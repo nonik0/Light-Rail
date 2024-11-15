@@ -1,0 +1,4 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "Light_Rail")(type "KiCad")(uri "${KIPRJMOD}/Light_Rail.kicad_sym")(options "")(descr ""))
+)

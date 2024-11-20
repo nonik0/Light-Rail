@@ -1668,165 +1668,6 @@
 				)
 			)
 		)
-		(symbol "Device:C_Polarized_US"
-			(pin_numbers hide)
-			(pin_names
-				(offset 0.254) hide)
-			(exclude_from_sim no)
-			(in_bom yes)
-			(on_board yes)
-			(property "Reference" "C"
-				(at 0.635 2.54 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(justify left)
-				)
-			)
-			(property "Value" "C_Polarized_US"
-				(at 0.635 -2.54 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(justify left)
-				)
-			)
-			(property "Footprint" ""
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Datasheet" "~"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Description" "Polarized capacitor, US symbol"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "ki_keywords" "cap capacitor"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "ki_fp_filters" "CP_*"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(symbol "C_Polarized_US_0_1"
-				(polyline
-					(pts
-						(xy -2.032 0.762) (xy 2.032 0.762)
-					)
-					(stroke
-						(width 0.508)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy -1.778 2.286) (xy -0.762 2.286)
-					)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(polyline
-					(pts
-						(xy -1.27 1.778) (xy -1.27 2.794)
-					)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(arc
-					(start 2.032 -1.27)
-					(mid 0 -0.5572)
-					(end -2.032 -1.27)
-					(stroke
-						(width 0.508)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-			)
-			(symbol "C_Polarized_US_1_1"
-				(pin passive line
-					(at 0 3.81 270)
-					(length 2.794)
-					(name "~"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "1"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin passive line
-					(at 0 -3.81 90)
-					(length 3.302)
-					(name "~"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "2"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-			)
-		)
 		(symbol "Device:D_Schottky"
 			(pin_numbers hide)
 			(pin_names
@@ -5122,6 +4963,88 @@
 				)
 			)
 		)
+		(symbol "Mechanical:MountingHole"
+			(pin_names
+				(offset 1.016)
+			)
+			(exclude_from_sim yes)
+			(in_bom no)
+			(on_board yes)
+			(property "Reference" "H"
+				(at 0 5.08 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "MountingHole"
+				(at 0 3.175 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" "~"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "Mounting Hole without connection"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_keywords" "mounting hole"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_fp_filters" "MountingHole*"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "MountingHole_0_1"
+				(circle
+					(center 0 0)
+					(radius 1.27)
+					(stroke
+						(width 1.27)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+		)
 		(symbol "Oscillator:ECS-2520MV-xxx-xx"
 			(exclude_from_sim no)
 			(in_bom yes)
@@ -6819,7 +6742,7 @@
 		(uuid "614a3afe-e4d8-424d-9b0a-898061596124")
 	)
 	(junction
-		(at 41.91 167.64)
+		(at 44.45 170.18)
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "6209e074-7c01-4a32-accd-ba466ae97524")
@@ -8444,7 +8367,7 @@
 	)
 	(wire
 		(pts
-			(xy 38.1 167.64) (xy 38.1 170.18)
+			(xy 40.64 170.18) (xy 40.64 172.72)
 		)
 		(stroke
 			(width 0)
@@ -8894,7 +8817,7 @@
 	)
 	(wire
 		(pts
-			(xy 45.72 167.64) (xy 45.72 170.18)
+			(xy 48.26 170.18) (xy 48.26 172.72)
 		)
 		(stroke
 			(width 0)
@@ -9794,7 +9717,7 @@
 	)
 	(wire
 		(pts
-			(xy 41.91 167.64) (xy 38.1 167.64)
+			(xy 44.45 170.18) (xy 40.64 170.18)
 		)
 		(stroke
 			(width 0)
@@ -10954,7 +10877,7 @@
 	)
 	(wire
 		(pts
-			(xy 41.91 167.64) (xy 45.72 167.64)
+			(xy 44.45 170.18) (xy 48.26 170.18)
 		)
 		(stroke
 			(width 0)
@@ -13124,7 +13047,7 @@
 	)
 	(wire
 		(pts
-			(xy 41.91 163.83) (xy 41.91 167.64)
+			(xy 44.45 166.37) (xy 44.45 170.18)
 		)
 		(stroke
 			(width 0)
@@ -14628,7 +14551,7 @@
 	)
 	(global_label "SCL"
 		(shape input)
-		(at 91.44 234.95 0)
+		(at 81.28 233.68 0)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -14638,7 +14561,7 @@
 		)
 		(uuid "218b4946-2367-4fa2-ba00-3260d488ba16")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 97.9328 234.95 0)
+			(at 87.7728 233.68 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15354,7 +15277,7 @@
 	)
 	(global_label "SDA"
 		(shape input)
-		(at 91.44 232.41 0)
+		(at 81.28 231.14 0)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -15364,7 +15287,7 @@
 		)
 		(uuid "5a5fc785-af8d-47a6-b00d-5c22cc1c4322")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 97.9933 232.41 0)
+			(at 87.8333 231.14 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -17268,7 +17191,7 @@
 	)
 	(global_label "VBAT"
 		(shape input)
-		(at 41.91 163.83 90)
+		(at 44.45 166.37 90)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -17278,7 +17201,7 @@
 		)
 		(uuid "fd5edf2f-ce5b-4eaf-b372-365529f5e86f")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 41.91 156.43 90)
+			(at 44.45 158.97 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18306,7 +18229,7 @@
 	)
 	(symbol
 		(lib_id "Connector:Conn_01x04_Pin")
-		(at 86.36 229.87 0)
+		(at 76.2 228.6 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -18314,7 +18237,7 @@
 		(dnp no)
 		(uuid "0ba16269-3581-4b7f-aecc-36964693d5bd")
 		(property "Reference" "J2"
-			(at 90.424 220.726 0)
+			(at 80.264 219.456 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18322,7 +18245,7 @@
 			)
 		)
 		(property "Value" "Conn_01x04_Pin"
-			(at 91.186 223.774 0)
+			(at 81.026 222.504 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18330,7 +18253,7 @@
 			)
 		)
 		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical"
-			(at 86.36 229.87 0)
+			(at 76.2 228.6 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18339,7 +18262,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 86.36 229.87 0)
+			(at 76.2 228.6 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18348,7 +18271,7 @@
 			)
 		)
 		(property "Description" "Generic connector, single row, 01x04, script generated"
-			(at 86.36 229.87 0)
+			(at 76.2 228.6 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -20378,7 +20301,7 @@
 	)
 	(symbol
 		(lib_id "Device:Battery_Cell")
-		(at 38.1 175.26 0)
+		(at 40.64 177.8 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -20386,7 +20309,7 @@
 		(dnp no)
 		(uuid "2c778b4d-55a5-4985-9c70-027bdd8c68f3")
 		(property "Reference" "BT1"
-			(at 29.972 172.212 0)
+			(at 32.512 174.752 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -20395,7 +20318,7 @@
 			)
 		)
 		(property "Value" "Battery_Cell"
-			(at 23.114 175.006 0)
+			(at 25.654 177.546 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -20404,7 +20327,7 @@
 			)
 		)
 		(property "Footprint" "Battery:BatteryHolder_Keystone_3034_1x20mm"
-			(at 38.1 173.736 90)
+			(at 40.64 176.276 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -20413,7 +20336,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 38.1 173.736 90)
+			(at 40.64 176.276 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -20422,7 +20345,7 @@
 			)
 		)
 		(property "Description" "Single-cell battery"
-			(at 38.1 175.26 0)
+			(at 40.64 177.8 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -20744,7 +20667,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Device:C_Polarized_US")
+		(lib_id "Device:C")
 		(at 146.05 184.15 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -20771,7 +20694,7 @@
 			)
 		)
 		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
-			(at 146.05 184.15 0)
+			(at 147.0152 187.96 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -20788,7 +20711,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Polarized capacitor, US symbol"
+		(property "Description" "Unpolarized capacitor"
 			(at 146.05 184.15 0)
 			(effects
 				(font
@@ -22445,6 +22368,70 @@
 		)
 	)
 	(symbol
+		(lib_id "Mechanical:MountingHole")
+		(at 97.79 219.71 0)
+		(unit 1)
+		(exclude_from_sim yes)
+		(in_bom no)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "4771084e-2381-4157-857a-d208433aec45")
+		(property "Reference" "H1"
+			(at 100.33 218.4399 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "MountingHole"
+			(at 100.33 220.9799 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Light_Rail:MountingHole_Custom"
+			(at 97.79 219.71 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 97.79 219.71 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Mounting Hole without connection"
+			(at 97.79 219.71 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(instances
+			(project "light_rail"
+				(path "/9b085724-ccd2-4800-8e6d-9b7e5ec0c051"
+					(reference "H1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Device:LED")
 		(at 298.45 97.79 270)
 		(unit 1)
@@ -22583,8 +22570,72 @@
 		)
 	)
 	(symbol
+		(lib_id "Mechanical:MountingHole")
+		(at 97.79 229.87 0)
+		(unit 1)
+		(exclude_from_sim yes)
+		(in_bom no)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "4ab1dd3d-2627-4fa5-81e7-4612ca7dd19c")
+		(property "Reference" "H3"
+			(at 100.33 228.5999 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "MountingHole"
+			(at 100.33 231.1399 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Light_Rail:MountingHole_Custom"
+			(at 97.79 229.87 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 97.79 229.87 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Mounting Hole without connection"
+			(at 97.79 229.87 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(instances
+			(project "light_rail"
+				(path "/9b085724-ccd2-4800-8e6d-9b7e5ec0c051"
+					(reference "H3")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "power:+3V3")
-		(at 91.44 229.87 270)
+		(at 81.28 228.6 270)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -22593,7 +22644,7 @@
 		(fields_autoplaced yes)
 		(uuid "4d2e16c1-495e-4fa7-a9f2-b002ca3e695b")
 		(property "Reference" "#PWR07"
-			(at 87.63 229.87 0)
+			(at 77.47 228.6 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -22602,7 +22653,7 @@
 			)
 		)
 		(property "Value" "+3V3"
-			(at 95.25 229.8699 90)
+			(at 85.09 228.5999 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -22611,7 +22662,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 91.44 229.87 0)
+			(at 81.28 228.6 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -22620,7 +22671,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 91.44 229.87 0)
+			(at 81.28 228.6 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -22629,7 +22680,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"+3V3\""
-			(at 91.44 229.87 0)
+			(at 81.28 228.6 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -23359,7 +23410,7 @@
 			)
 		)
 		(property "Value" "10K"
-			(at 187.96 177.038 90)
+			(at 187.96 177.546 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -24222,6 +24273,70 @@
 			(project "led_express"
 				(path "/9b085724-ccd2-4800-8e6d-9b7e5ec0c051"
 					(reference "C10")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Mechanical:MountingHole")
+		(at 97.79 224.79 0)
+		(unit 1)
+		(exclude_from_sim yes)
+		(in_bom no)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "64271695-4b69-4ff7-a7b8-e9d3b953869e")
+		(property "Reference" "H2"
+			(at 100.33 223.5199 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "MountingHole"
+			(at 100.33 226.0599 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Light_Rail:MountingHole_Custom"
+			(at 97.79 224.79 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 97.79 224.79 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Mounting Hole without connection"
+			(at 97.79 224.79 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(instances
+			(project "light_rail"
+				(path "/9b085724-ccd2-4800-8e6d-9b7e5ec0c051"
+					(reference "H2")
 					(unit 1)
 				)
 			)
@@ -25451,6 +25566,70 @@
 			(project "led_express"
 				(path "/9b085724-ccd2-4800-8e6d-9b7e5ec0c051"
 					(reference "#PWR025")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Mechanical:MountingHole")
+		(at 97.79 234.95 0)
+		(unit 1)
+		(exclude_from_sim yes)
+		(in_bom no)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "72c516f8-2490-4c38-9300-45475c0754e7")
+		(property "Reference" "H4"
+			(at 100.33 233.6799 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "MountingHole"
+			(at 100.33 236.2199 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Light_Rail:MountingHole_Custom"
+			(at 97.79 234.95 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 97.79 234.95 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Mounting Hole without connection"
+			(at 97.79 234.95 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(instances
+			(project "light_rail"
+				(path "/9b085724-ccd2-4800-8e6d-9b7e5ec0c051"
+					(reference "H4")
 					(unit 1)
 				)
 			)
@@ -27117,7 +27296,7 @@
 			)
 		)
 		(property "Value" "10K"
-			(at 201.93 177.292 90)
+			(at 201.93 177.546 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -27643,7 +27822,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 91.44 227.33 90)
+		(at 81.28 226.06 90)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -27652,7 +27831,7 @@
 		(fields_autoplaced yes)
 		(uuid "9831f00e-25b5-4f96-82a2-0ad973aa20c6")
 		(property "Reference" "#PWR046"
-			(at 97.79 227.33 0)
+			(at 87.63 226.06 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -27661,7 +27840,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 95.25 227.3299 90)
+			(at 85.09 226.0599 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -27670,7 +27849,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 91.44 227.33 0)
+			(at 81.28 226.06 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -27679,7 +27858,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 91.44 227.33 0)
+			(at 81.28 226.06 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -27688,7 +27867,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 91.44 227.33 0)
+			(at 81.28 226.06 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -31332,7 +31511,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 45.72 177.8 0)
+		(at 48.26 180.34 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -31341,7 +31520,7 @@
 		(fields_autoplaced yes)
 		(uuid "c57de832-9cb3-43ab-9fec-a91f39fa70ac")
 		(property "Reference" "#PWR050"
-			(at 45.72 184.15 0)
+			(at 48.26 186.69 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -31350,7 +31529,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 45.72 182.88 0)
+			(at 48.26 185.42 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -31358,7 +31537,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 45.72 177.8 0)
+			(at 48.26 180.34 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -31367,7 +31546,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 45.72 177.8 0)
+			(at 48.26 180.34 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -31376,7 +31555,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 45.72 177.8 0)
+			(at 48.26 180.34 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -32074,7 +32253,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 38.1 177.8 0)
+		(at 40.64 180.34 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -32083,7 +32262,7 @@
 		(fields_autoplaced yes)
 		(uuid "d01ff4aa-37c7-4107-982f-c0a7bb48ba70")
 		(property "Reference" "#PWR049"
-			(at 38.1 184.15 0)
+			(at 40.64 186.69 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -32092,7 +32271,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 38.1 182.88 0)
+			(at 40.64 185.42 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -32100,7 +32279,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 38.1 177.8 0)
+			(at 40.64 180.34 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -32109,7 +32288,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 38.1 177.8 0)
+			(at 40.64 180.34 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -32118,7 +32297,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 38.1 177.8 0)
+			(at 40.64 180.34 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -35518,7 +35697,7 @@
 	)
 	(symbol
 		(lib_id "Device:Battery_Cell")
-		(at 45.72 175.26 0)
+		(at 48.26 177.8 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -35527,7 +35706,7 @@
 		(fields_autoplaced yes)
 		(uuid "f47f2fef-ed30-405d-9537-c914979390a7")
 		(property "Reference" "BT2"
-			(at 49.53 172.1484 0)
+			(at 52.07 174.6884 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -35536,7 +35715,7 @@
 			)
 		)
 		(property "Value" "Battery_Cell"
-			(at 49.53 174.6884 0)
+			(at 52.07 177.2284 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -35545,7 +35724,7 @@
 			)
 		)
 		(property "Footprint" "Battery:BatteryHolder_Keystone_3034_1x20mm"
-			(at 45.72 173.736 90)
+			(at 48.26 176.276 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -35554,7 +35733,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 45.72 173.736 90)
+			(at 48.26 176.276 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -35563,7 +35742,7 @@
 			)
 		)
 		(property "Description" "Single-cell battery"
-			(at 45.72 175.26 0)
+			(at 48.26 177.8 0)
 			(effects
 				(font
 					(size 1.27 1.27)

@@ -6328,6 +6328,12 @@
 		(uuid "2a9fa1b9-be0d-4804-a276-210f5d5d375d")
 	)
 	(junction
+		(at 328.93 105.41)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "2b8bbc5a-cfdc-49ad-998c-5b78534cdcab")
+	)
+	(junction
 		(at 254 105.41)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -6418,12 +6424,6 @@
 		(uuid "3a04f6c0-396e-44ed-b559-5608d4232e0e")
 	)
 	(junction
-		(at 236.22 113.03)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "3b23827f-38e4-48e0-8b46-6e24d73b67e3")
-	)
-	(junction
 		(at 236.22 71.12)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -6440,12 +6440,6 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "3e398d98-d08f-4f18-863e-5870e2e83367")
-	)
-	(junction
-		(at 232.41 113.03)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "3e6ae620-fd29-4730-a898-6f70203ceb9b")
 	)
 	(junction
 		(at 289.56 116.84)
@@ -6530,12 +6524,6 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "4ba92003-4991-40d5-a76c-99134d5b0029")
-	)
-	(junction
-		(at 236.22 105.41)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "4bb761da-2dd0-414e-b440-c721fdca9063")
 	)
 	(junction
 		(at 360.68 55.88)
@@ -6844,6 +6832,12 @@
 		(uuid "6c9ce6b5-8c74-49b7-920f-94f360869364")
 	)
 	(junction
+		(at 236.22 105.41)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "6d37c6e4-c827-4047-98f1-04c5a2f1e252")
+	)
+	(junction
 		(at 232.41 44.45)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -6928,12 +6922,6 @@
 		(uuid "77170954-c43f-47f4-bae4-50b0ab31e6af")
 	)
 	(junction
-		(at 328.93 105.41)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "7781435b-1b97-4186-b734-f27d2be3314d")
-	)
-	(junction
 		(at 351.79 59.69)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -6968,12 +6956,6 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "7b25b330-d576-4738-b204-c11ae6952d92")
-	)
-	(junction
-		(at 328.93 113.03)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "7c4b2c2f-9a65-427a-a192-23257a312306")
 	)
 	(junction
 		(at 262.89 25.4)
@@ -7184,6 +7166,12 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "ab30d92b-9bdb-4b45-b6f3-a2f1387a58e6")
+	)
+	(junction
+		(at 232.41 113.03)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "abe3bc72-2469-4da1-aad9-f80bcd774fa6")
 	)
 	(junction
 		(at 294.64 44.45)
@@ -8387,6 +8375,16 @@
 	)
 	(wire
 		(pts
+			(xy 328.93 105.41) (xy 337.82 105.41)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "16daa99f-be80-4a60-be2a-a03a68669707")
+	)
+	(wire
+		(pts
 			(xy 280.67 105.41) (xy 289.56 105.41)
 		)
 		(stroke
@@ -9194,16 +9192,6 @@
 			(type default)
 		)
 		(uuid "35a77ce4-c70f-444c-9be2-091cf87f30ac")
-	)
-	(wire
-		(pts
-			(xy 232.41 113.03) (xy 232.41 124.46)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "35dc80d3-8d17-4b42-aaf3-ff65c9caf548")
 	)
 	(wire
 		(pts
@@ -11467,7 +11455,7 @@
 	)
 	(wire
 		(pts
-			(xy 328.93 105.41) (xy 337.82 105.41)
+			(xy 320.04 105.41) (xy 328.93 105.41)
 		)
 		(stroke
 			(width 0)
@@ -11927,16 +11915,6 @@
 	)
 	(wire
 		(pts
-			(xy 227.33 105.41) (xy 236.22 105.41)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "a6ca1940-2def-4dbd-932e-e31752ae7346")
-	)
-	(wire
-		(pts
 			(xy 337.82 59.69) (xy 346.71 59.69)
 		)
 		(stroke
@@ -11987,16 +11965,6 @@
 	)
 	(wire
 		(pts
-			(xy 232.41 113.03) (xy 236.22 113.03)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "a864d4b5-efbb-4381-af2f-03d5b9f2862b")
-	)
-	(wire
-		(pts
 			(xy 60.96 66.04) (xy 68.58 66.04)
 		)
 		(stroke
@@ -12034,16 +12002,6 @@
 			(type default)
 		)
 		(uuid "ad17370c-e53c-4b57-b753-e63b67491b7d")
-	)
-	(wire
-		(pts
-			(xy 328.93 111.76) (xy 328.93 113.03)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "ad5a2548-61b9-45ee-b04b-6956006676c7")
 	)
 	(wire
 		(pts
@@ -12337,7 +12295,7 @@
 	)
 	(wire
 		(pts
-			(xy 236.22 105.41) (xy 245.11 105.41)
+			(xy 227.33 105.41) (xy 236.22 105.41)
 		)
 		(stroke
 			(width 0)
@@ -12777,6 +12735,16 @@
 	)
 	(wire
 		(pts
+			(xy 232.41 113.03) (xy 232.41 124.46)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "cb15cda2-fa7e-4113-b8a0-4ca0da46ede1")
+	)
+	(wire
+		(pts
 			(xy 375.92 204.47) (xy 375.92 205.74)
 		)
 		(stroke
@@ -12834,16 +12802,6 @@
 			(type default)
 		)
 		(uuid "cf79b402-4c8c-4ce8-9bd0-8375d8d26851")
-	)
-	(wire
-		(pts
-			(xy 320.04 105.41) (xy 328.93 105.41)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "cfddc2aa-2edb-41e7-88f2-12886b0df828")
 	)
 	(wire
 		(pts
@@ -13077,6 +13035,16 @@
 	)
 	(wire
 		(pts
+			(xy 236.22 105.41) (xy 245.11 105.41)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d7961887-7ed2-4b54-916a-7c004e5406d7")
+	)
+	(wire
+		(pts
 			(xy 241.3 55.88) (xy 245.11 55.88)
 		)
 		(stroke
@@ -13114,16 +13082,6 @@
 			(type default)
 		)
 		(uuid "da907069-c798-4e35-9935-dee094bdd694")
-	)
-	(wire
-		(pts
-			(xy 236.22 111.76) (xy 236.22 113.03)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "dae81866-8768-45c6-8b9b-7695c9774ae4")
 	)
 	(wire
 		(pts
@@ -13814,6 +13772,16 @@
 			(type default)
 		)
 		(uuid "f8c45b6f-8ac7-480e-b730-35be9180e9da")
+	)
+	(wire
+		(pts
+			(xy 232.41 113.03) (xy 236.22 113.03)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "faa30e38-a984-49dc-8177-8173858d914f")
 	)
 	(wire
 		(pts
@@ -19552,6 +19520,75 @@
 	)
 	(symbol
 		(lib_id "Device:LED")
+		(at 236.22 109.22 270)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "2109aeaa-d4aa-45aa-8371-687f56172019")
+		(property "Reference" "D57"
+			(at 233.426 111.76 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "LED"
+			(at 236.474 111.76 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Light_Rail:LED_0805_TrainTrack"
+			(at 236.22 109.22 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 236.22 109.22 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Light emitting diode"
+			(at 236.22 109.22 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "6e80cf45-af8e-454d-a67d-d60fbc57b27f")
+		)
+		(pin "2"
+			(uuid "cd684984-3dbd-4817-a302-f19b12d22d8e")
+		)
+		(instances
+			(project "light_rail"
+				(path "/9b085724-ccd2-4800-8e6d-9b7e5ec0c051"
+					(reference "D57")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:LED")
 		(at 337.82 29.21 270)
 		(unit 1)
 		(exclude_from_sim no)
@@ -23386,6 +23423,75 @@
 			(project "led_express"
 				(path "/9b085724-ccd2-4800-8e6d-9b7e5ec0c051"
 					(reference "D22")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:LED")
+		(at 328.93 109.22 270)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "56d1009b-366f-4a72-9ffc-46c7d3b0633e")
+		(property "Reference" "D80"
+			(at 326.136 111.76 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "LED"
+			(at 329.184 111.76 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Light_Rail:LED_0805_TrainTrackBendStart2"
+			(at 328.93 109.22 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 328.93 109.22 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Light emitting diode"
+			(at 328.93 109.22 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "7bcdddda-5fcd-46c5-91f1-8832601aaaab")
+		)
+		(pin "2"
+			(uuid "78731222-1648-4838-9bc0-20b32ea79cf9")
+		)
+		(instances
+			(project "light_rail"
+				(path "/9b085724-ccd2-4800-8e6d-9b7e5ec0c051"
+					(reference "D80")
 					(unit 1)
 				)
 			)
@@ -31304,75 +31410,6 @@
 	)
 	(symbol
 		(lib_id "Device:LED")
-		(at 236.22 109.22 270)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(uuid "c445914c-7f4a-4ae9-a9ba-fd946035df4a")
-		(property "Reference" "D57"
-			(at 233.426 111.76 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "LED"
-			(at 236.474 111.76 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "Light_Rail:LED_0805_TrainTrack"
-			(at 236.22 109.22 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 236.22 109.22 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "Light emitting diode"
-			(at 236.22 109.22 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "0bb131f3-4f32-43ec-b23c-7574c2816fed")
-		)
-		(pin "2"
-			(uuid "5c9aec74-1922-4f07-897c-5d9572c8025e")
-		)
-		(instances
-			(project "led_express"
-				(path "/9b085724-ccd2-4800-8e6d-9b7e5ec0c051"
-					(reference "D57")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Device:LED")
 		(at 373.38 109.22 270)
 		(unit 1)
 		(exclude_from_sim no)
@@ -32592,75 +32629,6 @@
 			(project ""
 				(path "/9b085724-ccd2-4800-8e6d-9b7e5ec0c051"
 					(reference "X1")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Device:LED")
-		(at 328.93 109.22 270)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(uuid "d8de6e3e-778f-41bb-9510-9af2563199dc")
-		(property "Reference" "D80"
-			(at 326.136 111.76 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "LED"
-			(at 329.184 111.76 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "Light_Rail:LED_0805_TrainTrackBendStart2"
-			(at 328.93 109.22 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 328.93 109.22 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "Light emitting diode"
-			(at 328.93 109.22 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "ea56f625-6a73-4b78-8886-387655d06cb8")
-		)
-		(pin "2"
-			(uuid "fd2a1bde-84e6-4d22-8026-278286e7fc56")
-		)
-		(instances
-			(project "led_express"
-				(path "/9b085724-ccd2-4800-8e6d-9b7e5ec0c051"
-					(reference "D80")
 					(unit 1)
 				)
 			)

@@ -27,26 +27,9 @@ void loop()
   game.tick();
   if (game.isOver())
   {
-    game.restart(); 
     // game.modeSelect();
+    game.restart(); 
   }
 
-  // // clear train caboose from previous location
-  // trackLeds.setLEDPWM(trainLoc, 0);
-
-  // // advance train
-  // trainLoc = (trainLoc + 1) % TRACK_COUNT;
-
-  // // draw train at new location
-  // for (int i = 0; i < trainSize; i++)
-  // {
-  //   trackLeds.setLEDPWM((trainLoc + i) % TRACK_COUNT, 60);
-  // }
-
   delay(100);
-
-  // digitalWrite(LED_BUILTIN, HIGH);
-  // delay(1000);
-  // digitalWrite(LED_BUILTIN, LOW);
-  // delay(500);
 }

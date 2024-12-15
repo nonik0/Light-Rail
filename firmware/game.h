@@ -51,9 +51,9 @@ private:
   ~Game() {}
 
   // hardware resources
+  const Track *TrackGraph = reinterpret_cast<const Track *>(TrackData);
   Adafruit_IS31FL3731 _boardLeds = Adafruit_IS31FL3731(); // TODO: write own optimized code for IS31
   AS1115 _boardDigits = AS1115(0x13);
-  const Track *_trackGraph = reinterpret_cast<const Track *>(TrackData16x9);
 
   GameMode _mode;
   bool _isOver;
@@ -90,7 +90,7 @@ void Game::setup()
 
   for (uint8_t i = 0; i < MaxTrains; i++)
   {
-    _trains[i].setTrack(_trackGraph, setLed);
+    _trains[i].setTrack(TrackGraph, setLed);
   }
 
   // TODO: switches

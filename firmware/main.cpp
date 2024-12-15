@@ -4,10 +4,14 @@
 #include "common.h"
 #include "game.h"
 
-Game game;
+// singleton instance of Game manages all game state and board hardware
+Game &game = Game::getInstance();
 
 void setup()
 {
+  Serial.begin(9600);
+  delay(5000);
+
   log("Starting setup...");
 
   // disable ADC to save power
@@ -16,20 +20,18 @@ void setup()
   game.setup();
   // game.modeSelect();
 
-  log("   complete!");
+  log("Setup complete!");
 }
-
-int trainLoc = 0;
-int trainSize = 40;
 
 void loop()
 {
-  game.tick();
   if (game.isOver())
   {
     // game.modeSelect();
     game.restart(); 
   }
 
-  delay(100);
+  game.tick();
+
+  delay(50); // TODO: configurable to control overall game speed
 }

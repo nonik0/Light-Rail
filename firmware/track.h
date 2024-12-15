@@ -7,10 +7,11 @@
 
 struct Track
 {
-  uint8_t aConn;  // neighbor on anode side
-  uint8_t cConn;  // neighbor on cathode side
-  uint8_t aConn2; // neighbor2 on anode side
-  uint8_t cConn2; // neighbor2 on cathode side
+  // defined "backwards" because AVR is little-endian
+  uint8_t cathodeNextLoc2; // neighbor2 on cathode side
+  uint8_t anodeNextLoc2;   // neighbor2 on anode side
+  uint8_t cathodeNextLoc;  // neighbor on cathode side
+  uint8_t anodeNextLoc;    // neighbor on anode side
 };
 
 // TODO: platform data, potentially just use special values in track data
@@ -39,7 +40,7 @@ const uint32_t TrackData16x9[TRACK_COUNT] = {
     0x0604FFFF, // track 5/0x05
     0x0705FFFF, // track 6/0x06
     0x0806FFFF, // track 7/0x07
-    0x0907FFFF, // track 8/0x08+
+    0x0907FFFF, // track 8/0x08
     0x0A08FFFF, // track 9/0x09
     0x0B09FFFF, // track 10/0x0A
     0x0C0AFFFF, // track 11/0x0B
@@ -79,12 +80,21 @@ const uint32_t TrackData16x9[TRACK_COUNT] = {
     0xFFFFFFFF, // track 45/0x2D
     0xFFFFFFFF, // track 46/0x2E
     0x3F1FFFFF, // track 47/0x2F
-    0x2040FFFF, // track 58/0x30
+    0x2040FFFF, // track 48/0x30
+    0xFFFFFFFF, // track 49/0x31
+    0xFFFFFFFF, // track 50/0x32
+    0xFFFFFFFF, // track 51/0x33
+    0xFFFFFFFF, // track 52/0x34
+    0xFFFFFFFF, // track 53/0x35
+    0xFFFFFFFF, // track 54/0x36
+    0xFFFFFFFF, // track 55/0x37
+    0xFFFFFFFF, // track 56/0x38
+    0xFFFFFFFF, // track 57/0x39
+    0xFFFFFFFF, // track 58/0x30
     0xFFFFFFFF, // track 59/0x31
     0xFFFFFFFF, // track 60/0x32
     0xFFFFFFFF, // track 61/0x33
     0xFFFFFFFF, // track 62/0x34
-    0xFFFFFFFF, // track 63/0x35
     0x4F2FFFFF, // track 63/0x3F
     0x3050FFFF, // track 64/0x40
     0xFFFFFFFF, // track 65/0x41
@@ -150,7 +160,6 @@ const uint32_t TrackData16x9[TRACK_COUNT] = {
     0xFFFFFFFF, // track 125/0x7D
     0xFFFFFFFF, // track 126/0x7E
     0x8F6FFFFF, // track 127/0x7F
-    0x7090FFFF, // track 128/0x80
     0x7081FFFF, // track 128/0x80
     0x8082FFFF, // track 129/0x81
     0x8183FFFF, // track 130/0x82

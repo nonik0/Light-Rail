@@ -85,7 +85,7 @@ bool Train::advance()
   _setLed(nextTrackLoc, _cars[0].Cargo > 0 ? CarFullBrightness : CarEmptyBrightness);
   _engineDirection = _track[nextTrackLoc].anodeNextLoc == curTrackLoc; // if next track's aConn is current location, exit from next track's cConn
 
-  log("Train advanced to " + String(nextTrackLoc));
+  //log("Train advanced to " + String(nextTrackLoc));
 
   return true;
 }

@@ -1,0 +1,42 @@
+[package]
+name = "light-rail"
+version = "0.1.0"
+authors = ["Nick Brown <nworbn@gmail.com>"]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[[bin]]
+name = "light-rail"
+test = false
+bench = false
+
+[dependencies]
+panic-halt = "0.2.0"
+ufmt = "0.2.0"
+nb = "1.1.0"
+embedded-hal = "1.0"
+avr-device = { version = "0.5.4", features = ["rt"] }
+
+[dependencies.atmega-hal]
+git = "https://github.com/rahix/avr-hal"
+rev = "3e362624547462928a219c40f9ea8e3a64f21e5f"
+features = ["atmega32u4"]
+
+# The latest releases of `proc-macro2` do not support the rust toolchain that
+# we use.  Thus, we must fix this dependency to an older version where our
+# toolchain is still supported.  See https://github.com/Rahix/avr-hal/issues/537
+[build-dependencies.proc-macro2]
+version = "=1.0.79"
+
+# Configure the build for minimal size - AVRs have very little program memory
+[profile.dev]
+panic = "abort"
+lto = true
+opt-level = "s"
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+debug = true
+lto = true
+opt-level = "s"

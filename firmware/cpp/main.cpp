@@ -31,5 +31,5 @@ void loop()
 
   game.tick();
 
-  delay(50); // TODO: configurable to control overall game speed
+  delay(30); // TODO: configurable to control overall game speed
 }

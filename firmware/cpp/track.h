@@ -14,17 +14,9 @@ struct Track
   uint8_t anodeNextLoc;    // neighbor on anode side
 };
 
-// TODO: platform data, potentially just use special values in track data
-// e.g. platform: 0xEEEEEEXX where XX is the track connection/neighbor
-struct Platform
-{
-  uint8_t ledIndex;
-  uint8_t trackConn;
-};
-
 #ifndef LED_BACKPACK_MATRIX
 const uint32_t TrackData[TRACK_COUNT] = {
-    0x6121FFFF, // track 0/0x00
+    0x6111FFFF, // track 0/0x00
     0x20202020, // track 1/0x01 PLATFORM
     0x3003FFFF, // track 2/0x02
     0x7002FFFF, // track 3/0x03
@@ -40,7 +32,7 @@ const uint32_t TrackData[TRACK_COUNT] = {
     0x0868FFFF, // track 13/0x0D
     0x4C4EFFFF, // track 14/0x0E
     0x88888888, // track 15/0x0F PLATFORM
-    0x4960FFFF, // track 16/0x10
+    0x4920FFFF, // track 16/0x10
     0x0021FFFF, // track 17/0x11
     0x2933FFFF, // track 18/0x12
     0x53535353, // track 19/0x13 PLATFORM
@@ -77,7 +69,7 @@ const uint32_t TrackData[TRACK_COUNT] = {
     0x2162FFFF, // track 50/0x32
     0x8312FFFF, // track 51/0x33
     0x5350FFFF, // track 52/0x34
-    0x6936FFFF, // track 53/0x35
+    0x6336FFFF, // track 53/0x35
     0x7335FFFF, // track 54/0x36
     0x8447FFFF, // track 55/0x37
     0x390AFFFF, // track 56/0x38
@@ -120,7 +112,7 @@ const uint32_t TrackData[TRACK_COUNT] = {
     0x5B6DFFFF, // track 93/0x5D
     0x8D5FFFFF, // track 94/0x5E
     0x5E1FFFFF, // track 95/0x5F
-    0x6110FFFF, // track 96/0x60
+    0x6120FFFF, // track 96/0x60
     0x6000FFFF, // track 97/0x61
     0x2532FF22, // track 98/0x62
     0x2535FFFF, // track 99/0x63

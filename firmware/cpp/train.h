@@ -12,8 +12,8 @@ public:
   static const uint8_t MinSpeed = 0;
   static const uint8_t MaxSpeed = 100;
   static const uint8_t DefaultSpeed = 10;
-  static const uint8_t CarFullBrightness = 60;
-  static const uint8_t CarEmptyBrightness = 5;
+  static const uint8_t CarFullBrightness = 200;
+  static const uint8_t CarEmptyBrightness = 50;
 
   struct Car
   {
@@ -26,6 +26,7 @@ public:
   void init(uint8_t location, uint8_t cargo = 0);
   bool advance();
   bool addCar(uint8_t cargo = 0);
+  uint8_t front() { return _cars[0].Location; }
 
 private:
   void (*_setLed)(uint8_t, uint8_t);
@@ -79,11 +80,18 @@ bool Train::advance()
   // advance front car to next location, setting LED accordingly
   uint8_t curTrackLoc = _cars[0].Location;
   Track curTrack = _track[curTrackLoc];
-  uint8_t nextTrackLoc = _engineDirection ? curTrack.cathodeNextLoc : curTrack.anodeNextLoc; // TODO: switches
+  uint8_t nextTrackLoc = _engineDirection ? curTrack.cathodeNextLoc : curTrack.anodeNextLoc;
+  uint8_t nextTrackLoc2 = _engineDirection ? curTrack.cathodeNextLoc2 : curTrack.anodeNextLoc2;
+
+  // randomly choose between two possible next tracks for now
+  if (nextTrackLoc2 != TRACK_NONE && random(0, 2) == 0)
+  {
+    nextTrackLoc = nextTrackLoc2;
+  }
 
   _cars[0].Location = nextTrackLoc;
   _setLed(nextTrackLoc, _cars[0].Cargo > 0 ? CarFullBrightness : CarEmptyBrightness);
-  _engineDirection = _track[nextTrackLoc].anodeNextLoc == curTrackLoc; // if next track's aConn is current location, exit from next track's cConn
+  _engineDirection = _track[nextTrackLoc].anodeNextLoc == curTrackLoc || _track[nextTrackLoc].anodeNextLoc2 == curTrackLoc; // if (either of) next track's anode connection is current location, exit from next track's cathode connection
 
   //log("Train advanced to " + String(nextTrackLoc));
 

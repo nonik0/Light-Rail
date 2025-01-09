@@ -3,13 +3,14 @@
 #include <Adafruit_IS31FL3731.h>
 #include <Arduino.h>
 #include <AS1115.h>
+#include <avr/io.h>
 
 #include "common.h"
 #include "platform.h"
 #include "train.h"
 #include "track.h"
 
-#define BUZZ PB4
+#define BUZZ 8// PB4
 #define SW1 PB6
 #define SW2 PB7
 #define SW3 PC6
@@ -22,7 +23,6 @@
 #define SW10 PF1
 #define SW11 PF0
 #define SW12 PE6
-
 
 // TODO: make sure all game resources are statically allocated
 
@@ -41,7 +41,7 @@ class Game
 public:
   static const uint8_t MaxTrains = 5;
   static const uint8_t NumDigits = 3;
-  static const uint8_t DigitIntensity = 5;
+  static const uint8_t DigitIntensity = 3;
   // static const uint8_t NumPlatforms = X;
   static void setLed(uint8_t ledNum, uint8_t brightness);
   // static void setDigit(uint8_t index, uint8_t value); // print number
@@ -97,20 +97,19 @@ void Game::setup()
   _mode = ANIMATION;
   _isOver = true;
 
-
   // set buzzer pin to output
   PORTB |= (1 << BUZZ);
 
   // set all switch pins to input pullup
   DDRB &= ~(1 << SW1 | 1 << SW2);
   DDRC &= ~(1 << SW3 | 1 << SW4);
-  DDRD &= ~(1 << SW5 | 1 << SW7);
+  DDRD &= ~(1 << SW5 | 1 << SW7 | 1 << SW8);
   DDRE &= ~(1 << SW6 | 1 << SW12);
   DDRF &= ~(1 << SW9 | 1 << SW10 | 1 << SW11);
 
   PORTB |= (1 << SW1 | 1 << SW2);
   PORTC |= (1 << SW3 | 1 << SW4);
-  PORTD |= (1 << SW5 | 1 << SW7);
+  PORTD |= (1 << SW5 | 1 << SW7 | 1 << SW8);
   PORTE |= (1 << SW6 | 1 << SW12);
   PORTF |= (1 << SW9 | 1 << SW10 | 1 << SW11);
 
@@ -128,7 +127,7 @@ void Game::setup()
   // TODO: switches
 }
 
-int i = 0;
+int i = -1;
 int count = 0;
 void Game::tick()
 {
@@ -137,12 +136,63 @@ void Game::tick()
   //   _trains[i].advance();
   // }
 
+  // check if any switches are pressed
+  /*
+  if (!(PINB & (1 << SW1))) {
+    _boardDigits.display(1);
+    tone(BUZZ, 1000, 100);
+  }
+  else if (!(PINB & (1 << SW2))) {
+    _boardDigits.display(2);
+    tone(BUZZ, 2000, 100);
+  }
+  else if (!(PINC & (1 << SW3))) {
+    _boardDigits.display(3);
+    tone(BUZZ, 3000, 100);
+  }
+  else if (!(PINC & (1 << SW4))) {
+    _boardDigits.display(4);
+    tone(BUZZ, 4000, 100);
+  }
+  else if (!(PIND & (1 << SW5))) {
+    _boardDigits.display(5);
+    tone(BUZZ, 5000, 100);
+  }
+  else if (!(PINE & (1 << SW6))) {
+    _boardDigits.display(6);
+    tone(BUZZ, 6000, 100);
+  }
+  else if (!(PIND & (1 << SW7))) {
+    _boardDigits.display(7);
+    tone(BUZZ, 7000, 100);
+  }
+  else if (!(PIND & (1 << SW8))) {
+    _boardDigits.display(8);
+    tone(BUZZ, 8000, 100);
+  }
+  else if (!(PINF & (1 << SW9))) {
+    _boardDigits.display(9);
+    tone(BUZZ, 9000, 100);
+  }
+  else if (!(PINF & (1 << SW10))) {
+    _boardDigits.display(10);
+    tone(BUZZ, 10000, 100);
+  }
+  else if (!(PINF & (1 << SW11))) {
+    _boardDigits.display(11);
+    tone(BUZZ, 11000, 100);
+  }
+  else if (!(PINE & (1 << SW12))) {
+    _boardDigits.display(12);
+    tone(BUZZ, 12000, 100);
+  }
+  */
+
   _boardLeds.setLEDPWM(i, 0);
   i = (i + 1) % 144;
   _boardLeds.setLEDPWM(i, 200);
-
-  _boardDigits.display(count);
-  count = (count + 1) % 1000;
+  _boardDigits.display(i);
+  delay(1000);
 }
 
 bool Game::isOver()

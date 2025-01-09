@@ -9,6 +9,21 @@
 #include "train.h"
 #include "track.h"
 
+#define BUZZ PB4
+#define SW1 PB6
+#define SW2 PB7
+#define SW3 PC6
+#define SW4 PC7
+#define SW5 PD4
+#define SW6 PE2
+#define SW7 PD6
+#define SW8 PD7
+#define SW9 PF4
+#define SW10 PF1
+#define SW11 PF0
+#define SW12 PE6
+
+
 // TODO: make sure all game resources are statically allocated
 
 // possible game modes (maybe consider inheritance from Game)
@@ -81,6 +96,23 @@ void Game::setup()
 
   _mode = ANIMATION;
   _isOver = true;
+
+
+  // set buzzer pin to output
+  PORTB |= (1 << BUZZ);
+
+  // set all switch pins to input pullup
+  DDRB &= ~(1 << SW1 | 1 << SW2);
+  DDRC &= ~(1 << SW3 | 1 << SW4);
+  DDRD &= ~(1 << SW5 | 1 << SW7);
+  DDRE &= ~(1 << SW6 | 1 << SW12);
+  DDRF &= ~(1 << SW9 | 1 << SW10 | 1 << SW11);
+
+  PORTB |= (1 << SW1 | 1 << SW2);
+  PORTC |= (1 << SW3 | 1 << SW4);
+  PORTD |= (1 << SW5 | 1 << SW7);
+  PORTE |= (1 << SW6 | 1 << SW12);
+  PORTF |= (1 << SW9 | 1 << SW10 | 1 << SW11);
 
   _boardLeds.begin();
   _boardLeds.clear();

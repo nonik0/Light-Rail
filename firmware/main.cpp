@@ -10,8 +10,6 @@ Game &game = Game::getInstance();
 void setup()
 {
   Serial.begin(9600);
-  delay(5000);
-
   log("Starting setup...");
 
   // disable ADC to save power

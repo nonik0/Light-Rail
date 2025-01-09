@@ -53,7 +53,7 @@ private:
   // hardware resources
   const Track *TrackGraph = reinterpret_cast<const Track *>(TrackData);
   Adafruit_IS31FL3731 _boardLeds = Adafruit_IS31FL3731(); // TODO: write own optimized code for IS31
-  AS1115 _boardDigits = AS1115(0x13);
+  AS1115 _boardDigits = AS1115(0x00);
 
   GameMode _mode;
   bool _isOver;
@@ -85,8 +85,8 @@ void Game::setup()
   _boardLeds.begin();
   _boardLeds.clear();
 
-  // _boardDigits.init(NumDigits, DigitIntensity);
-  // _boardDigits.clear();
+  _boardDigits.init(NumDigits, DigitIntensity);
+  _boardDigits.clear();
 
   for (uint8_t i = 0; i < MaxTrains; i++)
   {
@@ -96,12 +96,21 @@ void Game::setup()
   // TODO: switches
 }
 
+int i = 0;
+int count = 0;
 void Game::tick()
 {
-  for (uint8_t i = 0; i < _numTrains; i++)
-  {
-    _trains[i].advance();
-  }
+  // for (uint8_t i = 0; i < _numTrains; i++)
+  // {
+  //   _trains[i].advance();
+  // }
+
+  _boardLeds.setLEDPWM(i, 0);
+  i = (i + 1) % 144;
+  _boardLeds.setLEDPWM(i, 200);
+
+  _boardDigits.display(count);
+  count = (count + 1) % 1000;
 }
 
 bool Game::isOver()

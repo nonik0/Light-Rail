@@ -16,6 +16,8 @@ public:
     void setTrack(const Track *track, uint8_t platformLoc, uint8_t trackLoc, SetLedCallback setLed);
     uint8_t platform() { return _platform; }
     uint8_t track() { return _track; }
+    bool hasCargo() { return _isOccupied; }
+    void loadCargo() { _isOccupied = false; }
     void tick();
     Platform() {}
 

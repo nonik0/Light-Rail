@@ -132,6 +132,7 @@ void Game::setup()
   }
 }
 
+int cargoLoaded = 0;
 void Game::tick()
 {
   readSwitches();
@@ -151,9 +152,13 @@ void Game::tick()
   {
     for (uint8_t j = 0; j < PlatformCount; j++)
     {
-      if (_trains[i].front() == _platforms[j].track())
+      if (_trains[i].front() == _platforms[j].track() && _platforms[j].hasCargo())
       {
+        _platforms[j].loadCargo();
         setLed(_platforms[j].platform(), 0);
+
+        cargoLoaded++;
+        _boardDigits.display(cargoLoaded);
       }
     }
   }

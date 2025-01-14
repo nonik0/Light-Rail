@@ -2,7 +2,8 @@
 target = "avr-specs/avr-atmega32u4.json"
 
 [target.'cfg(target_arch = "avr")']
-runner = "ravedude leonardo"
+runner = "ravedude -cb 57600 -P COM30 "
+#runner = "ravedude -c usbasp"
 
 [unstable]
 build-std = ["core"]

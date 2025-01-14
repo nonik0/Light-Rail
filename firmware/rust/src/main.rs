@@ -1,51 +1,60 @@
 #![no_std]
 #![no_main]
 
-use atmega_hal::usart::{Baudrate, Usart};
+//use atmega_hal::usart::{Baudrate, Usart};
 use embedded_hal::delay::DelayNs;
+use is31fl3731::IS31FL3731;
 use panic_halt as _;
+
+mod is31fl3731;
 
 type CoreClock = atmega_hal::clock::MHz8;
 type Delay = atmega_hal::delay::Delay<crate::CoreClock>;
 type I2c = atmega_hal::i2c::I2c<crate::CoreClock>;
-
-fn delay_ms(ms: u16) {
-    Delay::new().delay_ms(u32::from(ms))
-}
-
-#[allow(dead_code)]
-fn delay_us(us: u32) {
-    Delay::new().delay_us(us)
-}
 
 #[avr_device::entry]
 fn main() -> ! {
     let dp = atmega_hal::Peripherals::take().unwrap();
     let pins = atmega_hal::pins!(dp);
 
-    let mut led = pins.pb7.into_output();
+    let mut delay = Delay::new();
     let mut i2c = I2c::new(
         dp.TWI,
         pins.pd1.into_pull_up_input(),
         pins.pd0.into_pull_up_input(),
         400_000,
     );
-    let mut serial = Usart::new(
-        dp.USART1,
-        pins.pd2,
-        pins.pd3.into_output(),
-        Baudrate::<crate::CoreClock>::new(57600),
-    );
+    let mut boardLeds = is31fl3731::IS31FL3731::new(i2c);
+    // let mut serial = Usart::new(
+        //     dp.USART1,
+        //     pins.pd2,
+        //     pins.pd3.into_output(),
+        //     Baudrate::<crate::CoreClock>::new(57600),
+        // );
+        
 
-    ufmt::uwriteln!(&mut serial, "Write direction test:\r").unwrap();
-    i2c.i2cdetect(&mut serial, atmega_hal::i2c::Direction::Write)
-        .unwrap();
-    ufmt::uwriteln!(&mut serial, "\r\nRead direction test:\r").unwrap();
-    i2c.i2cdetect(&mut serial, atmega_hal::i2c::Direction::Read)
-        .unwrap();
+    boardLeds.begin(&mut delay).unwrap();
 
+    let mut ledNum: u8 = 0;
     loop {
-        led.toggle();
-        delay_ms(1000);
+        boardLeds.set_led_pwm(ledNum, 255).unwrap();
+        delay.delay_ms(1000);
+        boardLeds.set_led_pwm(ledNum, 0).unwrap();
+        ledNum = (ledNum + 1) % 144;
     }
 }
+
+
+
+/* default serial for leonardo
+macro_rules! default_serial {
+    ($p:expr, $pins:expr, $baud:expr) => {
+        $crate::Usart::new(
+            $p.USART1,
+            $pins.d0, pd2
+            $pins.d1.into_output(), pd3
+            $crate::hal::usart::BaudrateExt::into_baudrate($baud),
+        )
+    };
+}
+*/

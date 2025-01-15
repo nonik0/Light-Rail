@@ -24,6 +24,104 @@
 #define SW11 PF0
 #define SW12 PE6
 
+#define AVAILABLE_TONE_PINS 1
+#define USE_TIMER3
+
+const uint8_t PROGMEM tone_pin_to_timer_PGM[] = {3 /*, 1 */};
+static uint8_t tone_pins[AVAILABLE_TONE_PINS] = {255 /*, 255 */};
+
+volatile long timer3_toggle_count;
+volatile uint8_t *timer3_pin_port;
+volatile uint8_t timer3_pin_mask;
+
+// XXX: this function only works properly for timer 2 (the only one we use
+// currently).  for the others, it should end the tone, but won't restore
+// proper PWM functionality for the timer.
+void disableTimer(uint8_t _timer)
+{
+      bitWrite(TIMSK3, OCIE3A, 0);
+}
+
+
+void noTone(uint8_t _pin)
+{
+  int8_t _timer = -1;
+  
+  for (int i = 0; i < AVAILABLE_TONE_PINS; i++) {
+    if (tone_pins[i] == _pin) {
+      _timer = pgm_read_byte(tone_pin_to_timer_PGM + i);
+      tone_pins[i] = 255;
+      break;
+    }
+  }
+  
+  disableTimer(_timer);
+
+  digitalWrite(_pin, 0);
+}
+
+
+ISR(TIMER3_COMPA_vect)
+{
+  if (timer3_toggle_count != 0)
+  {
+    // toggle the pin
+    *timer3_pin_port ^= timer3_pin_mask;
+
+    if (timer3_toggle_count > 0)
+      timer3_toggle_count--;
+  }
+  else
+  {
+    disableTimer(3);
+    *timer3_pin_port &= ~(timer3_pin_mask); // keep pin low after stop
+  }
+}
+
+void tone(uint8_t _pin, unsigned int frequency, unsigned long duration)
+{
+  uint8_t prescalarbits = 0b001;
+  long toggle_count = 0;
+  uint32_t ocr = 0;
+  int8_t _timer = 3;
+
+  TCCR3A = 0;
+  TCCR3B = 0;
+  bitWrite(TCCR3B, WGM32, 1);
+  bitWrite(TCCR3B, CS30, 1);
+  timer3_pin_port = portOutputRegister(digitalPinToPort(_pin));
+  timer3_pin_mask = digitalPinToBitMask(_pin);
+
+  // Set the pinMode as OUTPUT
+  pinMode(_pin, OUTPUT);
+
+  // two choices for the 16 bit timers: ck/1 or ck/64
+  ocr = F_CPU / frequency / 2 - 1;
+
+  prescalarbits = 0b001;
+  if (ocr > 0xffff)
+  {
+    ocr = F_CPU / frequency / 2 / 64 - 1;
+    prescalarbits = 0b011;
+  }
+
+  TCCR3B = (TCCR3B & 0b11111000) | prescalarbits;
+
+  // Calculate the toggle count
+  if (duration > 0)
+  {
+    toggle_count = 2 * frequency * duration / 1000;
+  }
+  else
+  {
+    toggle_count = -1;
+  }
+
+  OCR3A = ocr;
+  timer3_toggle_count = toggle_count;
+  bitWrite(TIMSK3, OCIE3A, 1);
+}
+
 // TODO: make sure all game resources are statically allocated
 
 // possible game modes (maybe consider inheritance from Game)

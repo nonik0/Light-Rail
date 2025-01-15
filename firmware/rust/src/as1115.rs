@@ -26,7 +26,7 @@ where
         self.i2c
     }
 
-    pub fn init(&mut self, num_digits: u8, intensity: u8) -> Result<(), Error<E>> {
+    pub fn init(&mut self, num_digits: u8, intensity: u8) -> Result<(), AS1115Error<E>> {
         self.num_digits = constants::MAX_DIGITS.min(num_digits);
 
         self.write_register_to_addr(constants::DEFAULT_ADDRESS, addresses::SHUTDOWN, constants::shutdown_mode::NORMAL_OPERATION | constants::shutdown_mode::RESET_FEATURE)?;
@@ -43,7 +43,7 @@ where
     }
 
     // TOOD: debug
-    pub fn display_string(&mut self, string: &str) -> Result<(), Error<E>> {
+    pub fn display_string(&mut self, string: &str) -> Result<(), AS1115Error<E>> {
         let mut index = 0;
         for c in string.chars() {
             let digit = match c {
@@ -61,7 +61,7 @@ where
         Ok(())
     }
 
-    pub fn display_number(&mut self, number: u16) -> Result<(), Error<E>> {
+    pub fn display_number(&mut self, number: u16) -> Result<(), AS1115Error<E>> {
         let mut num = number;
         for i in 0..self.num_digits {
             let digit = num % 10;
@@ -71,26 +71,26 @@ where
         Ok(())
     }
 
-    pub fn display_digit(&mut self, digit: u8, value: u8) -> Result<(), Error<E>> {
+    pub fn display_digit(&mut self, digit: u8, value: u8) -> Result<(), AS1115Error<E>> {
         if digit >= self.num_digits {
-            return Err(Error::InvalidLocation(digit.into()));
+            return Err(AS1115Error::InvalidLocation(digit));
         }
         self.write_register(addresses::DIGIT_OFFSET + digit, value)?;
         Ok(())
     }
 
-    pub fn set_intensity(&mut self, intensity: u8) -> Result<(), E> {
+    pub fn set_intensity(&mut self, intensity: u8) -> Result<(), AS1115Error<E>> {
         // TODO: max intensity?
         self.write_register(addresses::GLOBAL_INTENSITY, intensity)?;
         Ok(())
     }
 
-    fn write_register(&mut self, register: u8, value: u8) -> Result<(), E> {
+    fn write_register(&mut self, register: u8, value: u8) -> Result<(), AS1115Error<E>> {
         self.write_register_to_addr(self.address, register, value)?;
         Ok(())
     }
 
-    fn write_register_to_addr(&mut self, address: u8, register: u8, value: u8) -> Result<(), E> {
+    fn write_register_to_addr(&mut self, address: u8, register: u8, value: u8) -> Result<(), AS1115Error<E>> {
         self.i2c.write(address, &[register, value])?;
         Ok(())
     }
@@ -157,7 +157,7 @@ pub mod addresses {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub enum Error<E> {
+pub enum AS1115Error<E> {
     I2cError(E),
     InvalidLocation(u8),
 }
@@ -172,8 +172,8 @@ pub enum Error<E> {
 //     }
 // }
 
-impl<E> From<E> for Error<E> {
+impl<E> From<E> for AS1115Error<E> {
     fn from(error: E) -> Self {
-        Error::I2cError(error)
+        AS1115Error::I2cError(error)
     }
 }

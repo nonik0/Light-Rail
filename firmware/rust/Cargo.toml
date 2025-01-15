@@ -17,6 +17,7 @@ nb = "1.1.0"
 embedded-hal = "1.0"
 embedded-hal-bus = "0.2.0"
 avr-device = { version = "0.7.0", features = ["rt"] }
+is31fl3731 = { git = "https://github.com/nonik0/is31fl3731" }
 
 [dependencies.atmega-hal]
 git = "https://github.com/rahix/avr-hal"

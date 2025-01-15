@@ -4,12 +4,11 @@
 
 use core::cell::RefCell;
 use embedded_hal::delay::DelayNs;
-use embedded_hal::digital::InputPin;
+//use embedded_hal::digital::InputPin;
 use embedded_hal_bus::i2c;
 use panic_halt as _;
 
 mod as1115;
-mod is31fl3731;
 
 type CoreClock = atmega_hal::clock::MHz8;
 type Delay = atmega_hal::delay::Delay<CoreClock>;
@@ -36,8 +35,8 @@ fn main() -> ! {
     //board_digits.display_string("Sup").unwrap();
     //delay.delay_ms(1000);
 
-    let mut board_leds = is31fl3731::IS31FL3731::new(i2c::RefCellDevice::new(&i2c_ref_cell));
-    board_leds.begin(&mut delay).unwrap();
+    let mut board_leds = is31fl3731::IS31FL3731::new(i2c::RefCellDevice::new(&i2c_ref_cell), 0x74);
+    board_leds.setup_blocking(&mut delay).unwrap();
 
     let mut led_num: u8 = 0;
     let mut digit_num: u16 = 0;
@@ -47,11 +46,11 @@ fn main() -> ! {
             digit_num = 0;
         }
 
-        board_leds.set_led_pwm(led_num, 255).unwrap();
+        board_leds.pixel_blocking(led_num, 255).unwrap();
         board_digits.display_number(digit_num).unwrap();
         delay.delay_ms(1000);
 
-        board_leds.set_led_pwm(led_num, 0).unwrap();
+        board_leds.pixel_blocking(led_num, 0).unwrap();
         led_num = (led_num + 1) % 144;
         digit_num = (digit_num + 1) % 1000;
     }

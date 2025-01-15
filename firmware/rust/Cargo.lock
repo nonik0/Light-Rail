@@ -112,6 +112,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "723dce4e9f25b6e6c5f35628e144794e5b459216ed7da97b7c4b66cdb3fa82ca"
 
 [[package]]
+name = "is31fl3731"
+version = "1.0.2"
+source = "git+https://github.com/nonik0/is31fl3731#a7b58362facb2e09b372d3dbc5c7b31831ca3e35"
+dependencies = [
+ "embedded-hal 1.0.0",
+]
+
+[[package]]
 name = "light-rail"
 version = "0.1.0"
 dependencies = [
@@ -119,6 +127,7 @@ dependencies = [
  "avr-device",
  "embedded-hal 1.0.0",
  "embedded-hal-bus 0.2.0",
+ "is31fl3731",
  "nb 1.1.0",
  "panic-halt",
  "proc-macro2",

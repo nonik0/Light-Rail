@@ -42,7 +42,7 @@ dependencies = [
  "avr-device",
  "embedded-hal 0.2.7",
  "embedded-hal 1.0.0",
- "embedded-hal-bus",
+ "embedded-hal-bus 0.1.0",
  "embedded-storage",
  "nb 1.1.0",
  "paste",
@@ -95,6 +95,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "embedded-hal-bus"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0d3980bf28e8577db59fe2bdb3df868a419469d2cecb363644eea2b6f7797669"
+dependencies = [
+ "critical-section",
+ "embedded-hal 1.0.0",
+ "portable-atomic",
+]
+
+[[package]]
 name = "embedded-storage"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -107,6 +118,7 @@ dependencies = [
  "atmega-hal",
  "avr-device",
  "embedded-hal 1.0.0",
+ "embedded-hal-bus 0.2.0",
  "nb 1.1.0",
  "panic-halt",
  "proc-macro2",
@@ -139,6 +151,12 @@ name = "paste"
 version = "1.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
+
+[[package]]
+name = "portable-atomic"
+version = "1.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "280dc24453071f1b63954171985a0b0d30058d287960968b9b2aca264c8d4ee6"
 
 [[package]]
 name = "proc-macro2"

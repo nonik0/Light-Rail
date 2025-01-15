@@ -1,6 +1,5 @@
 #![no_std]
 #![no_main]
-#![allow(dead_code)] // quiet unused warnings
 
 use core::cell::RefCell;
 use embedded_hal::delay::DelayNs;
@@ -27,7 +26,20 @@ fn main() -> ! {
     );
     let i2c_ref_cell = RefCell::new(i2c); // not Send/thread safe
 
-    let switch_pin = pins.pb6.into_pull_up_input();
+    let switch_pins = [
+        pins.pb6.into_pull_up_input(),
+        pins.pb7.into_pull_up_input(),
+        pins.pc6.into_pull_up_input(),
+        pins.pc7.into_pull_up_input(),
+        pins.pd4.into_pull_up_input(),
+        pins.pe2.into_pull_up_input(),
+        pins.pd6.into_pull_up_input(),
+        pins.pd7.into_pull_up_input(),
+        pins.pf4.into_pull_up_input(),
+        pins.pf1.into_pull_up_input(),
+        pins.pf0.into_pull_up_input(),
+        pins.pe6.into_pull_up_input(),
+    ];
 
     let mut board_digits = as1115::AS1115::new(i2c::RefCellDevice::new(&i2c_ref_cell), None);
     board_digits.init(3, 3).unwrap();
@@ -41,7 +53,7 @@ fn main() -> ! {
     let mut led_num: u8 = 0;
     let mut digit_num: u16 = 0;
     loop {
-        if switch_pin.is_low() {
+        if switch_pins[0].is_low() {
             led_num = 0;
             digit_num = 0;
         }

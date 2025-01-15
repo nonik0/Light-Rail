@@ -1,6 +1,8 @@
 // reference implementation:
 // https://github.com/blemasle/arduino-as1115
 
+#![allow(dead_code)] // quiet unused warnings
+
 //use embedded_hal::delay::DelayNs;
 use embedded_hal::i2c::I2c;
 
@@ -9,6 +11,7 @@ pub struct AS1115<I2C> {
     pub address: u8,
     pub num_digits: u8,
 }
+
 
 impl<I2C, E> AS1115<I2C>
 where

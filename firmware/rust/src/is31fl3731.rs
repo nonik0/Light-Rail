@@ -1,4 +1,3 @@
-
 // reference implementations:
 // https://github.com/gleich/is31fl3731/ => TODO: PR to update this lib to embedded-hal v1
 // https://github.com/adafruit/Adafruit_IS31FL3731
@@ -28,7 +27,7 @@ where
         self.i2c
     }
 
-    pub fn begin(&mut self, delay: &mut dyn DelayNs) -> Result<(), Error<E>> {
+    pub fn begin(&mut self, delay: &mut impl DelayNs) -> Result<(), Error<E>> {
         self.sleep(true)?;
         delay.delay_ms(10);
         self.mode(addresses::PICTURE_MODE)?;
@@ -93,8 +92,6 @@ where
         self.write_register(addresses::CONFIG_BANK, addresses::MODE_REGISTER, mode)?;
         Ok(())
     }
-
-
 
     pub fn sleep(&mut self, yes: bool) -> Result<(), E> {
         self.write_register(

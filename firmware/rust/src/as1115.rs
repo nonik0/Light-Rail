@@ -17,10 +17,10 @@ impl<I2C, E> AS1115<I2C>
 where
     I2C: I2c<Error = E>,
 {
-    pub fn new(i2c: I2C, address: Option<u8>) -> Self {
+    pub fn new(i2c: I2C, address: u8) -> Self {
         Self {
             i2c,
-            address: address.unwrap_or(constants::DEFAULT_ADDRESS),
+            address: address,
             num_digits: 0,
         }
     }
@@ -45,17 +45,17 @@ where
         Ok(())
     }
 
-    // TOOD: debug
     pub fn display_string(&mut self, string: &str) -> Result<(), AS1115Error<E>> {
+        // TODO: use c-style strings?
         let mut index = 0;
         for c in string.chars() {
-            let digit = match c {
-                '0'..='9' => DIGITS[(c as u8 - b'0') as usize],
+            let segment_data = match c {
+                '0'..='9' => NUMBERS[(c as u8 - b'0') as usize],
                 'a'..='z' => LETTERS[(c as u8 - b'a') as usize],
                 'A'..='Z' => LETTERS[(c as u8 - b'A') as usize],
                 _ => 0,
             };
-            self.display_digit(index, DIGITS[digit as usize])?;
+            self.set_digit_data(index, segment_data)?;
             index += 1;
             if index >= self.num_digits {
                 break;
@@ -68,13 +68,13 @@ where
         let mut num = number;
         for i in 0..self.num_digits {
             let digit = num % 10;
-            self.display_digit(self.num_digits - 1 - i, DIGITS[digit as usize])?;
+            self.set_digit_data(self.num_digits - 1 - i, NUMBERS[digit as usize])?;
             num /= 10;
         }
         Ok(())
     }
 
-    pub fn display_digit(&mut self, digit: u8, value: u8) -> Result<(), AS1115Error<E>> {
+    pub fn set_digit_data(&mut self, digit: u8, value: u8) -> Result<(), AS1115Error<E>> {
         if digit >= self.num_digits {
             return Err(AS1115Error::InvalidLocation(digit));
         }
@@ -122,7 +122,7 @@ pub mod constants {
     }
 }
 
-pub const DIGITS: [u8; 16] = [
+pub const NUMBERS: [u8; 16] = [
     0x7E, 0x30, 0x6D, 0x79, 0x33, 0x5B, 0x5F, 0x70,
     0x7F, 0x7B, 0x77, 0x1F, 0x4E, 0x3D, 0x4F, 0x47,
 ];
@@ -164,16 +164,6 @@ pub enum AS1115Error<E> {
     I2cError(E),
     InvalidLocation(u8),
 }
-
-// impl i2c::Error for Error<I2cError> {
-//     fn kind(&self) -> i2c::ErrorKind {
-//         match self {
-//             Error::I2cError(_) => i2c::ErrorKind::I2c,
-//             Error::InvalidLocation(_) => i2c::ErrorKind::Other,
-//             Error::InvalidFrame(_) => i2c::ErrorKind::Other,
-//         }
-//     }
-// }
 
 impl<E> From<E> for AS1115Error<E> {
     fn from(error: E) -> Self {

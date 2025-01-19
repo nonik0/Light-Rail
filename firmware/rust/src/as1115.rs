@@ -3,7 +3,6 @@
 
 #![allow(dead_code)] // quiet unused warnings
 
-//use embedded_hal::delay::DelayNs;
 use embedded_hal::i2c::I2c;
 
 pub struct AS1115<I2C> {
@@ -11,7 +10,6 @@ pub struct AS1115<I2C> {
     pub address: u8,
     pub num_digits: u8,
 }
-
 
 impl<I2C, E> AS1115<I2C>
 where
@@ -32,10 +30,18 @@ where
     pub fn init(&mut self, num_digits: u8, intensity: u8) -> Result<(), AS1115Error<E>> {
         self.num_digits = constants::MAX_DIGITS.min(num_digits);
 
-        self.write_register_to_addr(constants::DEFAULT_ADDRESS, addresses::SHUTDOWN, constants::shutdown_mode::NORMAL_OPERATION | constants::shutdown_mode::RESET_FEATURE)?;
+        self.write_register_to_addr(
+            constants::DEFAULT_ADDRESS,
+            addresses::SHUTDOWN,
+            constants::shutdown_mode::NORMAL_OPERATION | constants::shutdown_mode::RESET_FEATURE,
+        )?;
 
         if self.address != constants::DEFAULT_ADDRESS {
-            self.write_register_to_addr(constants::DEFAULT_ADDRESS, addresses::SELF_ADDRESSING, constants::self_addressing::USER_SET_ADDR)?;
+            self.write_register_to_addr(
+                constants::DEFAULT_ADDRESS,
+                addresses::SELF_ADDRESSING,
+                constants::self_addressing::USER_SET_ADDR,
+            )?;
         }
 
         self.write_register(addresses::DECODE_MODE, constants::decode_mode::NO_DECODE)?;
@@ -45,8 +51,32 @@ where
         Ok(())
     }
 
+    pub fn clear(&mut self) -> Result<(), AS1115Error<E>> {
+        for i in 0..self.num_digits {
+            self.set_digit_data(i, 0)?;
+        }
+        Ok(())
+    }
+
+    pub fn display_ascii(&mut self, bytes: &[u8]) -> Result<(), AS1115Error<E>> {
+        let mut index = 0;
+        for c in bytes {
+            let segment_data = match c {
+                b'0'..=b'9' => NUMBERS[(c - b'0') as usize],
+                b'a'..=b'z' => LETTERS[(c - b'a') as usize],
+                b'A'..=b'Z' => LETTERS[(c - b'A') as usize],
+                _ => 0,
+            };
+            self.set_digit_data(index, segment_data)?;
+            index += 1;
+            if index >= self.num_digits {
+                break;
+            }
+        }
+        Ok(())
+    }
+
     pub fn display_string(&mut self, string: &str) -> Result<(), AS1115Error<E>> {
-        // TODO: use c-style strings?
         let mut index = 0;
         for c in string.chars() {
             let segment_data = match c {
@@ -93,7 +123,12 @@ where
         Ok(())
     }
 
-    fn write_register_to_addr(&mut self, address: u8, register: u8, value: u8) -> Result<(), AS1115Error<E>> {
+    fn write_register_to_addr(
+        &mut self,
+        address: u8,
+        register: u8,
+        value: u8,
+    ) -> Result<(), AS1115Error<E>> {
         self.i2c.write(address, &[register, value])?;
         Ok(())
     }
@@ -105,8 +140,6 @@ pub mod constants {
 
     pub mod decode_mode {
         pub const NO_DECODE: u8 = 0x00;
-        // pub const DECODE_DIGIT_0: u8 = 0x01;
-        // pub const DECODE_DIGIT_1: u8 = 0x02;
     }
 
     pub mod self_addressing {
@@ -122,25 +155,23 @@ pub mod constants {
     }
 }
 
+pub const DOT_MASK: u8 = 0x80;
+
 pub const NUMBERS: [u8; 16] = [
-    0x7E, 0x30, 0x6D, 0x79, 0x33, 0x5B, 0x5F, 0x70,
-    0x7F, 0x7B, 0x77, 0x1F, 0x4E, 0x3D, 0x4F, 0x47,
+    0x7E, 0x30, 0x6D, 0x79, 0x33, 0x5B, 0x5F, 0x70, 0x7F, 0x7B, 0x77, 0x1F, 0x4E, 0x3D, 0x4F, 0x47,
 ];
 pub const LETTERS: [u8; 26] = [
-    0x77, 0x1F, 0x4E, 0x3D, 0x4F, 0x47, 0x5E, 0x37,
-    0x30, 0x3C, 0x2F, 0x0E, 0x54, 0x15, 0x1D, 0x67,
-    0x73, 0x05, 0x5B, 0x0F, 0x3E, 0x1C, 0x2A, 0x49,
-    0x3B, 0x25,
+    0x77, 0x1F, 0x4E, 0x3D, 0x4F, 0x47, 0x5E, 0x37, 0x30, 0x3C, 0x2F, 0x0E, 0x54, 0x15, 0x1D, 0x67,
+    0x73, 0x05, 0x5B, 0x0F, 0x3E, 0x1C, 0x2A, 0x49, 0x3B, 0x25,
 ];
 
-// TODO: try enum?
 pub mod addresses {
     pub const DIGIT_OFFSET: u8 = 0x01;
     pub const DECODE_MODE: u8 = 0x09;
     pub const GLOBAL_INTENSITY: u8 = 0x0A;
     pub const SCAN_LIMIT: u8 = 0x0B;
     pub const SHUTDOWN: u8 = 0x0C;
-    pub const SELF_ADDRESSING: u8 = 0x2D; // bit 5 is set?
+    pub const SELF_ADDRESSING: u8 = 0x2D; // bit 5 is set
     pub const FEATURE: u8 = 0x0E;
     pub const DISPLAY_TEST_MODE: u8 = 0x0F;
     pub const DIG01_INTENSITY: u8 = 0x10;

@@ -2,7 +2,7 @@
 target = "avr-specs/avr-atmega32u4.json"
 
 [target.'cfg(target_arch = "avr")']
-runner = "ravedude -cb 57600 -P COM30 "
+runner = "ravedude -P COM31 -cb 57600 mega32u4"
 #runner = "ravedude -c usbasp"
 
 [unstable]

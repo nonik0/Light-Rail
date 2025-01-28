@@ -6,17 +6,16 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
-use atmega_hal::usart::{Baudrate, Usart};
 use core::cell::RefCell;
 use embedded_hal::delay::DelayNs;
 use embedded_hal_bus::i2c;
 
-mod as1115;
-mod tone;
-
 type CoreClock = atmega_hal::clock::MHz8;
 type Delay = atmega_hal::delay::Delay<CoreClock>;
 type I2c = atmega_hal::i2c::I2c<CoreClock>;
+
+mod as1115;
+mod tone;
 
 const DIGITS_I2C_ADDR: u8 = 0x00;
 const DIGITS_COUNT: u8 = 3;
@@ -38,12 +37,6 @@ fn main() -> ! {
         400_000,
     );
     let i2c_ref_cell = RefCell::new(i2c); // not Send/thread safe
-    let mut serial = Usart::new(
-        dp.USART1,
-        pins.pd2,
-        pins.pd3.into_output(),
-        Baudrate::<CoreClock>::new(57600),
-    );
 
     let board_buttons = [
         pins.pb6.into_pull_up_input().downgrade(),
@@ -69,37 +62,28 @@ fn main() -> ! {
         is31fl3731::IS31FL3731::new(i2c::RefCellDevice::new(&i2c_ref_cell), LEDS_I2C_ADDR);
     board_leds.setup_blocking(&mut delay).unwrap();
 
-    let board_piezo = tone::Timer3Tone::new(dp.TC3, pins.pb4.into_output());
+    //let board_piezo = tone::Timer3Tone::new(dp.TC3, pins.pb4.into_output());
+    let mut board_piezo = tone::Timer1Tone::new(dp.TC1, pins.pb4.into_output().downgrade());
 
-    // enable global interrupts
-    unsafe {
-        avr_device::interrupt::enable();
-    }
-
-    ufmt::uwriteln!(&mut serial, "Light-Rail initialized!!\r").unwrap();
     board_digits.display_ascii(b"ohi").unwrap();
     delay.delay_ms(1000);
 
-    //let mut offset: usize = 0;
     let mut led_num: u8 = 0;
     let mut digit_num: u16 = 0;
     loop {
-        // board_digits
-        //     .display_string(&HELLO_MSG[offset..offset + DIGITS_COUNT as usize])
-        //     .unwrap();
-        // offset = (offset + 1) % (HELLO_MSG.len() - DIGITS_COUNT as usize);
-        // delay.delay_ms(300);
-
         // beep if any button is pressed
+        let mut any_button_pressed = false;
         for (i, button) in board_buttons.iter().enumerate() {
             if button.is_low() {
-                //panic!("btn prs");
-                ufmt::uwriteln!(&mut serial, "Button pressed\r").unwrap();
+                any_button_pressed = true;
                 board_digits.display_number((i + 1) as u16).unwrap();
-                delay.delay_ms(100);
-                // board_piezo.tone(4000, 100);
+                board_piezo.tone((i + 1) as u16 * 1000, 0);
                 break;
             }
+        }
+
+        if !any_button_pressed {
+            board_piezo.no_tone();
         }
 
         board_leds.pixel_blocking(led_num, 255).unwrap();
@@ -112,7 +96,6 @@ fn main() -> ! {
     }
 }
 
-#[cfg(not(doc))]
 #[panic_handler]
 fn panic(info: &core::panic::PanicInfo) -> ! {
     avr_device::interrupt::disable();
@@ -129,23 +112,12 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
     let mut board_digits = as1115::AS1115::new(i2c, DIGITS_I2C_ADDR);
     board_digits.init(DIGITS_COUNT, DIGITS_INTENSITY).unwrap();
 
-    let error_msg = ERROR_MSG;
-
-    // if info.location().is_some() {
-    //     //board_digits.display_string("OK").unwrap();
-    //     board_digits.display_ascii(b"OK").unwrap();
-    // } else {
-    //     //board_digits.display_string("NOK").unwrap();
-    //     board_digits.display_ascii(b"NOK").unwrap();
-    // }
-    // loop {}
-
     let mut offset: usize = 0;
     loop {
         board_digits
-            .display_string(&error_msg[offset..offset + DIGITS_COUNT as usize])
+            .display_string(&ERROR_MSG[offset..offset + DIGITS_COUNT as usize])
             .unwrap();
-        offset = (offset + 1) % (error_msg.len() - DIGITS_COUNT as usize);
+        offset = (offset + 1) % (ERROR_MSG.len() - DIGITS_COUNT as usize);
         delay.delay_ms(300);
     }
 }

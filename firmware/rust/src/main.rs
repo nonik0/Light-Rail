@@ -19,9 +19,9 @@ mod as1115;
 mod tone;
 
 mod game;
+mod location;
 mod platform;
 mod train;
-mod track;
 
 const DIGITS_I2C_ADDR: u8 = 0x00;
 const DIGITS_COUNT: u8 = 3;

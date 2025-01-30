@@ -14,8 +14,14 @@ type CoreClock = atmega_hal::clock::MHz8;
 type Delay = atmega_hal::delay::Delay<CoreClock>;
 type I2c = atmega_hal::i2c::I2c<CoreClock>;
 
+// TODO: formalize into own crates
 mod as1115;
 mod tone;
+
+mod game;
+mod location;
+mod platform;
+mod train;
 
 const DIGITS_I2C_ADDR: u8 = 0x00;
 const DIGITS_COUNT: u8 = 3;

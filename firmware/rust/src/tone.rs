@@ -4,8 +4,8 @@ use atmega_hal::{
 };
 use core::cell::RefCell;
 
-type Timer = atmega_hal::pac::TC1;
-type Prescalar = avr_device::atmega32u4::tc1::tccr1b::CS1_A;
+type Timer = atmega_hal::pac::TC3;
+type Prescalar = avr_device::atmega32u4::tc3::tccr3b::CS3_A;
 
 static TONE_STATE: avr_device::interrupt::Mutex<RefCell<Option<ToneState>>> =
     avr_device::interrupt::Mutex::new(RefCell::new(None));
@@ -16,10 +16,10 @@ struct ToneState {
     toggle_count: Option<u64>,
 }
 
-pub struct Timer1Tone {}
+pub struct Timer3Tone {}
 
-impl Timer1Tone {
-    // TODO: is singleton pattern needed if we take the Timer1 peripheral as input?
+impl Timer3Tone {
+    // TODO: is singleton pattern needed if we take the Timer3 peripheral as input?
     pub fn new(timer: Timer, output_pin: Pin<Output, Dynamic>) -> Self {
         let state = ToneState {
             timer,
@@ -46,7 +46,7 @@ impl Timer1Tone {
         }
 
         // calculate prescalar, overflow value, and toggle count for CTC mode
-        // OCR1A = CoreClockHz / TargetHz / Prescalar - 1
+        // OCR3A = CoreClockHz / TargetHz / Prescalar - 1
         let mut ocr: u32 = crate::CoreClock::FREQ / frequency as u32 / 2 - 1;
         let mut prescalar = Prescalar::DIRECT;
         if ocr > 0xFFFF {
@@ -69,15 +69,15 @@ impl Timer1Tone {
             state.toggle_count = toggle_count;
 
             // configure timer for CTC mode for the desired frequency
-            // WGM1 = 0b0100, CTC mode
-            // CS1 = 0b001/prescalar1 or 0b011/prescalar64
-            state.timer.tccr1a.write(|w| w.wgm1().bits(0b00));
+            // WGM3 = 0b0100, CTC mode
+            // CS3 = 0b001/prescalar1 or 0b011/prescalar64
+            state.timer.tccr3a.write(|w| w.wgm3().bits(0b00));
             state
                 .timer
-                .tccr1b
-                .write(|w| w.cs1().variant(prescalar).wgm1().bits(0b01));
-            state.timer.ocr1a.write(|w| w.bits(ocr as u16));
-            state.timer.timsk1.write(|w| w.ocie1a().set_bit());
+                .tccr3b
+                .write(|w| w.cs3().variant(prescalar).wgm3().bits(0b01));
+            state.timer.ocr3a.write(|w| w.bits(ocr as u16));
+            state.timer.timsk3.write(|w| w.ocie3a().set_bit());
         });
     }
 
@@ -88,14 +88,14 @@ impl Timer1Tone {
             let state = state_opt.as_mut().unwrap();
 
             state.output_pin.set_low();
-            state.timer.timsk1.write(|w| w.ocie1a().clear_bit());
+            state.timer.timsk3.write(|w| w.ocie3a().clear_bit());
             state.toggle_count = None;
         });
     }
 }
 
 #[avr_device::interrupt(atmega32u4)]
-fn TIMER1_COMPA() {
+fn TIMER3_COMPA() {
     avr_device::interrupt::free(|cs| {
         let mut state_opt = TONE_STATE.borrow(cs).borrow_mut();
         let state = state_opt.as_mut().unwrap(); // unwrap is safe here bc interrupt won't be enabled if state is None
@@ -105,7 +105,7 @@ fn TIMER1_COMPA() {
         if let Some(mut toggles_left) = state.toggle_count {
             toggles_left -= 1;
             if toggles_left == 0 {
-                state.timer.timsk1.write(|w| w.ocie1a().clear_bit());
+                state.timer.timsk3.write(|w| w.ocie3a().clear_bit());
                 state.toggle_count = None;
             } else {
                 state.toggle_count = Some(toggles_left);

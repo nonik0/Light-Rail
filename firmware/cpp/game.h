@@ -213,41 +213,41 @@ void Game::readSwitches()
   else if (!(PIND & (1 << SW5)))
   {
     _boardDigits.display(5);
-    tone2(BUZZ, 5000, 100);
+    tone(BUZZ, 5000, 100);
   }
   else if (!(PINE & (1 << SW6)))
   {
     _boardDigits.display(6);
-    tone2(BUZZ, 6000, 100);
+    tone(BUZZ, 6000, 100);
   }
   else if (!(PIND & (1 << SW7)))
   {
     _boardDigits.display(7);
-    tone2(BUZZ, 7000, 100);
+    tone(BUZZ, 7000, 100);
   }
   else if (!(PIND & (1 << SW8)))
   {
     _boardDigits.display(8);
-    tone2(BUZZ, 8000, 100);
+    tone(BUZZ, 8000, 100);
   }
   else if (!(PINF & (1 << SW9)))
   {
     _boardDigits.display(9);
-    tone2(BUZZ, 9000, 100);
+    tone(BUZZ, 9000, 100);
   }
   else if (!(PINF & (1 << SW10)))
   {
     _boardDigits.display(10);
-    tone2(BUZZ, 10000, 100);
+    tone(BUZZ, 10000, 100);
   }
   else if (!(PINF & (1 << SW11)))
   {
     _boardDigits.display(11);
-    tone2(BUZZ, 11000, 100);
+    tone(BUZZ, 11000, 100);
   }
   else if (!(PINE & (1 << SW12)))
   {
     _boardDigits.display(12);
-    tone2(BUZZ, 12000, 100);
+    tone(BUZZ, 12000, 100);
   }
 }

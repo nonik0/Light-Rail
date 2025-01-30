@@ -69,7 +69,7 @@ fn main() -> ! {
     board_leds.setup_blocking(&mut delay).unwrap();
 
     //let board_piezo = tone::Timer3Tone::new(dp.TC3, pins.pb4.into_output());
-    let mut board_piezo = tone::Timer1Tone::new(dp.TC1, pins.pb4.into_output().downgrade());
+    let mut board_piezo = tone::Timer3Tone::new(dp.TC3, pins.pb4.into_output().downgrade());
 
     board_digits.display_ascii(b"ohi").unwrap();
     delay.delay_ms(1000);

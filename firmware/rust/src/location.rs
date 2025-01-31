@@ -1,13 +1,73 @@
+const NO_DATA: u8 = 0xFF;
+
+pub enum Direction {
+    Anode, // direction of travel cathode -> anode
+    Cathode, // direction of travel anode -> cathode
+}
+
+// Location is a lightweight abstraction on top of LOCATION_DATA index
+#[derive(Clone, Copy, Debug)]
+pub struct Location(u8);
+
+impl Location {
+    pub fn next(&self, direction: Direction) -> Location {
+        let loc_data = self.get_data();
+
+        if !loc_data.is_track() {
+            panic!("LOC NOT TRACK");
+        }
+
+        let mut next_index = match direction {
+            Direction::Anode => loc_data.anode_neighbor,
+            Direction::Cathode => loc_data.cathode_neighbor,
+        };
+        let next_index_2 = match direction {
+            Direction::Anode => loc_data.anode_neighbor_2,
+            Direction::Cathode => loc_data.cathode_neighbor_2,
+        };
+
+        if next_index_2 != NO_DATA { // TODO: random
+            next_index = next_index_2;
+        }
+
+        Location(next_index)
+    }
+
+    pub fn get_platform(&self) -> Option<Location> {
+        let data = self.get_data();
+        if data.is_platform() {
+            Some(Location(data.anode_neighbor))
+        } else {
+            None
+        }
+    }
+    
+    fn get_data(&self) -> &LocationData {
+        &LOCATION_DATA[self.0 as usize]
+    }
+
+    fn is_platform(&self) -> bool {
+        self.get_data().is_platform()
+    }
+
+    fn is_track(&self) -> bool {
+        self.get_data().is_track()
+    }
+}
+
+// track/platform graph data is stored in a packed array of LocationData structs
+// some metadata is precomputed at compile time based on raw data
+// straight tracks have two neighbors, forks have three, and platforms have four
 #[repr(C, packed)]
 #[derive(Clone, Copy, Debug)]
-struct Location {
+struct LocationData {
     anode_neighbor: u8,
     cathode_neighbor: u8,
     anode_neighbor_2: u8,
     cathode_neighbor_2: u8,
 }
 
-impl Location {
+impl LocationData {
     fn is_platform(&self) -> bool {
         is_platform(*self)
     }
@@ -17,8 +77,8 @@ impl Location {
     }
 }
 
-// platforms are just encoded with all the neighbor fields pointing to their neighbor track
-const fn is_platform(location: Location) -> bool {
+// platforms are encoded with all fields equal and referencing the adjacent track
+const fn is_platform(location: LocationData) -> bool {
     location.anode_neighbor == location.cathode_neighbor // just check one match
 }
 
@@ -47,9 +107,9 @@ const PLATFORMS: [usize; NUM_PLATFORMS] = {
     platforms
 };
 const NUM_LOCATIONS: usize = 144;
-const LOCATION_DATA: [Location; NUM_LOCATIONS] = {
-    const fn unpack_location_data(data: u32) -> Location {
-        Location {
+const LOCATION_DATA: [LocationData; NUM_LOCATIONS] = {
+    const fn unpack_location_data(data: u32) -> LocationData {
+        LocationData {
             anode_neighbor: ((data >> 24) & 0xFF) as u8,
             cathode_neighbor: ((data >> 16) & 0xFF) as u8,
             anode_neighbor_2: ((data >> 8) & 0xFF) as u8,

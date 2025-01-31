@@ -21,15 +21,15 @@ mod tone;
 mod game;
 mod location;
 mod platform;
+mod random;
 mod train;
 
-const DIGITS_I2C_ADDR: u8 = 0x00;
+const DIGITS_I2C_ADDR: u8 = as1115::constants::DEFAULT_ADDRESS;
 const DIGITS_COUNT: u8 = 3;
 const DIGITS_INTENSITY: u8 = 3;
-const LEDS_I2C_ADDR: u8 = 0x74;
-const LEDS_COUNT: u8 = 144;
-const HELLO_MSG: &str = "   HELLO   ";
-const ERROR_MSG: &str = "   OSHIT   ";
+const LEDS_I2C_ADDR: u8 = 0x74; // TODO: add const to IS31FL3731 lib
+const LEDS_COUNT: u8 = 144; // TODO: add const to IS31FL3731 lib
+const ERROR_MSG: &str = "   ERROR";
 
 #[avr_device::entry]
 fn main() -> ! {
@@ -44,6 +44,7 @@ fn main() -> ! {
     );
     let i2c_ref_cell = RefCell::new(i2c); // not Send/thread safe
 
+    // TODO: potentially create abstraction to simplify usage
     let board_buttons = [
         pins.pb6.into_pull_up_input().downgrade(),
         pins.pb7.into_pull_up_input().downgrade(),
@@ -59,6 +60,9 @@ fn main() -> ! {
         pins.pe6.into_pull_up_input().downgrade(),
     ];
 
+    //let board_buzzer = tone::Timer3Tone::new(dp.TC3, pins.pb4.into_output());
+    let mut board_buzzer = tone::Timer3Tone::new(dp.TC3, pins.pb4.into_output().downgrade());
+
     let mut board_digits =
         as1115::AS1115::new(i2c::RefCellDevice::new(&i2c_ref_cell), DIGITS_I2C_ADDR);
     board_digits.init(DIGITS_COUNT, DIGITS_INTENSITY).unwrap();
@@ -68,10 +72,8 @@ fn main() -> ! {
         is31fl3731::IS31FL3731::new(i2c::RefCellDevice::new(&i2c_ref_cell), LEDS_I2C_ADDR);
     board_leds.setup_blocking(&mut delay).unwrap();
 
-    //let board_piezo = tone::Timer3Tone::new(dp.TC3, pins.pb4.into_output());
-    let mut board_piezo = tone::Timer3Tone::new(dp.TC3, pins.pb4.into_output().downgrade());
 
-    board_digits.display_ascii(b"ohi").unwrap();
+    board_digits.display_ascii(b"OHI").unwrap();
     delay.delay_ms(1000);
 
     let mut led_num: u8 = 0;
@@ -83,13 +85,13 @@ fn main() -> ! {
             if button.is_low() {
                 any_button_pressed = true;
                 board_digits.display_number((i + 1) as u16).unwrap();
-                board_piezo.tone((i + 1) as u16 * 1000, 0);
+                board_buzzer.tone((i + 1) as u16 * 1000, 0);
                 break;
             }
         }
 
         if !any_button_pressed {
-            board_piezo.no_tone();
+            board_buzzer.no_tone();
         }
 
         board_leds.pixel_blocking(led_num, 255).unwrap();

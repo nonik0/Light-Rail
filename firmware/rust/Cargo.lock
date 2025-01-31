@@ -157,6 +157,7 @@ dependencies = [
  "nb 1.1.0",
  "panic-halt",
  "proc-macro2",
+ "random-trait",
  "ufmt",
 ]
 
@@ -210,6 +211,12 @@ checksum = "0fa76aaf39101c457836aec0ce2316dbdc3ab723cdda1c6bd4e6ad4208acaca7"
 dependencies = [
  "proc-macro2",
 ]
+
+[[package]]
+name = "random-trait"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0d3186af2e04abe646626095b37293d7485027e8591c56430dfda49894a28447"
 
 [[package]]
 name = "stable_deref_trait"

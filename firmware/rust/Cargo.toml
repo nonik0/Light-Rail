@@ -11,14 +11,15 @@ test = false
 bench = false
 
 [dependencies]
-heapless = "0.8.0"
-panic-halt = "1.0.0"
-ufmt = "0.2.0"
-nb = "1.1.0"
+avr-device = { version = "0.7.0", features = ["rt"] }
 embedded-hal = "1.0"
 embedded-hal-bus = "0.2.0"
-avr-device = { version = "0.7.0", features = ["rt"] }
+heapless = "0.8.0"
 is31fl3731 = { git = "https://github.com/nonik0/is31fl3731" }
+nb = "1.1.0"
+panic-halt = "1.0.0"
+random-trait = "0.1"
+ufmt = "0.2.0"
 
 [dependencies.atmega-hal]
 git = "https://github.com/rahix/avr-hal"

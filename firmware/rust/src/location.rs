@@ -15,9 +15,16 @@ pub enum Cargo {
 // Used to encapsulate location updates from callees (Train and Platform) back to
 // caller (Game) that owns the LED driver driver instance and can update
 // the display. This seems like a good alternative to avoid callback and lifetime hell.
+#[derive(Clone, Copy, Debug)]
 pub struct LocationUpdate {
     pub loc: Location,
-    pub cargo: Cargo,
+    pub opt_cargo: Option<Cargo>,
+}
+
+impl LocationUpdate {
+    pub fn new(loc: Location, opt_cargo: Option<Cargo>) -> Self {
+        Self { loc, opt_cargo }
+    }
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -107,7 +114,7 @@ const fn is_platform(location: LocationData) -> bool {
     location.anode_neighbor == location.cathode_neighbor // just check one match
 }
 
-const NUM_PLATFORMS: usize = {
+pub const NUM_PLATFORMS: usize = {
     let mut count = 0;
     let mut loc = 0;
     while loc < NUM_LOCATIONS {
@@ -118,7 +125,7 @@ const NUM_PLATFORMS: usize = {
     }
     count
 };
-const PLATFORMS: [usize; NUM_PLATFORMS] = {
+pub const PLATFORM_INDICES: [usize; NUM_PLATFORMS] = {
     let mut platforms = [0; NUM_PLATFORMS]; // Replace with meaningful value if possible
     let mut count = 0;
     let mut loc = 0;

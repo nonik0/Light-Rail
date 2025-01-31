@@ -7,8 +7,8 @@ use core::cell::RefCell;
 use embedded_hal::delay::DelayNs;
 use embedded_hal_bus::i2c;
 
-type Adc = atmega_hal::adc::Adc<CoreClock>;
-type Channel = atmega_hal::adc::Channel;
+//type Adc = atmega_hal::adc::Adc<CoreClock>;
+//type Channel = atmega_hal::adc::Channel;
 type CoreClock = atmega_hal::clock::MHz8;
 type Delay = atmega_hal::delay::Delay<CoreClock>;
 type I2c = atmega_hal::i2c::I2c<CoreClock>;
@@ -40,7 +40,7 @@ fn main() -> ! {
         pins.pd0.into_pull_up_input(),
         400_000,
     );
-    let i2c_ref_cell = RefCell::new(i2c); // not Send/thread safe
+    let i2c_ref_cell = RefCell::new(i2c);
 
     // TODO: potentially create abstraction to simplify usage
     let board_buttons = [
@@ -82,13 +82,13 @@ fn main() -> ! {
     board_leds.setup_blocking(&mut delay).unwrap();
 
     let mut game = game::Game::new(board_buttons, board_buzzer, board_digits, board_leds);
-
     game.restart();
 
     loop {
         game.tick();
 
         if game.is_over() {
+            // TODO: mode selection
             game.restart();
         }
 
@@ -97,7 +97,7 @@ fn main() -> ! {
 }
 
 #[panic_handler]
-fn panic(info: &core::panic::PanicInfo) -> ! {
+fn panic(_: &core::panic::PanicInfo) -> ! {
     avr_device::interrupt::disable();
 
     let dp = unsafe { atmega_hal::Peripherals::steal() };

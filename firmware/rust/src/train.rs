@@ -1,9 +1,13 @@
+// TEMP: quiet unused warnings
+#![allow(dead_code)]
+#![allow(unused_variables)]
+
 use heapless::Vec;
 
 use crate::location::{Cargo, Direction, Location, LocationUpdate};
 
-const MAX_CARS: usize = 5;
-const MAX_LOC_UPDATES: usize = MAX_CARS + 1; // train length + 1 movement
+pub const MAX_CARS: usize = 5;
+pub const MAX_LOC_UPDATES: usize = MAX_CARS + 1; // train length + 1 movement
 const MIN_SPEED: u8 = 0;
 const MAX_SPEED: u8 = 100;
 const DEFAULT_LOCATION: u8 = 0xFF;
@@ -55,7 +59,7 @@ impl Train {
 
         self.cars.push(Car { loc, cargo }).unwrap();
 
-        Some(LocationUpdate { loc, cargo })
+        Some(LocationUpdate::new(loc, Some(cargo)))
     }
 
     pub fn advance(&mut self) -> Option<Vec<LocationUpdate, MAX_LOC_UPDATES>> {
@@ -67,27 +71,28 @@ impl Train {
 
         self.speed_counter -= MAX_SPEED;
 
-        // let mut loc_updates = Vec::new();
+        let mut loc_updates = Vec::new();
 
-        // // move train from the rear, setting each LED accordingly
-        // let loc_update = LocationUpdate {
-        //     loc: self.cars[self.cars.len() - 1].loc,
-        //     cargo: None,
-        // };
-        //loc_updates.push(Locaself.cars[i].loc, None);
+        // move train from the rear, keeping track of location updates
+        loc_updates.push(LocationUpdate::new(self.cars.last().unwrap().loc, None)).unwrap();
         if !self.cars.is_empty() {
             for i in (1..self.cars.len()).rev() {
-
                 self.cars[i].loc = self.cars[i - 1].loc;
 
-                //(self.set_led)(self.cars[i].loc, Some(self.cars[i].cargo));
+                loc_updates.push(LocationUpdate::new(
+                    self.cars[i].loc,
+                    Some(self.cars[i].cargo),
+                )).unwrap();
             }
         }
 
-        // advance front car to next location, setting LED accordingly
-        (self.cars[0].loc, self.direction) = self.cars[0].loc.next(self.direction);
-        //(self.set_led)(self.cars[0].loc, Some(self.cars[0].cargo));
-        //loc_updates
-        None
+        // advance front car to next location, adding final location update
+        (self.cars.first_mut().unwrap().loc, self.direction) = self.cars.first().unwrap().loc.next(self.direction);
+        loc_updates.push(LocationUpdate::new(
+            self.cars[0].loc,
+            Some(self.cars[0].cargo),
+        )).unwrap();
+
+        Some(loc_updates)
     }
 }

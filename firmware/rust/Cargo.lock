@@ -3,6 +3,14 @@
 version = 3
 
 [[package]]
+name = "as1115"
+version = "0.1.0"
+source = "git+https://github.com/nonik0/as1115?rev=1a16eaa54253c2c7507fb8790ad490ed39d47195#1a16eaa54253c2c7507fb8790ad490ed39d47195"
+dependencies = [
+ "embedded-hal 1.0.0",
+]
+
+[[package]]
 name = "atmega-hal"
 version = "0.1.0"
 source = "git+https://github.com/rahix/avr-hal?rev=d02ab21d17f06baadb5c0f2abf7cf3ea9c0a35b3#d02ab21d17f06baadb5c0f2abf7cf3ea9c0a35b3"
@@ -139,7 +147,7 @@ dependencies = [
 [[package]]
 name = "is31fl3731"
 version = "1.0.2"
-source = "git+https://github.com/nonik0/is31fl3731#a7b58362facb2e09b372d3dbc5c7b31831ca3e35"
+source = "git+https://github.com/nonik0/is31fl3731?rev=61cb477a398b53b0cbe6078fa285f4f008496da2#61cb477a398b53b0cbe6078fa285f4f008496da2"
 dependencies = [
  "embedded-hal 1.0.0",
 ]
@@ -148,6 +156,7 @@ dependencies = [
 name = "light-rail"
 version = "0.1.0"
 dependencies = [
+ "as1115",
  "atmega-hal",
  "avr-device",
  "embedded-hal 1.0.0",
@@ -264,9 +273,9 @@ checksum = "e87a2ed6b42ec5e28cc3b94c09982969e9227600b2e3dcbc1db927a84c06bd69"
 
 [[package]]
 name = "unicode-ident"
-version = "1.0.15"
+version = "1.0.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "11cd88e12b17c6494200a9c1b683a04fcac9573ed74cd1b62aeb2727c5592243"
+checksum = "a210d160f08b701c8721ba1c726c11662f877ea6b7094007e1ca9a1041945034"
 
 [[package]]
 name = "unwrap-infallible"

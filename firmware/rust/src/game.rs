@@ -1,12 +1,18 @@
+// TEMP: quiet unused warnings
+#![allow(dead_code)]
+#![allow(unused_variables)]
+
+use as1115::AS1115;
 use embedded_hal::{digital::InputPin, i2c::I2c};
 use heapless::Vec;
 use is31fl3731::IS31FL3731;
 
-use crate::as1115::AS1115;
-use crate::location::Location;
-use crate::tone::Timer3Tone;
-use crate::train::{Cargo, Train};
-use crate::{platform, NUM_BUTTONS};
+use crate::{
+    location::{Cargo, Location},
+    tone::Timer3Tone,
+    train::Train,
+    NUM_BUTTONS,
+};
 
 #[derive(Copy, Clone)]
 enum GameMode {
@@ -22,7 +28,7 @@ const TRACK_EMPTY_PWM: u8 = 0;
 const TRAIN_CARGO_EMPTY: u8 = 200;
 const TRAIN_CARGO_FULL: u8 = 50;
 
-struct Game<I2C, ButtonPin>
+pub struct Game<I2C, ButtonPin>
 where
     I2C: I2c,
     ButtonPin: InputPin,
@@ -84,8 +90,7 @@ where
         self.is_over = false;
 
         self.board_digits.clear().ok();
-        self.board_leds.fill_blocking(0, None, 0).unwrap(); // TODO: clear method in IS31FL3731
-
+        self.board_leds.clear_blocking().unwrap();
         self.trains.clear();
 
         // let mut train = Train::new(Location::new(69), Cargo::Full);

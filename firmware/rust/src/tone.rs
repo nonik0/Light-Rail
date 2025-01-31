@@ -16,6 +16,8 @@ struct ToneState {
     toggle_count: Option<u64>,
 }
 
+// TODO: try using trait to abstract the timer peripheral
+// TODO: use generic type for output pin
 pub struct Timer3Tone {}
 
 impl Timer3Tone {
@@ -32,6 +34,7 @@ impl Timer3Tone {
             *state_opt = Some(state);
         });
 
+        // TODO: should caller/owner be responsible for enabling interrupts?
         unsafe {
             avr_device::interrupt::enable();
         }
@@ -59,7 +62,7 @@ impl Timer3Tone {
             None
         };
 
-        // update static state and enable interrupt
+        // update static state
         avr_device::interrupt::free(|cs| {
             let state_opt_refcell = TONE_STATE.borrow(cs);
             let mut state_opt = state_opt_refcell.borrow_mut();
@@ -86,6 +89,7 @@ impl Timer3Tone {
             let state_opt_refcell = TONE_STATE.borrow(cs);
             let mut state_opt = state_opt_refcell.borrow_mut();
             let state = state_opt.as_mut().unwrap();
+            //let mut state = state_opt_refcell.borrow_mut().as_mut().unwrap();
 
             state.output_pin.set_low();
             state.timer.timsk3.write(|w| w.ocie3a().clear_bit());
@@ -95,6 +99,7 @@ impl Timer3Tone {
 }
 
 #[avr_device::interrupt(atmega32u4)]
+#[allow(non_snake_case)]
 fn TIMER3_COMPA() {
     avr_device::interrupt::free(|cs| {
         let mut state_opt = TONE_STATE.borrow(cs).borrow_mut();

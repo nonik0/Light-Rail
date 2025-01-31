@@ -1,32 +1,34 @@
-use atmega_hal::port::{
-    mode::{Input, PullUp},
-    Dynamic, Pin,
-};
-//use embedded_hal::digital::InputPin;
-use crate::as1115::AS1115;
+use embedded_hal::{digital::InputPin, i2c::I2c};
+use heapless::Vec;
 use is31fl3731::IS31FL3731;
+
+use crate::as1115::AS1115;
+use crate::location::Location;
 use crate::tone::Timer3Tone;
-
-use crate::train::Train;
-
+use crate::train::{Cargo, Train};
+use crate::{platform, NUM_BUTTONS};
 
 #[derive(Copy, Clone)]
 enum GameMode {
     Animation,
     Freeplay,
+    Puzzle,
     Race,
     Survival,
-    Puzzle,
 }
 
 const MAX_TRAINS: usize = 5;
-const NUM_BUTTONS: usize = 12;
-const NUM_DIGITS: usize = 3;
-const DIGIT_INTENSITY: u8 = 3;
+const TRACK_EMPTY_PWM: u8 = 0;
+const TRAIN_CARGO_EMPTY: u8 = 200;
+const TRAIN_CARGO_FULL: u8 = 50;
 
-struct Game<I2C> {
+struct Game<I2C, ButtonPin>
+where
+    I2C: I2c,
+    ButtonPin: InputPin,
+{
     // board components
-    board_buttons: [Pin<Input<PullUp>, Dynamic>; NUM_BUTTONS],
+    board_buttons: [ButtonPin; NUM_BUTTONS],
     board_buzzer: Timer3Tone,
     board_digits: AS1115<I2C>,
     board_leds: IS31FL3731<I2C>,
@@ -38,10 +40,14 @@ struct Game<I2C> {
     //platforms: [Platform; PLATFORM_COUNT],
 }
 
-impl<I2C> Game<I2C> {
+impl<I2C, ButtonPin> Game<I2C, ButtonPin>
+where
+    I2C: I2c,
+    ButtonPin: InputPin,
+{
     // do we need singleton enforcement with ownership?
     pub fn new(
-        board_buttons: [Pin<Input<PullUp>, Dynamic>; NUM_BUTTONS],
+        board_buttons: [ButtonPin; NUM_BUTTONS],
         board_buzzer: Timer3Tone,
         board_digits: AS1115<I2C>,
         board_leds: IS31FL3731<I2C>,
@@ -53,7 +59,66 @@ impl<I2C> Game<I2C> {
             board_leds,
             mode: GameMode::Animation,
             is_over: false,
-            trains: heapless::Vec::<Train, MAX_TRAINS>::new(),
+            trains: Vec::<Train, MAX_TRAINS>::new(),
+        }
+    }
+
+    pub fn is_over(&self) -> bool {
+        self.is_over
+    }
+
+    fn update_location(&mut self, loc: Location, cargo: Option<Cargo>) {
+        let brightness = match cargo {
+            Some(Cargo::Empty) => TRAIN_CARGO_EMPTY,
+            Some(Cargo::Full) => TRAIN_CARGO_FULL,
+            None => TRACK_EMPTY_PWM,
+        };
+        self.board_leds
+            .pixel_blocking(loc.index, brightness)
+            .unwrap();
+    }
+
+    // TODO: mode
+    pub fn restart(&mut self) {
+        self.mode = GameMode::Animation; // TODO
+        self.is_over = false;
+
+        self.board_digits.clear().ok();
+        self.board_leds.fill_blocking(0, None, 0).unwrap(); // TODO: clear method in IS31FL3731
+
+        self.trains.clear();
+
+        // let mut train = Train::new(Location::new(69), Cargo::Full);
+        // train.add_car(Cargo::Empty);
+        // train.add_car(Cargo::Empty);
+        // self.trains.push(train).unwrap();
+
+        // let mut train2 = Train::new(Location::new(90), Cargo::Full);
+        // train2.add_car(Cargo::Empty);
+        // train2.add_car(Cargo::Full);
+        // train2.add_car(Cargo::Empty);
+        // self.trains.push(train2).unwrap();
+    }
+
+    pub fn tick(&mut self) {
+        self.read_buttons();
+
+        for train in self.trains.iter_mut() {
+            train.advance();
+        }
+
+        // for platform in self.platforms.iter_mut() {
+        //     if platform.is_occupied() && platform.train_present() {
+        //         platform.load
+        //     }
+        // }
+    }
+
+    fn read_buttons(&mut self) {
+        for (i, button) in self.board_buttons.iter_mut().enumerate() {
+            if button.is_low().unwrap() {
+                self.board_buzzer.tone((i + 1) as u16 * 1000, 100);
+            }
         }
     }
 }

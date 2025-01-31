@@ -24,6 +24,7 @@ mod platform;
 mod random;
 mod train;
 
+const NUM_BUTTONS: usize = 12;
 const DIGITS_I2C_ADDR: u8 = as1115::constants::DEFAULT_ADDRESS;
 const DIGITS_COUNT: u8 = 3;
 const DIGITS_INTENSITY: u8 = 3;

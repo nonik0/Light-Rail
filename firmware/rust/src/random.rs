@@ -1,17 +1,20 @@
+// TEMP: quiet unused warnings
+#![allow(dead_code)]
+#![allow(unused_variables)]
+
+/// A simple random number generator based on the Lehmer LCG algorithm. TODO: verify algorithm is correct
+
 use core::cell::Cell;
 use random_trait::Random;
 
 static RNG_STATE: avr_device::interrupt::Mutex<Cell<u32>> =
     avr_device::interrupt::Mutex::new(Cell::new(0));
 
+// zero-sized type to represent the RNG
 #[derive(Clone, Copy, Default)]
 pub struct Rng;
 
 impl Rng {
-    pub fn instance() -> Self {
-        Rng::default()
-    }
-
     pub fn seed(&mut self, seed: u32) {
         avr_device::interrupt::free(|cs| {
             let cell = RNG_STATE.borrow(cs);

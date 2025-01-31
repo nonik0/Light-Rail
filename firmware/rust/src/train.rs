@@ -1,15 +1,14 @@
-use crate::location::Location;
 use heapless::Vec;
+
+use crate::location::{Direction, Location};
 
 const MAX_CARS: usize = 5;
 const MIN_SPEED: u8 = 0;
 const MAX_SPEED: u8 = 100;
 const DEFAULT_LOCATION: u8 = 0xFF;
 const DEFAULT_SPEED: u8 = 10;
-const CAR_FULL_PWM: u8 = 200;
-const CAR_EMPTY_PWM: u8 = 50;
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub enum Cargo {
     Empty = 0,
     Full = 1,
@@ -21,56 +20,85 @@ pub struct Car {
     pub cargo: Cargo,
 }
 
-pub struct Engine {
-    pub speed: u8,
-    pub counter: u8,
-}
+// impl Default for Engine {
+//     fn default() -> Self {
+//         Self {
+//             direction: Direction::Anode, // TODO: random?
+//             speed: DEFAULT_SPEED,
+//             counter: 0,
+//         }
+//     }
+// }
 
-impl Default for Engine {
-    fn default() -> Self {
-        Self {
-            speed: DEFAULT_SPEED,
-            counter: 0,
-        }
-    }
-}
+pub type UpdateLocationCallback = fn(Location, Option<Cargo>);
 
+#[derive(Debug)]
 pub struct Train {
-    pub engine: Engine,
+    pub direction: Direction,
+    pub speed: u8,
+    pub speed_counter: u8,
     pub cars: Vec<Car, MAX_CARS>,
+    pub set_led: UpdateLocationCallback,
 }
 
 impl Train {
-    
-    pub fn new(loc: Location, cargo: Cargo) -> Self {
+    pub fn new(loc: Location, cargo: Cargo, set_led: UpdateLocationCallback) -> Self {
         let mut cars = Vec::new();
         cars.push(Car { loc, cargo }).unwrap();
         Self {
-            engine: Engine::default(),
+            direction: Direction::Anode, // TODO: random?
+            speed: DEFAULT_SPEED,
+            speed_counter: 0,
             cars,
+            set_led,
         }
     }
 
-    pub fn advance(&mut self) -> bool {
-        self.engine.counter += self.engine.speed;
-
-        if self.engine.counter < MAX_SPEED {
+    pub fn add_car(&mut self, cargo: Cargo) -> bool {
+        if self.cars.len() >= MAX_CARS {
             return false;
         }
 
-        self.engine.counter -= MAX_SPEED;
+        let caboose_loc = self.cars[self.cars.len() - 1].loc;
+        let inv_caboose_dir = if self.cars.len() > 1 {
+            let next_car_loc = self.cars[self.cars.len() - 2].loc;
+            if caboose_loc.next(Direction::Anode).0 == next_car_loc {
+                Direction::Cathode
+            } else {
+                Direction::Anode
+            }
+        } else {
+            self.direction
+        };
+        let loc = caboose_loc.next(inv_caboose_dir).0;
+
+        self.cars.push(Car { loc, cargo }).unwrap();
+        true
+    }
+
+    pub fn advance(&mut self) -> bool {
+        self.speed_counter += self.speed;
+
+        if self.speed_counter < MAX_SPEED {
+            return false;
+        }
+
+        self.speed_counter -= MAX_SPEED;
 
         // move train from the rear, setting each LED accordingly
         if !self.cars.is_empty() {
-            //set_led(self.cars[self.cars.len() - 1].loc, 0);
             for i in (1..self.cars.len()).rev() {
+                (self.set_led)(self.cars[i].loc, None);
+
                 self.cars[i].loc = self.cars[i - 1].loc;
-                //set_led(self.cars[i].loc, TODO);
+
+                (self.set_led)(self.cars[i].loc, Some(self.cars[i].cargo));
             }
         }
 
         // advance front car to next location, setting LED accordingly
-        //self.cars[0].loc = self.cars[0].loc.next();
+        (self.cars[0].loc, self.direction) = self.cars[0].loc.next(self.direction);
+        (self.set_led)(self.cars[0].loc, Some(self.cars[0].cargo));
 
         true
     }

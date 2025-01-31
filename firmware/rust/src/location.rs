@@ -1,16 +1,29 @@
+use crate::random::Rng;
+use random_trait::Random;
+
 const NO_DATA: u8 = 0xFF;
 
+#[derive(Clone, Copy, Debug)]
 pub enum Direction {
-    Anode, // direction of travel cathode -> anode
+    Anode,   // direction of travel cathode -> anode
     Cathode, // direction of travel anode -> cathode
 }
 
 // Location is a lightweight abstraction on top of LOCATION_DATA index
-#[derive(Clone, Copy, Debug)]
-pub struct Location(u8);
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Location {
+    pub index: u8,
+}
 
 impl Location {
-    pub fn next(&self, direction: Direction) -> Location {
+    pub fn new(index: u8) -> Self {
+        if index as usize >= NUM_LOCATIONS {
+            panic!("LOC INDEX OOB");
+        }
+        Self { index }
+    }
+
+    pub fn next(&self, direction: Direction) -> (Location, Direction) {
         let loc_data = self.get_data();
 
         if !loc_data.is_track() {
@@ -26,24 +39,24 @@ impl Location {
             Direction::Cathode => loc_data.cathode_neighbor_2,
         };
 
-        if next_index_2 != NO_DATA { // TODO: random
+        // TODO: randomly choose fork path for now
+        if next_index_2 != NO_DATA && Rng::default().get_bool() {
             next_index = next_index_2;
         }
 
-        Location(next_index)
+        // exit from next_loc from opposite direction of cur_loc
+        let next_loc_data = LOCATION_DATA[next_index as usize];
+        let next_direction = if next_loc_data.cathode_neighbor == self.index || next_loc_data.cathode_neighbor_2 == self.index {
+            Direction::Anode
+        } else {
+            Direction::Cathode
+        };
+
+        (Location { index: next_index }, next_direction)
     }
 
-    pub fn get_platform(&self) -> Option<Location> {
-        let data = self.get_data();
-        if data.is_platform() {
-            Some(Location(data.anode_neighbor))
-        } else {
-            None
-        }
-    }
-    
     fn get_data(&self) -> &LocationData {
-        &LOCATION_DATA[self.0 as usize]
+        &LOCATION_DATA[self.index as usize]
     }
 
     fn is_platform(&self) -> bool {

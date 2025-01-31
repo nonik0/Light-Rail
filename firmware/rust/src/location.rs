@@ -3,6 +3,23 @@ use random_trait::Random;
 
 const NO_DATA: u8 = 0xFF;
 
+// TODO: here for now bc train and platform need it
+// TODO: is Cargo best name? or should it be like LocationContents?
+#[derive(Clone, Copy, Debug)]
+pub enum Cargo {
+    Empty = 0,
+    Full = 1,
+}
+
+// TODO: refine naming/usage
+// Used to encapsulate location updates from callees (Train and Platform) back to
+// caller (Game) that owns the LED driver driver instance and can update
+// the display. This seems like a good alternative to avoid callback and lifetime hell.
+pub struct LocationUpdate {
+    pub loc: Location,
+    pub cargo: Cargo,
+}
+
 #[derive(Clone, Copy, Debug)]
 pub enum Direction {
     Anode,   // direction of travel cathode -> anode
@@ -16,13 +33,6 @@ pub struct Location {
 }
 
 impl Location {
-    pub fn new(index: u8) -> Self {
-        if index as usize >= NUM_LOCATIONS {
-            panic!("LOC INDEX OOB");
-        }
-        Self { index }
-    }
-
     pub fn next(&self, direction: Direction) -> (Location, Direction) {
         let loc_data = self.get_data();
 
@@ -46,7 +56,9 @@ impl Location {
 
         // exit from next_loc from opposite direction of cur_loc
         let next_loc_data = LOCATION_DATA[next_index as usize];
-        let next_direction = if next_loc_data.cathode_neighbor == self.index || next_loc_data.cathode_neighbor_2 == self.index {
+        let next_direction = if next_loc_data.cathode_neighbor == self.index
+            || next_loc_data.cathode_neighbor_2 == self.index
+        {
             Direction::Anode
         } else {
             Direction::Cathode
@@ -59,11 +71,11 @@ impl Location {
         &LOCATION_DATA[self.index as usize]
     }
 
-    fn is_platform(&self) -> bool {
+    pub fn is_platform(&self) -> bool {
         self.get_data().is_platform()
     }
 
-    fn is_track(&self) -> bool {
+    pub fn is_track(&self) -> bool {
         self.get_data().is_track()
     }
 }

@@ -1,12 +1,24 @@
 use core::cell::Cell;
 use random_trait::Random;
 
-// TODO: get noise for seed from ADC
 static RNG_STATE: avr_device::interrupt::Mutex<Cell<u32>> =
     avr_device::interrupt::Mutex::new(Cell::new(0));
 
 #[derive(Clone, Copy, Default)]
 pub struct Rng;
+
+impl Rng {
+    pub fn instance() -> Self {
+        Rng::default()
+    }
+
+    pub fn seed(&mut self, seed: u32) {
+        avr_device::interrupt::free(|cs| {
+            let cell = RNG_STATE.borrow(cs);
+            cell.set(seed);
+        });
+    }
+}
 
 impl Random for Rng {
     type Error = ();

@@ -5,26 +5,18 @@
 use random_trait::Random;
 
 use crate::{
-    location::{Cargo, Location, LocationUpdate},
+    location::{Cargo, Location, LocationUpdate, NUM_PLATFORMS, PLATFORM_INDICES},
     random::Rng,
 };
 
 pub struct Platform {
-    pub location: Location,
-    pub track_location: Location,
-    pub opt_cargo: Option<Cargo>,
+    location: Location,
+    track_location: Location,
+    opt_cargo: Option<Cargo>,
 }
 
 impl Platform {
-    pub fn new(location: Location, track_location: Location) -> Self {
-        if !location.is_platform() {
-            panic!("LOC NOT PLAT");
-        }
-
-        if !track_location.is_track() {
-            panic!("LOC NOT TRACK");
-        }
-
+    fn new(location: Location, track_location: Location) -> Self {
         Self {
             location,
             track_location,
@@ -32,6 +24,14 @@ impl Platform {
         }
     }
 
+    pub fn take() -> [Platform; NUM_PLATFORMS] {
+        // TODO: panic if called more than once
+        PLATFORM_INDICES.map(|index| {
+            let location = Location { index: index as u8 };
+            let track_location = location.adjacent_track();
+            Platform::new(location, track_location)
+        })
+    }
     pub fn tick(&mut self) -> Option<LocationUpdate> {
         if self.opt_cargo.is_none() || Rng::default().get_u16() > 100 {
             return None;

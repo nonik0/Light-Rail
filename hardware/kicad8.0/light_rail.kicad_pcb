@@ -73478,18 +73478,6 @@
 			(justify left bottom mirror)
 		)
 	)
-	(gr_text "WayWayWay"
-		(at 79.935301 83.586562 0)
-		(layer "F.SilkS")
-		(uuid "1d999cae-549b-4976-81f6-1d0f14248a44")
-		(effects
-			(font
-				(size 1 1)
-				(thickness 0.1)
-			)
-			(justify left bottom)
-		)
-	)
 	(gr_text "LIGHT"
 		(at 44.451501 54.452762 0)
 		(layer "F.SilkS")

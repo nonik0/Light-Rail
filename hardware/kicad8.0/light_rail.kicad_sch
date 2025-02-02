@@ -7078,12 +7078,6 @@
 		(uuid "9a6c0722-47ae-4846-9a46-351a282560ad")
 	)
 	(junction
-		(at 64.77 71.12)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "9cc60774-b602-4101-b5b5-f8cd466fe092")
-	)
-	(junction
 		(at 378.46 237.49)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -7660,6 +7654,12 @@
 		(uuid "f2420b6c-f1a1-4c54-838f-bd52dd75fc9b")
 	)
 	(junction
+		(at 64.77 71.12)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "f3252b74-1be0-4540-b798-4836287b2551")
+	)
+	(junction
 		(at 351.79 90.17)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -7995,7 +7995,7 @@
 	)
 	(wire
 		(pts
-			(xy 25.4 45.72) (xy 24.13 45.72)
+			(xy 25.4 45.72) (xy 22.86 45.72)
 		)
 		(stroke
 			(width 0)
@@ -8022,6 +8022,16 @@
 			(type default)
 		)
 		(uuid "08a58c02-e01a-4a50-9747-9d443b15ac2e")
+	)
+	(wire
+		(pts
+			(xy 62.23 71.12) (xy 64.77 71.12)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "0939302c-6638-4ff6-ba7b-9ec26239e97c")
 	)
 	(wire
 		(pts
@@ -8665,6 +8675,16 @@
 	)
 	(wire
 		(pts
+			(xy 55.88 31.75) (xy 55.88 38.1)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "25fb1175-6857-4b9b-a751-1d4002f44c90")
+	)
+	(wire
+		(pts
 			(xy 241.3 67.31) (xy 245.11 67.31)
 		)
 		(stroke
@@ -8782,16 +8802,6 @@
 			(type default)
 		)
 		(uuid "296d645a-b4df-48b0-85f6-c8683a8166b1")
-	)
-	(wire
-		(pts
-			(xy 43.18 68.58) (xy 43.18 71.12)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "299dafee-bc66-4386-ac97-10e5e72a273a")
 	)
 	(wire
 		(pts
@@ -10345,7 +10355,7 @@
 	)
 	(wire
 		(pts
-			(xy 24.13 43.18) (xy 24.13 45.72)
+			(xy 22.86 44.45) (xy 22.86 45.72)
 		)
 		(stroke
 			(width 0)
@@ -12415,16 +12425,6 @@
 	)
 	(wire
 		(pts
-			(xy 55.88 35.56) (xy 55.88 38.1)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "be8ad0da-71c0-4b12-ae3e-db0248cf4a29")
-	)
-	(wire
-		(pts
 			(xy 325.12 113.03) (xy 325.12 124.46)
 		)
 		(stroke
@@ -12872,16 +12872,6 @@
 			(type default)
 		)
 		(uuid "d1d813e6-6140-437a-9de3-eadd9fa776f3")
-	)
-	(wire
-		(pts
-			(xy 43.18 71.12) (xy 64.77 71.12)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "d23199aa-355b-42e1-88c5-486e0fec18fd")
 	)
 	(wire
 		(pts
@@ -13979,7 +13969,29 @@
 		)
 		(uuid c5727e97-dc97-4545-9bf3-96fd915cacae)
 	)
-	(text "Pull-ups values roughly calculated\nfor <100 kHz I2C bus speed.\nWill need <~5k for >100 kHz."
+	(text "Design Flaw Note: Clock uses\nCMOS oscillator (XO) instead\nof crystal (XTAL). Tri-state\npin must be floating or high,\nand caps are not needed. Set\nfuse to external clock to\nkeep XTAL2 at high impedance."
+		(exclude_from_sim no)
+		(at 19.558 65.278 0)
+		(effects
+			(font
+				(size 1.016 1.016)
+			)
+			(justify left)
+		)
+		(uuid "08700676-0cd9-4c35-a810-20667071602c")
+	)
+	(text "Design Note: New alkaline CR2032 (3V) brown\nout, but rechargeable lithium CR2032 (3.7V)\nwork fine. MIC5219 supports up to 12V, so\nbatteries can/should be in series for stability."
+		(exclude_from_sim no)
+		(at 27.94 193.294 0)
+		(effects
+			(font
+				(size 1.016 1.016)
+			)
+			(justify left)
+		)
+		(uuid "1be11693-6107-4520-b94e-333ec1599063")
+	)
+	(text "Pull-ups values roughly calculated\nfor <400 kHz I2C bus speed.\nWill need <~5k for >400 kHz."
 		(exclude_from_sim no)
 		(at 193.548 159.258 0)
 		(effects
@@ -13998,6 +14010,17 @@
 			)
 		)
 		(uuid "2b4af80a-3102-4e4c-9331-3bb92c85111b")
+	)
+	(text "Design Note: Put more thought and review into LED\nnumbers before layout. These aren't even in order."
+		(exclude_from_sim no)
+		(at 185.928 126.238 0)
+		(effects
+			(font
+				(size 1.016 1.016)
+			)
+			(justify left)
+		)
+		(uuid "49600a05-2ffb-4212-a03d-3f3bbf6f11a2")
 	)
 	(text "Bus Stuff"
 		(exclude_from_sim no)
@@ -14074,7 +14097,7 @@
 		(at 130.302 96.52 0)
 		(effects
 			(font
-				(size 1.27 1.27)
+				(size 1.016 1.016)
 			)
 		)
 		(uuid "d2be96ae-7239-4842-91b6-70ba5b76338d")
@@ -14693,28 +14716,6 @@
 			)
 		)
 	)
-	(global_label "+3V3"
-		(shape input)
-		(at 43.18 68.58 90)
-		(fields_autoplaced yes)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "313cd8a8-f024-42d9-841b-b6b077f17c3e")
-		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 43.18 60.5148 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-				(hide yes)
-			)
-		)
-	)
 	(global_label "VIN"
 		(shape input)
 		(at 105.41 171.45 90)
@@ -14755,28 +14756,6 @@
 					(size 1.27 1.27)
 				)
 				(justify right)
-				(hide yes)
-			)
-		)
-	)
-	(global_label "+3V3"
-		(shape input)
-		(at 123.19 90.17 90)
-		(fields_autoplaced yes)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "33b626aa-32b1-42bf-bed7-fda0f1745293")
-		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 123.19 82.1048 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
 				(hide yes)
 			)
 		)
@@ -15410,28 +15389,6 @@
 		(uuid "656460d8-a4fc-4af3-a1d9-2f3a353311d6")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
 			(at 105.5528 68.58 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-				(hide yes)
-			)
-		)
-	)
-	(global_label "+3V3"
-		(shape input)
-		(at 24.13 43.18 90)
-		(fields_autoplaced yes)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "66b8b632-e7db-40eb-8805-7cd0973b6e24")
-		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 24.13 35.1148 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -16691,28 +16648,6 @@
 					(size 1.27 1.27)
 				)
 				(justify right)
-				(hide yes)
-			)
-		)
-	)
-	(global_label "+3V3"
-		(shape input)
-		(at 55.88 35.56 90)
-		(fields_autoplaced yes)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "d7dfdedf-9473-46d8-a4e2-5fe94958fb0b")
-		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 55.88 27.4948 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
 				(hide yes)
 			)
 		)
@@ -23498,6 +23433,72 @@
 		)
 	)
 	(symbol
+		(lib_id "power:+3V3")
+		(at 55.88 31.75 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "574d7fcf-0ce6-4eca-b4e4-6aae17c72520")
+		(property "Reference" "#PWR060"
+			(at 55.88 35.56 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "+3V3"
+			(at 55.88 26.67 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 55.88 31.75 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 55.88 31.75 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"+3V3\""
+			(at 55.88 31.75 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "fafacb97-bade-475a-8e45-61ec3908bc4d")
+		)
+		(instances
+			(project "light_rail"
+				(path "/9b085724-ccd2-4800-8e6d-9b7e5ec0c051"
+					(reference "#PWR060")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Device:R")
 		(at 187.96 175.26 0)
 		(unit 1)
@@ -25874,6 +25875,72 @@
 			(project "led_express"
 				(path "/9b085724-ccd2-4800-8e6d-9b7e5ec0c051"
 					(reference "D136")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:+3V3")
+		(at 123.19 90.17 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "74e5bf5d-79f3-49c7-a25a-b531911bfb64")
+		(property "Reference" "#PWR062"
+			(at 123.19 93.98 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "+3V3"
+			(at 123.19 85.09 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 123.19 90.17 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 123.19 90.17 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"+3V3\""
+			(at 123.19 90.17 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "88bfeb2f-8b22-4517-a20b-17ea297c9291")
+		)
+		(instances
+			(project "light_rail"
+				(path "/9b085724-ccd2-4800-8e6d-9b7e5ec0c051"
+					(reference "#PWR062")
 					(unit 1)
 				)
 			)
@@ -32493,6 +32560,71 @@
 		)
 	)
 	(symbol
+		(lib_id "power:+3V3")
+		(at 62.23 71.12 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "d2b40c36-93eb-4ba3-8558-854a3755cbdc")
+		(property "Reference" "#PWR059"
+			(at 62.23 74.93 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "+3V3"
+			(at 58.166 71.12 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 62.23 71.12 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 62.23 71.12 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"+3V3\""
+			(at 62.23 71.12 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "c6ff578e-540b-43cc-9c76-a29e553e93c1")
+		)
+		(instances
+			(project "light_rail"
+				(path "/9b085724-ccd2-4800-8e6d-9b7e5ec0c051"
+					(reference "#PWR059")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Device:LED")
 		(at 236.22 52.07 270)
 		(unit 1)
@@ -36065,6 +36197,72 @@
 			(project "led_express"
 				(path "/9b085724-ccd2-4800-8e6d-9b7e5ec0c051"
 					(reference "#PWR048")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:+3V3")
+		(at 22.86 44.45 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "fa011345-b7f8-45b3-97fc-39ecdccec531")
+		(property "Reference" "#PWR061"
+			(at 22.86 48.26 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "+3V3"
+			(at 22.86 39.37 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 22.86 44.45 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 22.86 44.45 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"+3V3\""
+			(at 22.86 44.45 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "8f9c7d7b-8e4b-4f46-86f8-112290958eee")
+		)
+		(instances
+			(project "light_rail"
+				(path "/9b085724-ccd2-4800-8e6d-9b7e5ec0c051"
+					(reference "#PWR061")
 					(unit 1)
 				)
 			)

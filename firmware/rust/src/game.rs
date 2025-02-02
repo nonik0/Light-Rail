@@ -8,7 +8,7 @@ use heapless::Vec;
 use is31fl3731::IS31FL3731;
 
 use crate::{
-    location::{Cargo, Location, LocationUpdate, NUM_PLATFORMS, PLATFORM_INDICES},
+    location::{Cargo, Location, LocationUpdate, NUM_PLATFORMS},
     platform::Platform,
     tone::Timer3Tone,
     train::Train,
@@ -46,8 +46,8 @@ where
     // game state
     mode: GameMode,
     is_over: bool,
-    trains: heapless::Vec<Train, MAX_TRAINS>,
     platforms: [Platform; NUM_PLATFORMS],
+    trains: heapless::Vec<Train, MAX_TRAINS>,
 }
 
 impl<I2C, ButtonPin> Game<I2C, ButtonPin>
@@ -70,8 +70,7 @@ where
             mode: GameMode::Animation,
             is_over: false,
             trains: Vec::<Train, MAX_TRAINS>::new(),
-            platforms: PLATFORM_INDICES
-                .map(|i| Platform::new(Location { index: i as u8 }, Location { index: i as u8 })), // TODO: fix
+            platforms: Platform::take(),
         }
     }
 

@@ -4,10 +4,11 @@
 
 use heapless::Vec;
 
-use crate::location::{Cargo, Direction, Location, LocationUpdate};
+use crate::common::*;
+use crate::location::{Direction, Location};
 
 pub const MAX_CARS: usize = 5;
-pub const MAX_LOC_UPDATES: usize = MAX_CARS + 1; // train length + 1 movement
+pub const MAX_UPDATES: usize = MAX_CARS + 1; // train length + 1 movement
 const MIN_SPEED: u8 = 0;
 const MAX_SPEED: u8 = 100;
 const DEFAULT_LOCATION: u8 = 0xFF;
@@ -39,7 +40,7 @@ impl Train {
         }
     }
 
-    pub fn add_car(&mut self, cargo: Cargo) -> Option<LocationUpdate> {
+    pub fn add_car(&mut self, cargo: Cargo) -> Option<EntityUpdate> {
         if self.cars.len() >= MAX_CARS {
             return None;
         }
@@ -59,10 +60,10 @@ impl Train {
 
         self.cars.push(Car { loc, cargo }).unwrap();
 
-        Some(LocationUpdate::new(loc, Some(cargo)))
+        Some(EntityUpdate::new(loc, Contents::Train(cargo)))
     }
 
-    pub fn advance(&mut self) -> Option<Vec<LocationUpdate, MAX_LOC_UPDATES>> {
+    pub fn advance(&mut self) -> Option<Vec<EntityUpdate, MAX_UPDATES>> {
         self.speed_counter += self.speed;
 
         if self.speed_counter < MAX_SPEED {
@@ -74,25 +75,32 @@ impl Train {
         let mut loc_updates = Vec::new();
 
         // move train from the rear, keeping track of location updates
-        loc_updates.push(LocationUpdate::new(self.cars.last().unwrap().loc, None)).unwrap();
+        let last_loc_update = EntityUpdate::new(self.cars.last().unwrap().loc, Contents::Empty);
+        loc_updates.push(last_loc_update).unwrap();
         if !self.cars.is_empty() {
             for i in (1..self.cars.len()).rev() {
                 self.cars[i].loc = self.cars[i - 1].loc;
 
-                loc_updates.push(LocationUpdate::new(
-                    self.cars[i].loc,
-                    Some(self.cars[i].cargo),
-                )).unwrap();
+                let loc_update =
+                    EntityUpdate::new(self.cars[i].loc, Contents::Train(self.cars[i].cargo));
+                loc_updates.push(loc_update).unwrap();
             }
         }
 
         // advance front car to next location, adding final location update
-        (self.cars.first_mut().unwrap().loc, self.direction) = self.cars.first().unwrap().loc.next(self.direction);
-        loc_updates.push(LocationUpdate::new(
-            self.cars[0].loc,
-            Some(self.cars[0].cargo),
-        )).unwrap();
+        (self.cars.first_mut().unwrap().loc, self.direction) =
+            self.cars.first().unwrap().loc.next(self.direction);
+        let loc_update = EntityUpdate::new(
+            self.cars.first().unwrap().loc,
+            Contents::Train(self.cars.first().unwrap().cargo),
+        );
+        loc_updates.push(loc_update).unwrap();
 
         Some(loc_updates)
     }
+}
+
+pub struct TrainUpdate {
+    pub location: Location,
+    pub cargo: Cargo,
 }

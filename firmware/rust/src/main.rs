@@ -1,6 +1,7 @@
 #![no_std]
 #![no_main]
 #![feature(abi_avr_interrupt)]
+#![feature(const_trait_impl)]
 #![feature(panic_info_message)]
 
 use core::cell::RefCell;
@@ -15,6 +16,7 @@ type I2c = atmega_hal::i2c::I2c<CoreClock>;
 
 mod tone; // TODO: contribute tone library/impl for avr-hal
 
+mod common;
 mod game;
 mod location;
 mod platform;
@@ -27,7 +29,9 @@ const DIGITS_I2C_ADDR: u8 = as1115::constants::DEFAULT_ADDRESS;
 const DIGITS_COUNT: u8 = 3;
 const DIGITS_INTENSITY: u8 = 3;
 const LEDS_I2C_ADDR: u8 = is31fl3731::DEFAULT_ADDRESS;
-const ERROR_MSG: &str = "   ERROR"; // TODO: try static error message in panic
+// TODO: investigate linker issue with panic handler
+// TODO: try static error message as workaround for panic handler
+const ERROR_MSG: &str = "   ERROR";
 
 #[avr_device::entry]
 fn main() -> ! {

@@ -10,6 +10,7 @@ use is31fl3731::IS31FL3731;
 use crate::{
     common::*,
     location::{Location, NUM_PLATFORMS},
+    panic::set_panic_msg,
     platform::Platform,
     tone::Timer3Tone,
     train::Train,
@@ -26,11 +27,6 @@ enum GameMode {
 }
 
 const MAX_TRAINS: usize = 5;
-const TRACK_EMPTY_PWM: u8 = 0;
-const TRAIN_CARGO_EMPTY_PWM: u8 = 200;
-const TRAIN_CARGO_FULL_PWM: u8 = 50;
-const PLATFORM_EMPTY_PWM: u8 = 0;
-const PLATFORM_FULL_PWM: u8 = 50;
 const MAX_LOC_UPDATES: usize = crate::train::MAX_UPDATES * MAX_TRAINS + NUM_PLATFORMS;
 
 pub struct Game<I2C, ButtonPin>
@@ -47,7 +43,7 @@ where
     // game state
     mode: GameMode,
     is_over: bool,
-    platforms: [Platform; NUM_PLATFORMS],
+    //platforms: [Platform; NUM_PLATFORMS],
     trains: heapless::Vec<Train, MAX_TRAINS>,
 }
 
@@ -63,6 +59,7 @@ where
         board_digits: AS1115<I2C>,
         board_leds: IS31FL3731<I2C>,
     ) -> Self {
+        set_panic_msg(b"100");
         Self {
             board_buttons,
             board_buzzer,
@@ -71,24 +68,13 @@ where
             mode: GameMode::Animation,
             is_over: false,
             trains: Vec::<Train, MAX_TRAINS>::new(),
-            platforms: Platform::take(),
+            //platforms: Platform::take(),
         }
     }
 
     pub fn is_over(&self) -> bool {
         self.is_over
     }
-
-    // fn update_location(&mut self, loc: Location, cargo: Option<Cargo>) {
-    //     let brightness = match cargo {
-    //         Some(Cargo::Empty) => TRAIN_CARGO_EMPTY_PWM,
-    //         Some(Cargo::Full) => TRAIN_CARGO_FULL_PWM,
-    //         None => TRACK_EMPTY_PWM,
-    //     };
-    //     self.board_leds
-    //         .pixel_blocking(loc.index(), brightness)
-    //         .unwrap();
-    // }
 
     // TODO: mode
     pub fn restart(&mut self) {
@@ -104,11 +90,11 @@ where
         train.add_car(Cargo::Empty);
         self.trains.push(train).unwrap();
 
-        let mut train2 = Train::new(Location::new(90), Cargo::Full);
-        train2.add_car(Cargo::Empty);
-        train2.add_car(Cargo::Full);
-        train2.add_car(Cargo::Empty);
-        self.trains.push(train2).unwrap();
+        // let mut train2 = Train::new(Location::new(90), Cargo::Full);
+        // train2.add_car(Cargo::Empty);
+        // train2.add_car(Cargo::Full);
+        // train2.add_car(Cargo::Empty);
+        // self.trains.push(train2).unwrap();
     }
 
     pub fn tick(&mut self) {
@@ -122,11 +108,11 @@ where
             }
         }
 
-        for platform in self.platforms.iter_mut() {
-            if let Some(loc_update) = platform.tick() {
-                all_updates.push(loc_update).unwrap();
-            }
-        }
+        // for platform in self.platforms.iter_mut() {
+        //     if let Some(loc_update) = platform.tick(&self.trains) {
+        //         all_updates.push(loc_update).unwrap();
+        //     }
+        // }
 
         for loc_update in all_updates.iter() {
             self.board_leds

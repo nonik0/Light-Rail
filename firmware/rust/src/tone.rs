@@ -29,6 +29,10 @@ impl Timer3Tone {
             toggle_count: None,
         };
 
+        // set timer for CTC mode, WGM3 = 0b0100
+        state.timer.tccr3a.write(|w| w.wgm3().bits(0b00));
+        state.timer.tccr3b.write(|w| w.wgm3().bits(0b01));
+
         avr_device::interrupt::free(|cs| {
             let mut state_opt = TONE_STATE.borrow(cs).borrow_mut();
             *state_opt = Some(state);
@@ -71,14 +75,9 @@ impl Timer3Tone {
             state.output_pin.set_low();
             state.toggle_count = toggle_count;
 
-            // configure timer for CTC mode for the desired frequency
-            // WGM3 = 0b0100, CTC mode
+            // uppdate timer for desired frequency
             // CS3 = 0b001/prescalar1 or 0b011/prescalar64
-            state.timer.tccr3a.write(|w| w.wgm3().bits(0b00));
-            state
-                .timer
-                .tccr3b
-                .write(|w| w.cs3().variant(prescalar).wgm3().bits(0b01));
+            state.timer.tccr3b.modify(|_, w| w.cs3().variant(prescalar));
             state.timer.ocr3a.write(|w| w.bits(ocr as u16));
             state.timer.timsk3.write(|w| w.ocie3a().set_bit());
         });
@@ -89,7 +88,6 @@ impl Timer3Tone {
             let state_opt_refcell = TONE_STATE.borrow(cs);
             let mut state_opt = state_opt_refcell.borrow_mut();
             let state = state_opt.as_mut().unwrap();
-            //let mut state = state_opt_refcell.borrow_mut().as_mut().unwrap();
 
             state.output_pin.set_low();
             state.timer.timsk3.write(|w| w.ocie3a().clear_bit());

@@ -98,6 +98,10 @@ impl Train {
 
         Some(loc_updates)
     }
+
+    pub fn front(&self) -> Location {
+        self.cars.first().unwrap().loc
+    }
 }
 
 pub struct TrainUpdate {

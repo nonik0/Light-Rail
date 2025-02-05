@@ -2,6 +2,9 @@ use avr_progmem::progmem;
 use heapless::Vec;
 use random_trait::Random;
 
+use crate::panic_to_digits;
+use crate::panic::set_panic_msg;
+
 /// Represents the direction of travel for a train where
 /// Anode is "exiting" a location from the anode and cathode
 /// is vice versa.
@@ -32,7 +35,7 @@ impl Location {
         let loc_data = self.location_data();
 
         if !loc_data.is_track() {
-            panic!("LOC NOT TRACK");
+            panic_to_digits!("LOC NOT TRACK");
         }
 
         let mut next_index = match direction {
@@ -44,10 +47,10 @@ impl Location {
             Direction::Cathode => loc_data.cathode_neighbor_2,
         };
 
-        // TODO: randomly choose fork path for now
-        if next_index_2 != NO_DATA && crate::random::Rng::default().get_bool() {
-            next_index = next_index_2;
-        }
+        // // TODO: randomly choose fork path for now
+        // if next_index_2 != NO_DATA && crate::random::Rng::default().get_bool() {
+        //     next_index = next_index_2;
+        // }
 
         // exit from next_loc from opposite direction of cur_loc
         let next_loc_data = LOCATION_DATA.load_at(next_index as usize);
@@ -73,9 +76,8 @@ impl Location {
 
     pub fn adjacent_track(&self) -> Location {
         let loc_data = self.location_data();
-
         if !loc_data.is_platform() {
-            panic!("LOC NOT");
+            panic_to_digits!("LOC NOT PLAT");
         }
 
         Location {

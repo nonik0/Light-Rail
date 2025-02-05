@@ -14,13 +14,13 @@ type CoreClock = atmega_hal::clock::MHz8;
 type Delay = atmega_hal::delay::Delay<CoreClock>;
 type I2c = atmega_hal::i2c::I2c<CoreClock>;
 
-mod tone; // TODO: contribute tone library/impl for avr-hal
-
 mod common;
 mod game;
 mod location;
+mod panic;
 mod platform;
 mod random;
+mod tone; // TODO: contribute tone library/impl for avr-hal
 mod train;
 
 const BASE_DELAY: u32 = 10;
@@ -29,9 +29,6 @@ const DIGITS_I2C_ADDR: u8 = as1115::constants::DEFAULT_ADDRESS;
 const DIGITS_COUNT: u8 = 3;
 const DIGITS_INTENSITY: u8 = 3;
 const LEDS_I2C_ADDR: u8 = is31fl3731::DEFAULT_ADDRESS;
-// TODO: investigate linker issue with panic handler
-// TODO: try static error message as workaround for panic handler
-const ERROR_MSG: &str = "   ERROR";
 
 #[avr_device::entry]
 fn main() -> ! {
@@ -97,31 +94,5 @@ fn main() -> ! {
         }
 
         delay.delay_ms(BASE_DELAY);
-    }
-}
-
-#[panic_handler]
-fn panic(_: &core::panic::PanicInfo) -> ! {
-    avr_device::interrupt::disable();
-
-    let dp = unsafe { atmega_hal::Peripherals::steal() };
-    let pins = atmega_hal::pins!(dp);
-    let mut delay = Delay::new();
-    let i2c = I2c::new(
-        dp.TWI,
-        pins.pd1.into_pull_up_input(),
-        pins.pd0.into_pull_up_input(),
-        400_000,
-    );
-    let mut board_digits = as1115::AS1115::new(i2c, DIGITS_I2C_ADDR);
-    board_digits.init(DIGITS_COUNT, DIGITS_INTENSITY).unwrap();
-
-    let mut offset: usize = 0;
-    loop {
-        board_digits
-            .display_string(&ERROR_MSG[offset..offset + DIGITS_COUNT as usize])
-            .unwrap();
-        offset = (offset + 1) % (ERROR_MSG.len() - DIGITS_COUNT as usize);
-        delay.delay_ms(300);
     }
 }

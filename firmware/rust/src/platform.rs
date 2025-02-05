@@ -1,12 +1,10 @@
-// TEMP: quiet unused warnings
-#![allow(dead_code)]
-#![allow(unused_variables)]
-
 use random_trait::Random;
 
 use crate::{
     common::*,
     location::{Location, NUM_PLATFORMS},
+    panic::set_panic_msg,
+    train::Train,
     random::Rng,
 };
 
@@ -26,22 +24,43 @@ impl Platform {
     }
 
     pub fn take() -> [Platform; NUM_PLATFORMS] {
-        // TODO: panic if called more than once
-        Location::platform_locs().map(|location| {
-            let track_location = location.adjacent_track();
-            Platform::new(location, track_location)
-        })
-    }
-    pub fn tick(&mut self) -> Option<EntityUpdate> {
-        if self.cargo == Cargo::Empty || Rng::default().get_u16() > 100 {
-            return None;
+        static mut TAKEN: bool = false;
+        unsafe {
+            if TAKEN {
+                panic!("take() called more than once");
+            }
+            TAKEN = true;
         }
 
-        self.cargo = Cargo::Full;
-        Some(EntityUpdate::new(
-            self.location,
-            Contents::Platform(Cargo::Full),
-        ))
+        let platforms = Location::platform_locs().map(|location| {
+            let track_location = location.adjacent_track();
+            Platform::new(location, track_location)
+        });
+        platforms
+    }
+
+    pub fn tick(&mut self, trains: &[Train]) -> Option<EntityUpdate> {
+        if self.cargo == Cargo::Full {
+            for train in trains {
+                if train.front() == self.track_location {
+                    self.clear_cargo();
+                    return Some(EntityUpdate::new(
+                        self.location,
+                        Contents::Platform(Cargo::Empty),
+                    ));
+                }
+            }
+        } else {
+            if Rng::default().get_u16() <= 100 {
+                self.cargo = Cargo::Full;
+                return Some(EntityUpdate::new(
+                    self.location,
+                    Contents::Platform(Cargo::Full),
+                ));
+            }
+        }
+
+        None
     }
 
     pub fn set_cargo(&mut self) {

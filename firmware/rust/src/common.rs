@@ -19,12 +19,12 @@ impl Contents {
         match self {
             Contents::Empty => 0,
             Contents::Train(cargo) => match cargo {
-                Cargo::Empty => 1,
-                Cargo::Full => 2,
+                Cargo::Empty => 50,
+                Cargo::Full => 200,
             },
             Contents::Platform(cargo) => match cargo {
-                Cargo::Empty => 3,
-                Cargo::Full => 4,
+                Cargo::Empty => 0,
+                Cargo::Full => 50,
             },
         }
     }

@@ -5,14 +5,15 @@
 use random_trait::Random;
 
 use crate::{
-    location::{Cargo, Location, LocationUpdate, NUM_PLATFORMS, PLATFORM_INDICES},
+    common::*,
+    location::{Location, NUM_PLATFORMS},
     random::Rng,
 };
 
 pub struct Platform {
     location: Location,
     track_location: Location,
-    opt_cargo: Option<Cargo>,
+    cargo: Cargo,
 }
 
 impl Platform {
@@ -20,31 +21,34 @@ impl Platform {
         Self {
             location,
             track_location,
-            opt_cargo: None,
+            cargo: Cargo::Empty,
         }
     }
 
     pub fn take() -> [Platform; NUM_PLATFORMS] {
         // TODO: panic if called more than once
-        PLATFORM_INDICES.map(|index| {
-            let location = Location { index: index as u8 };
+        Location::platform_locs().map(|location| {
             let track_location = location.adjacent_track();
             Platform::new(location, track_location)
         })
     }
-    pub fn tick(&mut self) -> Option<LocationUpdate> {
-        if self.opt_cargo.is_none() || Rng::default().get_u16() > 100 {
+    pub fn tick(&mut self) -> Option<EntityUpdate> {
+        if self.cargo == Cargo::Empty || Rng::default().get_u16() > 100 {
             return None;
         }
 
-        Some(LocationUpdate::new(self.location, Some(Cargo::Full)))
+        self.cargo = Cargo::Full;
+        Some(EntityUpdate::new(
+            self.location,
+            Contents::Platform(Cargo::Full),
+        ))
     }
 
-    pub fn set_cargo(&mut self, cargo: Cargo) {
-        self.opt_cargo = Some(cargo);
+    pub fn set_cargo(&mut self) {
+        self.cargo = Cargo::Full;
     }
 
     pub fn clear_cargo(&mut self) {
-        self.opt_cargo = None;
+        self.cargo = Cargo::Empty;
     }
 }

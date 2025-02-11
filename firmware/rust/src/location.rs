@@ -2,8 +2,10 @@ use avr_progmem::progmem;
 use heapless::Vec;
 use random_trait::Random;
 
-use crate::panic_to_digits;
 use crate::panic::set_panic_msg;
+use crate::panic_to_digits;
+use crate::random::Rng;
+use random_trait::GenerateRand;
 
 /// Represents the direction of travel for a train where
 /// Anode is "exiting" a location from the anode and cathode
@@ -31,7 +33,7 @@ impl Location {
         self.index
     }
 
-    pub fn next(&self, direction: Direction) -> (Location, Direction) {
+    pub fn next(&self, direction: Direction, rng: &mut Rng) -> (Location, Direction) {
         let loc_data = self.location_data();
 
         if !loc_data.is_track() {
@@ -48,8 +50,7 @@ impl Location {
         };
 
         // TODO: randomly choose fork path for now
-        //if next_index_2 != NO_DATA && crate::random::Rng::default().get_bool() {
-        if next_index_2 != NO_DATA {
+        if next_index_2 != NO_DATA && rng.get_bool() {
             next_index = next_index_2;
         }
 

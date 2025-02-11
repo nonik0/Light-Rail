@@ -4,9 +4,11 @@
 #![feature(const_trait_impl)]
 #![feature(panic_info_message)]
 
+use atmega_hal::pac::adc::didr0;
 use core::cell::RefCell;
 use embedded_hal::delay::DelayNs;
 use embedded_hal_bus::i2c;
+use random_trait::Random;
 
 //type Adc = atmega_hal::adc::Adc<CoreClock>;
 //type Channel = atmega_hal::adc::Channel;
@@ -65,6 +67,7 @@ fn main() -> ! {
         as1115::AS1115::new(i2c::RefCellDevice::new(&i2c_ref_cell), DIGITS_I2C_ADDR);
     board_digits.init(DIGITS_COUNT, DIGITS_INTENSITY).unwrap();
     board_digits.clear().unwrap();
+    board_digits.display_ascii(b"OHI").unwrap();
 
     // TODO: which pins are not ADC?
     // let mut board_floating_pins = [
@@ -77,12 +80,19 @@ fn main() -> ! {
     //     pins.pf7.into_analog_input(&mut adc).into_channel(),
     // ];
     // let board_entropy = Adc::new(dp.ADC, Default::default());
+    let board_entropy = random::Rng::seed(0x12345678);
 
     let mut board_leds =
         is31fl3731::IS31FL3731::new(i2c::RefCellDevice::new(&i2c_ref_cell), LEDS_I2C_ADDR);
     board_leds.setup_blocking(&mut delay).unwrap();
 
-    let mut game = game::Game::new(board_buttons, board_buzzer, board_digits, board_leds);
+    let mut game = game::Game::new(
+        board_buttons,
+        board_buzzer,
+        board_digits,
+        board_entropy,
+        board_leds,
+    );
     game.restart();
 
     loop {

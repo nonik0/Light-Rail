@@ -6,6 +6,7 @@ use as1115::AS1115;
 use embedded_hal::{digital::InputPin, i2c::I2c};
 use heapless::Vec;
 use is31fl3731::IS31FL3731;
+use random_trait::Random;
 
 use crate::{
     common::*,
@@ -38,6 +39,7 @@ where
     board_buttons: [ButtonPin; NUM_BUTTONS],
     board_buzzer: Timer3Tone,
     board_digits: AS1115<I2C>,
+    board_entropy: crate::random::Rng,
     board_leds: IS31FL3731<I2C>,
 
     // game state
@@ -57,6 +59,7 @@ where
         board_buttons: [ButtonPin; NUM_BUTTONS],
         board_buzzer: Timer3Tone,
         board_digits: AS1115<I2C>,
+        board_entropy: crate::random::Rng,
         board_leds: IS31FL3731<I2C>,
     ) -> Self {
         set_panic_msg(b"100");
@@ -64,6 +67,7 @@ where
             board_buttons,
             board_buzzer,
             board_digits,
+            board_entropy,
             board_leds,
             mode: GameMode::Animation,
             is_over: false,
@@ -85,16 +89,16 @@ where
         self.board_leds.clear_blocking().unwrap();
         self.trains.clear();
 
-        let mut train = Train::new(Location::new(69), Cargo::Full);
+        let mut train = Train::new(Location::new(69), Cargo::Full, self.board_entropy);
         train.add_car(Cargo::Empty);
         train.add_car(Cargo::Empty);
         self.trains.push(train).unwrap();
 
-        // let mut train2 = Train::new(Location::new(90), Cargo::Full);
-        // train2.add_car(Cargo::Empty);
-        // train2.add_car(Cargo::Full);
-        // train2.add_car(Cargo::Empty);
-        // self.trains.push(train2).unwrap();
+        let mut train2 = Train::new(Location::new(90), Cargo::Full, self.board_entropy);
+        train2.add_car(Cargo::Empty);
+        train2.add_car(Cargo::Full);
+        train2.add_car(Cargo::Empty);
+        self.trains.push(train2).unwrap();
     }
 
     pub fn tick(&mut self) {

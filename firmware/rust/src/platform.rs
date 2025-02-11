@@ -51,13 +51,13 @@ impl Platform {
                 }
             }
         } else {
-            if Rng::default().get_u16() <= 100 {
-                self.cargo = Cargo::Full;
-                return Some(EntityUpdate::new(
-                    self.location,
-                    Contents::Platform(Cargo::Full),
-                ));
-            }
+            // if Rng::default().get_u16() <= 100 {
+            //     self.cargo = Cargo::Full;
+            //     return Some(EntityUpdate::new(
+            //         self.location,
+            //         Contents::Platform(Cargo::Full),
+            //     ));
+            // }
         }
 
         None

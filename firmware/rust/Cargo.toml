@@ -18,7 +18,6 @@ embedded-hal-bus = "0.2.0"
 heapless = "0.8.0"
 nb = "1.1.0"
 panic-halt = "1.0.0"
-random-trait = "0.1"
 ufmt = "0.2.0"
 
 [dependencies.as1115]
@@ -33,6 +32,10 @@ rev = "61cb477a398b53b0cbe6078fa285f4f008496da2"
 git = "https://github.com/rahix/avr-hal"
 rev = "d02ab21d17f06baadb5c0f2abf7cf3ea9c0a35b3"
 features = ["atmega32u4"]
+
+[dependencies.random-trait]
+git = "https://github.com/nonik0/random-rs"
+rev = "306d59aaad4565e8b159f8f34cb25fe32217c83e"
 
 # The latest releases of `proc-macro2` do not support the rust toolchain that
 # we use.  Thus, we must fix this dependency to an older version where our

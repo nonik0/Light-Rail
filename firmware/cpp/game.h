@@ -9,7 +9,6 @@
 #include "platform.h"
 #include "train.h"
 #include "track.h"
-#include "tone.h"
 
 #define BUZZ 8 // PB4
 #define SW1 PB6

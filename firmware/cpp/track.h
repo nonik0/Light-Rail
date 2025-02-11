@@ -58,7 +58,7 @@ const uint32_t TrackData[TRACK_COUNT] = {
     0x8289428C, // track 39/0x27
     0x09090909, // track 40/0x28 PLATFORM
     0x2B12FFFF, // track 41/0x29
-    0x6A6BFFFF, // track 42/0x2A
+    0x6A6BFF3D, // track 42/0x2A
     0x294EFFFF, // track 43/0x2B
     0x5A5A5A5A, // track 44/0x2C PLATFORM
     0x096AFFFF, // track 45/0x2D

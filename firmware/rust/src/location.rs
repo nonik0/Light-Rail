@@ -47,10 +47,11 @@ impl Location {
             Direction::Cathode => loc_data.cathode_neighbor_2,
         };
 
-        // // TODO: randomly choose fork path for now
-        // if next_index_2 != NO_DATA && crate::random::Rng::default().get_bool() {
-        //     next_index = next_index_2;
-        // }
+        // TODO: randomly choose fork path for now
+        //if next_index_2 != NO_DATA && crate::random::Rng::default().get_bool() {
+        if next_index_2 != NO_DATA {
+            next_index = next_index_2;
+        }
 
         // exit from next_loc from opposite direction of cur_loc
         let next_loc_data = LOCATION_DATA.load_at(next_index as usize);
@@ -239,7 +240,7 @@ const fn get_location_data(index: usize) -> LocationData {
         39 => unpack_location_data(0x8289428C),  // track 39/0x27
         40 => unpack_location_data(0x09090909),  // platf 40/0x28
         41 => unpack_location_data(0x2B12FFFF),  // track 41/0x29
-        42 => unpack_location_data(0x6A6BFFFF),  // track 42/0x2A
+        42 => unpack_location_data(0x6A6BFF3D),  // track 42/0x2A
         43 => unpack_location_data(0x294EFFFF),  // track 43/0x2B
         44 => unpack_location_data(0x5A5A5A5A),  // platf 44/0x2C
         45 => unpack_location_data(0x096AFFFF),  // track 45/0x2D

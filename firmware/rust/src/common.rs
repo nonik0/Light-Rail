@@ -11,6 +11,7 @@ pub enum Cargo {
 pub enum Contents {
     Empty,
     Train(Cargo),
+    // platforms never move so will never be Contents::Empty like tracks/train locations
     Platform(Cargo),
 }
 
@@ -24,7 +25,7 @@ impl Contents {
             },
             Contents::Platform(cargo) => match cargo {
                 Cargo::Empty => 0,
-                Cargo::Full => 50,
+                Cargo::Full => 16,
             },
         }
     }

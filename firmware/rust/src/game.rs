@@ -45,7 +45,7 @@ where
     // game state
     mode: GameMode,
     is_over: bool,
-    //platforms: [Platform; NUM_PLATFORMS],
+    platforms: [Platform; NUM_PLATFORMS],
     trains: heapless::Vec<Train, MAX_TRAINS>,
 }
 
@@ -72,7 +72,7 @@ where
             mode: GameMode::Animation,
             is_over: false,
             trains: Vec::<Train, MAX_TRAINS>::new(),
-            //platforms: Platform::take(),
+            platforms: Platform::take(board_entropy),
         }
     }
 
@@ -112,11 +112,11 @@ where
             }
         }
 
-        // for platform in self.platforms.iter_mut() {
-        //     if let Some(loc_update) = platform.tick(&self.trains) {
-        //         all_updates.push(loc_update).unwrap();
-        //     }
-        // }
+        for platform in self.platforms.iter_mut() {
+            if let Some(loc_update) = platform.tick(&self.trains) {
+                all_updates.push(loc_update).unwrap();
+            }
+        }
 
         for loc_update in all_updates.iter() {
             self.board_leds
@@ -131,6 +131,7 @@ where
     fn read_buttons(&mut self) {
         for (i, button) in self.board_buttons.iter_mut().enumerate() {
             if button.is_low().unwrap() {
+                self.board_digits.display_number((i + 1) as u16).unwrap();
                 self.board_buzzer.tone((i + 1) as u16 * 1000, 100);
             }
         }

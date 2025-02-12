@@ -5,6 +5,8 @@
 #![feature(panic_info_message)]
 
 use atmega_hal::pac::adc::didr0;
+use location::NUM_PLATFORMS;
+use platform::Platform;
 use core::cell::RefCell;
 use embedded_hal::delay::DelayNs;
 use embedded_hal_bus::i2c;

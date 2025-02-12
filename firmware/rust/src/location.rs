@@ -149,12 +149,13 @@ impl From<u32> for LocationData {
 }
 
 // expose number without directly exposing progmem data
-pub const NUM_PLATFORMS: usize = NUM_PLATFORMS_IMPL;
+//pub const NUM_PLATFORMS: usize = NUM_PLATFORMS_IMPL;
+pub const NUM_PLATFORMS: usize = 27;
 
 // location data built from raw data in const fn below and stored in progmem, const fn data discarded
 progmem! {
-    static progmem<const NUM_PLATFORMS_IMPL: usize> PLATFORM_INDICES: [u8; NUM_PLATFORMS_IMPL] = {
-        let mut platforms = [0u8; NUM_LOCATIONS];
+    static progmem PLATFORM_INDICES: [u8; NUM_PLATFORMS] = {
+        let mut platforms = [0u8; NUM_PLATFORMS];
         let mut count = 0;
         let mut loc = 0;
         while loc < NUM_LOCATIONS {
@@ -220,7 +221,7 @@ const fn get_location_data(index: usize) -> LocationData {
         18 => unpack_location_data(0x2933FFFF),  // track 18/0x12
         19 => unpack_location_data(0x53535353),  // platf 19/0x13
         20 => unpack_location_data(0x5154FFFF),  // track 20/0x14
-        21 => unpack_location_data(0x61616161),  // track 21/0x15
+        21 => unpack_location_data(0x61616161),  // platf 21/0x15
         22 => unpack_location_data(0x5351FFFF),  // track 22/0x16
         23 => unpack_location_data(0x1E81FFFF),  // track 23/0x17
         24 => unpack_location_data(0x4F0CFFFF),  // track 24/0x18

@@ -26,11 +26,11 @@ pub struct Car {
 
 #[derive(Debug)]
 pub struct Train {
-    pub direction: Direction,
-    pub entropy: Rng,
-    pub speed: u8,
-    pub speed_counter: u8,
-    pub cars: Vec<Car, MAX_CARS>,
+    direction: Direction,
+    entropy: Rng,
+    speed: u8,
+    speed_counter: u8,
+    cars: Vec<Car, MAX_CARS>,
 }
 
 impl Train {

@@ -2,10 +2,7 @@ use avr_progmem::progmem;
 use heapless::Vec;
 use random_trait::Random;
 
-use crate::panic::set_panic_msg;
-use crate::panic_to_digits;
-use crate::random::Rng;
-use random_trait::GenerateRand;
+use crate::{panic::set_panic_msg, panic_to_digits, random::Rng};
 
 /// Represents the direction of travel for a train where
 /// Anode is "exiting" a location from the anode and cathode

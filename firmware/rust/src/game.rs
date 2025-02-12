@@ -6,7 +6,6 @@ use as1115::AS1115;
 use embedded_hal::{digital::InputPin, i2c::I2c};
 use heapless::Vec;
 use is31fl3731::IS31FL3731;
-use random_trait::Random;
 
 use crate::{
     common::*,
@@ -45,6 +44,9 @@ where
     // game state
     mode: GameMode,
     is_over: bool,
+    score: u16,
+
+    // game entities
     platforms: [Platform; NUM_PLATFORMS],
     trains: heapless::Vec<Train, MAX_TRAINS>,
 }
@@ -71,6 +73,7 @@ where
             board_leds,
             mode: GameMode::Animation,
             is_over: false,
+            score: 0,
             trains: Vec::<Train, MAX_TRAINS>::new(),
             platforms: Platform::take(board_entropy),
         }
@@ -114,6 +117,14 @@ where
 
         for platform in self.platforms.iter_mut() {
             if let Some(loc_update) = platform.tick(&self.trains) {
+                // update score each time a platform is cleared
+                match loc_update.contents {
+                    Contents::Platform(Cargo::Empty) => {
+                        self.score += 1;
+                        self.board_digits.display_number(self.score).unwrap();
+                    }
+                    _ => {}
+                }
                 all_updates.push(loc_update).unwrap();
             }
         }

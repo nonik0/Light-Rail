@@ -29,10 +29,10 @@ mod train;
 
 const BASE_DELAY: u32 = 10;
 const NUM_BUTTONS: usize = 12;
+const NUM_DIGITS: u8 = 3;
 const DIGITS_I2C_ADDR: u8 = as1115::constants::DEFAULT_ADDRESS;
-const DIGITS_COUNT: u8 = 3;
-const DIGITS_INTENSITY: u8 = 3;
 const LEDS_I2C_ADDR: u8 = is31fl3731::DEFAULT_ADDRESS;
+const DIGITS_INTENSITY: u8 = 3;
 
 #[avr_device::entry]
 fn main() -> ! {
@@ -67,7 +67,7 @@ fn main() -> ! {
 
     let mut board_digits =
         as1115::AS1115::new(i2c::RefCellDevice::new(&i2c_ref_cell), DIGITS_I2C_ADDR);
-    board_digits.init(DIGITS_COUNT, DIGITS_INTENSITY).unwrap();
+    board_digits.init(NUM_DIGITS, DIGITS_INTENSITY).unwrap();
     board_digits.clear().unwrap();
     board_digits.display_ascii(b"OHI").unwrap();
 

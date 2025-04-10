@@ -2,13 +2,13 @@
 
 ## Overview & Acknowledgements
 
+<img src="https://github.com/nonik0/Light-Rail/blob/main/images/hardware_test.gif" align="right" alt="GIF animation of the basic hardware demo"/>
+
 Light Rail is a minimalist, interactive PCB game that simulates trains traveling along tracks, picking up and delivering cargo from platforms. The track is composed of yellow LEDs arranged in lines, which illuminate sequentially to create the effect of trains moving along the tracks. Next to each of the eight forks and crosses in the track is a button to switch its state. The board also has a three-character seven-segment display for showing the game status and/or score and four more buttons underneath the track for gameplay control. Light Rail can be powered with two LIR2032 batteries or via USB.
 
 I also want to acknowledge and thank [PCBWay](https://www.pcbway.com/) for their generous support of this project! Even before I had the initial idea, PCBWay had already reached out to me asking if I would like to collaborate on my next project. However, I didn't actually see the email until I started looking into how I wanted to manufacture prototypes for Light Rail. Just getting the email and seeing that others were liking my older projects gave me a big motivation boost to continue with this project, be creative, and make something of my own. Overall, my experience with PCBWay was great and I would definitely recommend checking them out for your own projects!
 
 For more details about my design goals, process, and ordering and production experience with PCBWay, please see my full [project writeup](WRITEUP.md)!
-
-[![hardware test](https://github.com/nonik0/Light-Rail/blob/main/images/hardware_test.gif)](https://raw.githubusercontent.com/nonik0/Light-Rail/main/images/hardware_test.mp4)
 
 ### Work Left
 - first working game prototype

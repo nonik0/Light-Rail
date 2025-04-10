@@ -20,7 +20,7 @@ It was a unique mental experience I won't soon forget! It's quite hard to descri
 - [TIGER Electronics](https://en.wikipedia.org/wiki/Tiger_Electronics) handheld LCD games
 - Adafruit LED backpacks, especially [this one](https://www.adafruit.com/product/2946)
 
-<img src="https://github.com/nonik0/Light-Rail/blob/main/images/sketch.jpg" width="20%" />
+<img src="https://github.com/nonik0/Light-Rail/blob/main/images/sketch.jpg" style="float: right; margin-right: 20px; width: 200px;" alt="My first (and only) concept sketch" />
 
 OK, so what was the actual idea? It was a train game. The tracks would be represented as lines of LEDs, with silkscreen graphics, and the trains themselves would be contiguous sequences of lit LEDs moving along those tracks—each LED representing a single car in the train. Arranged alongside the tracks would be other LEDs that would represent the platforms. When lit, a platform would indicate cargo ready for pickup, which a passing train could collect from an adjacent track and deliver to another platform elsewhere. The train's cargo could be visualized using bright LEDs for full cars and dim ones for empty cars. The track layout would include forks and crossings, each with a nearby push button to toggle or switch their state.
 
@@ -82,7 +82,7 @@ From there, I leaned on my experience designing wildly impractical Lego train tr
 - Direction of forks along a given track
 - Platform distribution in each track section, relative to length of section
 
-<img src="https://github.com/nonik0/Light-Rail/blob/main/images/lego_track.jpg" width="30%" />
+<img src="https://github.com/nonik0/Light-Rail/blob/main/images/lego_track.jpg"  style="float: right; margin-right: 20px; width: 200px;" alt="Example Lego track with lots of 3D-printed forks and intersections. Unsuspecting, but also uncaring, cat unaware of train fast approaching."  />
 
 Once the track layout felt right, I moved onto the rest of the components. I put the ATMega near the bottom to keep it close to the power circuit and USB connector. The IS31FL3731 went right in the middle of the board to minimize trace length to the LEDs. At the top, I placed the Kingbright seven-segment displays and AS1115—these would serve as the  game status/score display. Buttons were placed next to each fork and cross to function as toggles, and I added four control buttons at the bottom for gameplay input.
 
@@ -113,8 +113,9 @@ Once I finished the BoM, I could submit the order. Unfortunately, I realized soo
 After submitting the order, I spent the next few days working out a few kinks in my layout through some back-and-forth with the review team. The main issue was that the minimum solder mask bridge width for the black solder mask was slightly less forgiving than the standard green. That meant a couple of the ICs on the board had pin gaps too narrow for the solder mask to "bridge" between them. The fix was simple: just remove the solder mask between the pins. I was initially concerned this might increase the risk of solder bridging or shorts, but after a bit of reading, I found that it’s actually not that uncommon—especially when the chips aren’t being hand-soldered. Since I wasn’t planning to assemble the boards myself, I felt comfortable with the change.
 
 <p align="center" width="100%">
-  <img src="https://github.com/nonik0/Light-Rail/blob/main/images/solder_mask.png" width="30%" />
-  <img src="https://github.com/nonik0/Light-Rail/blob/main/images/solder_mask_exclusion.png" width="30%" />
+  <img src="https://github.com/nonik0/Light-Rail/blob/main/images/solder_mask_gap.png" height="200" alt="Showing pin gap distance of ~0.2mm" />
+  <img src="https://github.com/nonik0/Light-Rail/blob/main/images/solder_mask.png" height="200" alt="Showing solder mask bridging gap" />
+  <img src="https://github.com/nonik0/Light-Rail/blob/main/images/solder_mask_exclusion.png" height="200" alt="Showing manually drawn exclusion zone to prevent solder mask bridging" />
 </p>
 
 The reason it took a few rounds to get right, though, was mostly due to my struggles with getting KiCad to actually apply the fix. On my first attempt, I found the “Solder mask minimum web width” setting under the solder mask/paste options in the layout editor. The tooltip said, “Min. dist between two pad areas. Two pads nearer this area will be merged during plotting.” That sounded exactly like what I needed. The default was 0, so I changed it to PCBWay’s requirement for the black solder mask (0.22mm), shot back the Gerbers, and called it a day—without actually checking if it had worked. (It didn’t do anything). For the second attempt, I spent way too long fiddling with settings trying to get KiCad to just fill in the gaps between pads like I expected. Eventually I gave up and manually drew solder mask exclusion zones around the pads—it took about two minutes as opposed to maybe an hour or two struggling to figure out KiCad settings. I sent the updated files back to PCBWay, only to realize later I’d completely forgotten to apply the same fix to the other IC that had the same issue. So: one last revision and my board layout finally passed review.
@@ -126,8 +127,8 @@ That said, the process wasn’t without hiccups. There was a roughly two-week de
 The other issue was that the footprints of all the other buttons on the board did not match the footprint of the actual buttons, oof. But in this case, it was entirely out of my purview or control because the buttons didn’t match their own [datasheet](https://www.ckswitches.com/media/2780/pts526.pdf). PCBWay also pointed this out with a screenshot of the datasheet and photo of the buttons. Thankfully, the mismatch only affected the positioning of the ground pins, so the buttons were still solderable and fully functional.
 
 <p align="center" width="100%">
-  <img src="https://github.com/nonik0/Light-Rail/blob/main/images/button_footprint_datasheet.png" width="30%" />
-  <img src="https://github.com/nonik0/Light-Rail/blob/main/images/button_footprint_actual.jpg" width="30%" />
+  <img src="https://github.com/nonik0/Light-Rail/blob/main/images/button_footprint_datasheet.png" height="200" alt="Datasheet specification for button footprint. Ground pins are symmetrical and aligned with long axis of other pins" />
+  <img src="https://github.com/nonik0/Light-Rail/blob/main/images/button_footprint_actual.jpg" height="200" alt="Photo of actual buttons. Ground pins are mutally offset and aligned with short axist of other pins" />
 </p>
 
 About a week after clearing up the engineering questions, I got an email with annotated photos of an assembled board. PCBWay wanted me to confirm the LED and seven-segment display orientations. The LEDs were good, but I spotted that the seven-segments were upside down. After responding, I got another email with new photos the very next day showing the board with the corrections, and I gave the thumbs-up to assemble the rest. Four days later, the boards shipped! When they arrived, they were nearly perfect! The only asssembly issue was that component C1 was missing on every board. Ironically, however, due to my own design issue, the component C1 ended up being unnecessary.

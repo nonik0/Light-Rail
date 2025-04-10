@@ -20,7 +20,7 @@ It was a unique mental experience I won't soon forget! It's quite hard to descri
 - [TIGER Electronics](https://en.wikipedia.org/wiki/Tiger_Electronics) handheld LCD games
 - Adafruit LED backpacks, especially [this one](https://www.adafruit.com/product/2946)
 
-[TODO: picture of sketch]
+<img src="https://github.com/nonik0/Light-Rail/blob/main/images/sketch.jpg" width="30%" />
 
 OK, so what was the actual idea? It was a train game. The tracks would be represented as lines of LEDs, with silkscreen graphics, and the trains themselves would be contiguous sequences of lit LEDs moving along those tracks—each LED representing a single car in the train. Arranged alongside the tracks would be other LEDs that would represent the platforms. When lit, a platform would indicate cargo ready for pickup, which a passing train could collect from an adjacent track and deliver to another platform elsewhere. The train's cargo could be visualized using bright LEDs for full cars and dim ones for empty cars. The track layout would include forks and crossings, each with a nearby push button to toggle or switch their state.
 
@@ -82,6 +82,8 @@ From there, I leaned on my experience designing wildly impractical Lego train tr
 - Direction of forks along a given track
 - Platform distribution in each track section, relative to length of section
 
+<img src="https://github.com/nonik0/Light-Rail/blob/main/images/lego_track.jpg" width="30%" />
+
 Once the track layout felt right, I moved onto the rest of the components. I put the ATMega near the bottom to keep it close to the power circuit and USB connector. The IS31FL3731 went right in the middle of the board to minimize trace length to the LEDs. At the top, I placed the Kingbright seven-segment displays and AS1115—these would serve as the  game status/score display. Buttons were placed next to each fork and cross to function as toggles, and I added four control buttons at the bottom for gameplay input.
 
 Before I started routing traces, I was pretty sure I’d need a 4-layer board due to trace complexity of routing to all of the LEDs. So, I began by defining the two inner layers as power and ground fills. This effectively created a large parallel-plate capacitor out of the board itself. This would help, at least in theory, with voltage stability across the board, where it would complement the existing ceramic capacitors on the board. (Mental note: at some point I'd like to run the number to get an estimate of the actual capacitance based on board area, copper thickness, and layer spacing—just to see how much it actually contributes.)
@@ -94,6 +96,8 @@ Meanwhile, KiCad had its own set of small annoyances. For instance, I tried savi
 
 Once layout was done, I spent way too much time drawing silkscreen roads and tiny parking spots. For how small they are, I obsessed a bit too much over getting consistent widths and spacing. But I thought turned out great, my artistic skill notwithstanding, so... only minor regrets there. When I showed my mockups to my family, I immediately got comments about how the components looked like buildings. Instant validation.
 
+# Ordering, Manufacturing, Assembly
+
 ## Order Preparation
 Before this project, I had only done one other project that used PCBs of my own design—my Stemmett project—so I had pretty limited experience with the various options for PCB manufacturing and assembly. Luckily, early in the design process, PCBWay reached out to me about a potential collaboration. Since I hadn’t tried their services before, it made the choice of manufacturer really easy! Looking back, I genuinely don’t have any real issues worth mentioning—just good things to say about the whole experience.
 
@@ -103,12 +107,15 @@ I also decided early on to go with full assembly for the boards. This freed me u
 
 The most time-consuming part of the assembly order process was preparing the Bill of Materials (BoM). I did this manually using PCBWay’s BoM sample template as a guide, which was really helpful. KiCad has some ability to generate BoMs, but I decided—at least for my first time—to raw dog it. It was a crash course in datasheet spelunking: making sure I had the exact manufacturer part numbers, learning the myriad SMD package types (and all the weird naming overlaps), and double-checking all the tiny details. I ended up relying heavily on Digikey’s product pages for this, since I found their descriptions and data formatting to be much more consistent than Mouser’s.
 
-## Ordering Process With PCBWay
+## Ordering and Assembly With PCBWay
 Once I finished the BoM, I could submit the order. Unfortunately, I realized soon after hitting submit that I had uploaded the wrong version of the BoM. But to my relief, I was able to get in touch with customer service almost immediately through a live chat window on the order page—ostensibly human as well (though you can never be sure now). They addressed my concerns quickly and let me know I could just email my assigned rep directly with the updated file.
 
 After submitting the order, I spent the next few days working out a few kinks in my layout through some back-and-forth with the review team. The main issue was that the minimum solder mask bridge width for the black solder mask was slightly less forgiving than the standard green. That meant a couple of the ICs on the board had pin gaps too narrow for the solder mask to "bridge" between them. The fix was simple: just remove the solder mask between the pins. I was initially concerned this might increase the risk of solder bridging or shorts, but after a bit of reading, I found that it’s actually not that uncommon—especially when the chips aren’t being hand-soldered. Since I wasn’t planning to assemble the boards myself, I felt comfortable with the change.
 
-[TODO: solder mask picture]
+<p align="center" width="100%">
+  <img src="https://github.com/nonik0/Light-Rail/blob/main/images/solder_mask.png" width="30%" />
+  <img src="https://github.com/nonik0/Light-Rail/blob/main/images/solder_mask_exclusion.png" width="30%" />
+</p>
 
 The reason it took a few rounds to get right, though, was mostly due to my struggles with getting KiCad to actually apply the fix. On my first attempt, I found the “Solder mask minimum web width” setting under the solder mask/paste options in the layout editor. The tooltip said, “Min. dist between two pad areas. Two pads nearer this area will be merged during plotting.” That sounded exactly like what I needed. The default was 0, so I changed it to PCBWay’s requirement for the black solder mask (0.22mm), shot back the Gerbers, and called it a day—without actually checking if it had worked. (It didn’t do anything). For the second attempt, I spent way too long fiddling with settings trying to get KiCad to just fill in the gaps between pads like I expected. Eventually I gave up and manually drew solder mask exclusion zones around the pads—it took about two minutes as opposed to maybe an hour or two struggling to figure out KiCad settings. I sent the updated files back to PCBWay, only to realize later I’d completely forgotten to apply the same fix to the other IC that had the same issue. So: one last revision and my board layout finally passed review.
 
@@ -116,15 +123,18 @@ After resolving the board layout issue, the next step was getting everything squ
 
 That said, the process wasn’t without hiccups. There was a roughly two-week delay where I was unknowingly holding things up. PCBWay had sent some engineering questions via email, but I completely missed them. I had been checking my order daily on their website, where there is a tab for engineering questions, and had not seen any indication. This is definitely my biggest piece of feedback for PCBway if they are reading! Please make sure engineering questions sent via email also show up in the website’s order dashboard! The engineering questions themselves were straightforward. They needed an extra reference image for the LED orientation and clarification that components I had marked "DNA" in the BoM did not need any solder mask (which was frivolous given the DNA marker, right?). A couple of assembly-related issues also cropped up. One was entirely my fault: I made the mistake of swapping out the reset switch in the schematic and BoM, but I had forgotten to also update the footprint so it wouldn't work on the boards that had already been manufactured at that point. Fortunately, the fix was easy! I found a switch that matched the footprint and PCBWay was able to sourced the new part, for the same price, and it only delayed the assembly process one day!
 
-The other issue was that the footprints of all the other buttons on the board did not match the footprint of the actual buttons, oof. But in this case, it was entirely out of my purview or control because the buttons didn’t match their own datasheet. PCBWay also pointed this out with a screenshot of the datasheet and photo of the buttons. Thankfully, the mismatch only affected the positioning of the ground pins, so the buttons were still solderable and fully functional.
+The other issue was that the footprints of all the other buttons on the board did not match the footprint of the actual buttons, oof. But in this case, it was entirely out of my purview or control because the buttons didn’t match their own [datasheet](https://www.ckswitches.com/media/2780/pts526.pdf). PCBWay also pointed this out with a screenshot of the datasheet and photo of the buttons. Thankfully, the mismatch only affected the positioning of the ground pins, so the buttons were still solderable and fully functional.
 
-[TODO: switch and datasheet photo]
+<p align="center" width="100%">
+  <img src="https://github.com/nonik0/Light-Rail/blob/main/images/button_footprint_datasheet.jpg" width="30%" />
+  <img src="https://github.com/nonik0/Light-Rail/blob/main/images/button_footprint_actual.jpg" width="30%" />
+</p>
 
 About a week after clearing up the engineering questions, I got an email with annotated photos of an assembled board. PCBWay wanted me to confirm the LED and seven-segment display orientations. The LEDs were good, but I spotted that the seven-segments were upside down. After responding, I got another email with new photos the very next day showing the board with the corrections, and I gave the thumbs-up to assemble the rest. Four days later, the boards shipped! When they arrived, they were nearly perfect! The only asssembly issue was that component C1 was missing on every board. Ironically, however, due to my own design issue, the component C1 ended up being unnecessary.
 
-## Design Issues
+# Design Issues
 
-### Clock Source
+## Clock Source
 I didn’t select a clock source until fairly late in the design process. I had placed a placeholder symbol and footprint in the schematic and only swapped in a CMOS oscillator near the end, when I was focused on wrapping up the layout. Unfortunately, I only glanced at the pin mapping table in the datasheet—and skipped the rest. That oversight caused the ATmega chips to be completely non-functional when the boards arrived. I had ordered the SKU with default fuses set for an external clock, but due to my mistake, the MCU had no stable clock source. Worse, I couldn’t even get an ISP programmer to recongize the chip so I could read and update the fuses! Thankfully, after a few hours of debugging, I was able to fully diagnose and resolve the issue.
 
 After digging back into the datasheets for the ATmega and the oscillator, and doing a little research into the differences between passive crystals (XTAL) and active oscillators (XO), the issue, and my mistake, become known. When the ATmega fuses are configured for a crystal oscillator, both the XTAL1 and XTAL2 pins are used as part of the whole oscillator circuit. That means XTAL2 is not stable during normal operation. But in my schematic, when I had replaced the crystal with an active oscillator, I had left XTAL2 connected to the oscillator’s tri-state pin, where I unknowly made the assumption that the pin functionality was the same. When I read the oscillator datasheet again, this time thoroughly, I realized that I had left the oscillator's tri-state (minor gripe that it didn't say enable pin) pin on a non-stable input--an invalid state for the oscillator to be in.
@@ -133,14 +143,14 @@ My first workaround was a literal glob of solder between the XO's enable pin and
 
 After that change, I plugged the board into my computer via USB—and boom, the stock DFU bootloader showed up in Windows Device Manager! Good feels.
 
-### USB/USB Bootloader issue
+## USB/USB Bootloader issue
 Once I had the DFU bootloader showing up over USB, I wanted to try using the Caterina bootloader. This is the "standard" USB bootloader found on many Arduino-family ATmega32u4-based boards like the Leonardo, Adafruit Feather 32u4, or SparkFun Pro Micro. Unfortunately, after flashing th Caterina bootloader, things stopped progressing. No variation I tried worked—each time I plugged the board in, Windows reported it as a non-functional USB device.
 
 It was frustrating: the stock DFU bootloader showed up fine, so why not Caterina? After a bunch of head-scratching, I decided to re-flash the stock DFU bootloader to sanity-check my hardware and try flashing via DFU. Weirdly, I had to dig up the original DFU bootloader binary from some GitHub repo—I couldn’t find any official download from Microchip. I supposed I could have also read the flash data from one of the boards that still had it. Thankfully for my sanity, reflashing the DFU bootloader worked. The boards showed up again in Device Manager, and I was subsequently able to easily flash a firmware hex using dfu-programmer and see my code running on the boards!
 
 At that point, I decided to shelve the Caterina investigation and move on. There didn’t seem to be much benefit in spending more time chasing down the issue when I already had a working toolchain for flashing code. My current theory is that the Caterina bootloader negotiates a faster USB bus speed than the DFU bootloader and is hitting some kind of timing issue—possibly due to clock instability or something subtle in my board layout. It could also be a USB signal integrity problem—maybe the impedance isn’t quite right, and tweaking the resistor values on D+/D− could help. Since I don’t know much about USB internals yet, and digging further would require a decent amount of ramp-up time, I was fine leaving it alone for now.
 
-## Conclusion and Next Steps
+# Conclusion and Next Steps
 
 All in all, I’m really happy with how this project turned out. I learned a ton and got exactly the kind of hands-on experience I was hoping for—especially when it came to debugging and coming up with workarounds and fixes for design issues. I’m thankful that the problems I ran into weren’t insurmountable. Some of that was luck, sure, but a lot of it came down to taking my time, reviewing the design carefully, and coming back to it repeatedly with fresh eyes instead of rushing to place the order.
 

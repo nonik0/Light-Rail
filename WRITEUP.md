@@ -20,7 +20,7 @@ It was a unique mental experience I won't soon forget! It's quite hard to descri
 - [TIGER Electronics](https://en.wikipedia.org/wiki/Tiger_Electronics) handheld LCD games
 - Adafruit LED backpacks, especially [this one](https://www.adafruit.com/product/2946)
 
-<img src="https://github.com/nonik0/Light-Rail/blob/main/images/sketch.jpg" width="30%" />
+<img src="https://github.com/nonik0/Light-Rail/blob/main/images/sketch.jpg" width="20%" />
 
 OK, so what was the actual idea? It was a train game. The tracks would be represented as lines of LEDs, with silkscreen graphics, and the trains themselves would be contiguous sequences of lit LEDs moving along those tracks—each LED representing a single car in the train. Arranged alongside the tracks would be other LEDs that would represent the platforms. When lit, a platform would indicate cargo ready for pickup, which a passing train could collect from an adjacent track and deliver to another platform elsewhere. The train's cargo could be visualized using bright LEDs for full cars and dim ones for empty cars. The track layout would include forks and crossings, each with a nearby push button to toggle or switch their state.
 
@@ -126,7 +126,7 @@ That said, the process wasn’t without hiccups. There was a roughly two-week de
 The other issue was that the footprints of all the other buttons on the board did not match the footprint of the actual buttons, oof. But in this case, it was entirely out of my purview or control because the buttons didn’t match their own [datasheet](https://www.ckswitches.com/media/2780/pts526.pdf). PCBWay also pointed this out with a screenshot of the datasheet and photo of the buttons. Thankfully, the mismatch only affected the positioning of the ground pins, so the buttons were still solderable and fully functional.
 
 <p align="center" width="100%">
-  <img src="https://github.com/nonik0/Light-Rail/blob/main/images/button_footprint_datasheet.jpg" width="30%" />
+  <img src="https://github.com/nonik0/Light-Rail/blob/main/images/button_footprint_datasheet.png" width="30%" />
   <img src="https://github.com/nonik0/Light-Rail/blob/main/images/button_footprint_actual.jpg" width="30%" />
 </p>
 

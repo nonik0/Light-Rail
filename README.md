@@ -8,7 +8,7 @@ Light Rail is a minimalist, interactive PCB game that simulates trains traveling
 
 I also want to acknowledge and thank [PCBWay](https://www.pcbway.com/) for their generous support of this project! Even before I had the initial idea, PCBWay had already reached out to me asking if I would like to collaborate on my next project. However, I didn't actually see the email until I started looking into how I wanted to manufacture prototypes for Light Rail. Just getting the email and seeing that others were liking my older projects gave me a big motivation boost to continue with this project, be creative, and make something of my own. Overall, my experience with PCBWay was great and I would definitely recommend checking them out for your own projects!
 
-For more details about my design goals, process, and ordering and production experience with PCBWay, please see my full [project writeup](https://altonimb.us/writeups/light-rail/)!
+For more details about my design goals, process, and ordering and production experience with PCBWay, please see my full [project writeup](https://altonimb.us/light-rail/)!
 
 ### Work Left
 - first working game prototype

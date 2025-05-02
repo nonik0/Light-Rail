@@ -1,1 +1,1 @@
-Moved [here](https://altonimb.us/writeups/light-rail/).
+Moved [here](https://altonimb.us/light-rail/).

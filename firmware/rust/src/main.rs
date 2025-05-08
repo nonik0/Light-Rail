@@ -4,13 +4,9 @@
 #![feature(const_trait_impl)]
 #![feature(panic_info_message)]
 
-use atmega_hal::pac::adc::didr0;
-use location::NUM_PLATFORMS;
-use platform::Platform;
 use core::cell::RefCell;
 use embedded_hal::delay::DelayNs;
 use embedded_hal_bus::i2c;
-use random_trait::Random;
 
 //type Adc = atmega_hal::adc::Adc<CoreClock>;
 //type Channel = atmega_hal::adc::Channel;
@@ -19,12 +15,13 @@ type Delay = atmega_hal::delay::Delay<CoreClock>;
 type I2c = atmega_hal::i2c::I2c<CoreClock>;
 
 mod common;
+mod input;
 mod game;
 mod location;
 mod panic;
 mod platform;
 mod random;
-mod tone; // TODO: contribute tone library/impl for avr-hal
+mod tone;
 mod train;
 
 const BASE_DELAY: u32 = 10;
@@ -48,7 +45,7 @@ fn main() -> ! {
     let i2c_ref_cell = RefCell::new(i2c);
 
     // TODO: potentially create abstraction to simplify usage
-    let board_buttons = [
+    let button_pins = [
         pins.pb6.into_pull_up_input().downgrade(),
         pins.pb7.into_pull_up_input().downgrade(),
         pins.pc6.into_pull_up_input().downgrade(),
@@ -62,6 +59,7 @@ fn main() -> ! {
         pins.pf0.into_pull_up_input().downgrade(),
         pins.pe6.into_pull_up_input().downgrade(),
     ];
+    let board_buttons = input::Buttons::new(button_pins);
 
     let board_buzzer = tone::Timer3Tone::new(dp.TC3, pins.pb4.into_output().downgrade());
 
@@ -82,7 +80,7 @@ fn main() -> ! {
     //     pins.pf7.into_analog_input(&mut adc).into_channel(),
     // ];
     // let board_entropy = Adc::new(dp.ADC, Default::default());
-    let board_entropy = random::Rng::seed(0x12345678);
+    random::Rng::seed(0x12345678);
 
     let mut board_leds =
         is31fl3731::IS31FL3731::new(i2c::RefCellDevice::new(&i2c_ref_cell), LEDS_I2C_ADDR);
@@ -92,7 +90,6 @@ fn main() -> ! {
         board_buttons,
         board_buzzer,
         board_digits,
-        board_entropy,
         board_leds,
     );
     game.restart();

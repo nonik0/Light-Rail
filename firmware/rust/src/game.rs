@@ -3,18 +3,18 @@
 #![allow(unused_variables)]
 
 use as1115::AS1115;
-use embedded_hal::{digital::InputPin, i2c::I2c};
+use embedded_hal::i2c::I2c;
 use heapless::Vec;
 use is31fl3731::IS31FL3731;
 
 use crate::{
     common::*,
+    input::{Buttons, InputEvent},
     location::{Location, NUM_PLATFORMS},
     panic::set_panic_msg,
     platform::Platform,
     tone::Timer3Tone,
     train::Train,
-    NUM_BUTTONS,
 };
 
 #[derive(Copy, Clone)]
@@ -29,16 +29,14 @@ enum GameMode {
 const MAX_TRAINS: usize = 5;
 const MAX_LOC_UPDATES: usize = crate::train::MAX_UPDATES * MAX_TRAINS + NUM_PLATFORMS;
 
-pub struct Game<I2C, ButtonPin>
+pub struct Game<I2C>
 where
     I2C: I2c,
-    ButtonPin: InputPin,
 {
     // board components
-    board_buttons: [ButtonPin; NUM_BUTTONS],
+    board_buttons: Buttons,
     board_buzzer: Timer3Tone,
     board_digits: AS1115<I2C>,
-    board_entropy: crate::random::Rng,
     board_leds: IS31FL3731<I2C>,
 
     // game state
@@ -51,17 +49,15 @@ where
     trains: heapless::Vec<Train, MAX_TRAINS>,
 }
 
-impl<I2C, ButtonPin> Game<I2C, ButtonPin>
+impl<I2C> Game<I2C>
 where
     I2C: I2c,
-    ButtonPin: InputPin,
 {
     // do we need singleton enforcement with ownership?
     pub fn new(
-        board_buttons: [ButtonPin; NUM_BUTTONS],
+        board_buttons: Buttons,
         board_buzzer: Timer3Tone,
         board_digits: AS1115<I2C>,
-        board_entropy: crate::random::Rng,
         board_leds: IS31FL3731<I2C>,
     ) -> Self {
         set_panic_msg(b"100");
@@ -69,13 +65,12 @@ where
             board_buttons,
             board_buzzer,
             board_digits,
-            board_entropy,
             board_leds,
             mode: GameMode::Animation,
             is_over: false,
             score: 0,
             trains: Vec::<Train, MAX_TRAINS>::new(),
-            platforms: Platform::take(board_entropy),
+            platforms: Platform::take(),
         }
     }
 
@@ -92,12 +87,12 @@ where
         self.board_leds.clear_blocking().unwrap();
         self.trains.clear();
 
-        let mut train = Train::new(Location::new(69), Cargo::Full, self.board_entropy);
+        let mut train = Train::new(Location::new(69), Cargo::Full);
         train.add_car(Cargo::Empty);
         train.add_car(Cargo::Empty);
         self.trains.push(train).unwrap();
 
-        let mut train2 = Train::new(Location::new(90), Cargo::Full, self.board_entropy);
+        let mut train2 = Train::new(Location::new(90), Cargo::Full);
         train2.add_car(Cargo::Empty);
         train2.add_car(Cargo::Full);
         train2.add_car(Cargo::Empty);
@@ -105,7 +100,20 @@ where
     }
 
     pub fn tick(&mut self) {
-        self.read_buttons();
+        let event = self.board_buttons.update();
+
+        match event {
+            Some(InputEvent::TrackButtonPressed(index)) => {
+                self.board_digits
+                    .display_number((index + 1) as u16)
+                    .unwrap();
+                self.board_buzzer.tone((index + 1) as u16 * 1000, 100);
+            }
+            Some(InputEvent::TrackButtonReleased(index)) => {}
+            Some(InputEvent::DirectionButtonPressed(direction)) => {}
+            Some(InputEvent::DirectionButtonReleased(_)) => {}
+            _ => {}
+        }
 
         let mut all_updates = Vec::<EntityUpdate, MAX_LOC_UPDATES>::new();
 
@@ -136,15 +144,6 @@ where
                     loc_update.contents.to_pwm_value(),
                 )
                 .unwrap();
-        }
-    }
-
-    fn read_buttons(&mut self) {
-        for (i, button) in self.board_buttons.iter_mut().enumerate() {
-            if button.is_low().unwrap() {
-                self.board_digits.display_number((i + 1) as u16).unwrap();
-                self.board_buzzer.tone((i + 1) as u16 * 1000, 100);
-            }
         }
     }
 }

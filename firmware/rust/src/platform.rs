@@ -10,23 +10,21 @@ use crate::{
 };
 
 pub struct Platform {
-    entropy: Rng,
     location: Location,
     track_location: Location,
     cargo: Cargo,
 }
 
 impl Platform {
-    fn new(location: Location, track_location: Location, entropy: Rng) -> Self {
+    fn new(location: Location, track_location: Location) -> Self {
         Self {
-            entropy,
             location,
             track_location,
             cargo: Cargo::Empty,
         }
     }
 
-    pub fn take(entropy: Rng) -> [Platform; NUM_PLATFORMS] {
+    pub fn take() -> [Platform; NUM_PLATFORMS] {
         static mut TAKEN: bool = false;
         unsafe {
             if TAKEN {
@@ -37,14 +35,7 @@ impl Platform {
 
         let platforms = Location::platform_locs().map(|location| {
             let track_location = location.adjacent_track();
-            
-            // TODO: very hacky
-            let mut new_entropy = entropy.clone();
-            for _ in 0..location.index() {
-                new_entropy.get_u16();
-            }
-
-            Platform::new(location, track_location, new_entropy)
+            Platform::new(location, track_location)
         });
         platforms
     }
@@ -61,7 +52,7 @@ impl Platform {
                 }
             }
         } else {
-            if self.entropy.get_u16() <= 100 {
+            if Rng::default().get_u16() <= 100 {
                 self.cargo = Cargo::Full;
                 return Some(EntityUpdate::new(
                     self.location,

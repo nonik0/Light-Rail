@@ -27,19 +27,17 @@ pub struct Car {
 #[derive(Debug)]
 pub struct Train {
     direction: Direction,
-    entropy: Rng,
     speed: u8,
     speed_counter: u8,
     cars: Vec<Car, MAX_CARS>,
 }
 
 impl Train {
-    pub fn new(loc: Location, cargo: Cargo, entropy: Rng) -> Self {
+    pub fn new(loc: Location, cargo: Cargo) -> Self {
         let mut cars = Vec::new();
         cars.push(Car { loc, cargo }).unwrap();
         Self {
             direction: Direction::Anode, // TODO: random?
-            entropy,
             speed: DEFAULT_SPEED,
             speed_counter: 0,
             cars,
@@ -54,7 +52,7 @@ impl Train {
         let caboose_loc = self.cars[self.cars.len() - 1].loc;
         let inv_caboose_dir = if self.cars.len() > 1 {
             let next_car_loc = self.cars[self.cars.len() - 2].loc;
-            if caboose_loc.next(Direction::Anode, &mut self.entropy).0 == next_car_loc {
+            if caboose_loc.next(Direction::Anode).0 == next_car_loc {
                 Direction::Cathode
             } else {
                 Direction::Anode
@@ -62,7 +60,7 @@ impl Train {
         } else {
             self.direction
         };
-        let loc = caboose_loc.next(inv_caboose_dir, &mut self.entropy).0;
+        let loc = caboose_loc.next(inv_caboose_dir).0;
 
         self.cars.push(Car { loc, cargo }).unwrap();
 
@@ -90,12 +88,12 @@ impl Train {
 
         let mut loc_updates = Vec::new();
 
-        // // randomly add or remove car
-        if self.cars.len() < MAX_CARS && self.entropy.get_u8() == 0 {
+        // randomly add or remove car
+        if self.cars.len() < MAX_CARS && Rng::default().get_u8() == 0 {
             let loc_update = self.add_car(Cargo::Empty).unwrap(); // just checked for space
             loc_updates.push(loc_update).unwrap();
         }
-        else if self.cars.len() > 1 && self.entropy.get_u8() == 0 {
+        else if self.cars.len() > 1 && Rng::default().get_u8() == 0 {
             let loc_update = self.remove_car().unwrap(); // just checked for space
             loc_updates.push(loc_update).unwrap();
         }
@@ -115,7 +113,7 @@ impl Train {
 
         // advance front car to next location, adding final location update
         (self.cars.first_mut().unwrap().loc, self.direction) =
-            self.cars.first().unwrap().loc.next(self.direction, &mut self.entropy);
+            self.cars.first().unwrap().loc.next(self.direction);
         let loc_update = EntityUpdate::new(
             self.cars.first().unwrap().loc,
             Contents::Train(self.cars.first().unwrap().cargo),

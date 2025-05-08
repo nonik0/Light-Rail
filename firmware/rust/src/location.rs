@@ -30,7 +30,7 @@ impl Location {
         self.index
     }
 
-    pub fn next(&self, direction: Direction, rng: &mut Rng) -> (Location, Direction) {
+    pub fn next(&self, direction: Direction) -> (Location, Direction) {
         let loc_data = self.location_data();
 
         if !loc_data.is_track() {
@@ -47,7 +47,7 @@ impl Location {
         };
 
         // TODO: randomly choose fork path for now
-        if next_index_2 != NO_DATA && rng.get_bool() {
+        if next_index_2 != NO_DATA && Rng::default().get_bool() {
             next_index = next_index_2;
         }
 
@@ -99,7 +99,7 @@ impl Location {
 
 /// Track/platform graph data is stored in a packed array of LocationData structs.
 /// LocationData is built at compile time from the packed u32 array from C impl.
-/// Straight tracks have two neighbors, forks have three, ands have four.
+/// Straight tracks have two neighbors, forks have three, and crosses have four.
 #[repr(C, packed)]
 #[derive(Clone, Copy, Debug, PartialEq)]
 struct LocationData {

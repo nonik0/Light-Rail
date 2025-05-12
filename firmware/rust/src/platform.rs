@@ -1,11 +1,12 @@
+
 use random_trait::Random;
 
 use crate::{
     common::*,
     location::{Location, NUM_PLATFORMS},
-    panic::set_panic_msg,
-    panic_to_digits,
-    random::Rng,
+    panic::trace,
+    panic_with_msg,
+    random::Rand,
     train::Train,
 };
 
@@ -28,7 +29,7 @@ impl Platform {
         static mut TAKEN: bool = false;
         unsafe {
             if TAKEN {
-                panic_to_digits!("take() called more than once");
+                panic_with_msg!("take() called more than once");
             }
             TAKEN = true;
         }
@@ -41,6 +42,7 @@ impl Platform {
     }
 
     pub fn tick(&mut self, trains: &[Train]) -> Option<EntityUpdate> {
+        trace(b"platform tick");
         if self.cargo == Cargo::Full {
             for train in trains {
                 if train.front() == self.track_location {
@@ -52,7 +54,7 @@ impl Platform {
                 }
             }
         } else {
-            if Rng::default().get_u16() <= 100 {
+            if Rand::default().get_u16() <= 100 {
                 self.cargo = Cargo::Full;
                 return Some(EntityUpdate::new(
                     self.location,

@@ -8,7 +8,8 @@ use random_trait::Random;
 use crate::{
     common::*,
     location::{Direction, Location},
-    random::Rng,
+    panic::trace,
+    random::Rand,
 };
 
 pub const MAX_CARS: usize = 5;
@@ -89,14 +90,14 @@ impl Train {
         let mut loc_updates = Vec::new();
 
         // randomly add or remove car
-        if self.cars.len() < MAX_CARS && Rng::default().get_u8() == 0 {
-            let loc_update = self.add_car(Cargo::Empty).unwrap(); // just checked for space
-            loc_updates.push(loc_update).unwrap();
-        }
-        else if self.cars.len() > 1 && Rng::default().get_u8() == 0 {
-            let loc_update = self.remove_car().unwrap(); // just checked for space
-            loc_updates.push(loc_update).unwrap();
-        }
+        // if self.cars.len() < MAX_CARS && Rand::default().get_u8() == 0 {
+        //     let loc_update = self.add_car(Cargo::Empty).unwrap(); // just checked for space
+        //     loc_updates.push(loc_update).unwrap();
+        // }
+        // else if self.cars.len() > 1 && Rand::default().get_u8() == 0 {
+        //     let loc_update = self.remove_car().unwrap(); // just checked for space
+        //     loc_updates.push(loc_update).unwrap();
+        // }
 
         // move train from the rear, keeping track of location updates
         let last_loc_update = EntityUpdate::new(self.cars.last().unwrap().loc, Contents::Empty);

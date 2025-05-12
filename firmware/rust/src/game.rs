@@ -7,11 +7,13 @@ use embedded_hal::i2c::I2c;
 use heapless::Vec;
 use is31fl3731::IS31FL3731;
 
+use embedded_hal::delay::DelayNs;
+
 use crate::{
     common::*,
     input::{Buttons, InputEvent},
     location::{Location, NUM_PLATFORMS},
-    panic::set_panic_msg,
+    panic::trace,
     platform::Platform,
     tone::Timer3Tone,
     train::Train,
@@ -36,7 +38,7 @@ where
     // board components
     board_buttons: Buttons,
     board_buzzer: Timer3Tone,
-    board_digits: AS1115<I2C>,
+    pub board_digits: AS1115<I2C>,
     board_leds: IS31FL3731<I2C>,
 
     // game state
@@ -60,7 +62,7 @@ where
         board_digits: AS1115<I2C>,
         board_leds: IS31FL3731<I2C>,
     ) -> Self {
-        set_panic_msg(b"100");
+        trace(b"100");
         Self {
             board_buttons,
             board_buzzer,
@@ -100,44 +102,47 @@ where
     }
 
     pub fn tick(&mut self) {
-        let event = self.board_buttons.update();
+        //let event = self.board_buttons.update();
 
-        match event {
-            Some(InputEvent::TrackButtonPressed(index)) => {
-                self.board_digits
-                    .display_number((index + 1) as u16)
-                    .unwrap();
-                self.board_buzzer.tone((index + 1) as u16 * 1000, 100);
-            }
-            Some(InputEvent::TrackButtonReleased(index)) => {}
-            Some(InputEvent::DirectionButtonPressed(direction)) => {}
-            Some(InputEvent::DirectionButtonReleased(_)) => {}
-            _ => {}
-        }
+        // match event {
+        //     Some(InputEvent::TrackButtonPressed(index)) => {
+        //         self.board_digits
+        //             .display_number((index + 1) as u16)
+        //             .unwrap();
+        //         self.board_buzzer.tone((index + 1) as u16 * 1000, 100);
+        //     }
+        //     Some(InputEvent::TrackButtonReleased(index)) => {}
+        //     Some(InputEvent::DirectionButtonPressed(direction)) => {}
+        //     Some(InputEvent::DirectionButtonReleased(_)) => {}
+        //     _ => {}
+        // }
 
         let mut all_updates = Vec::<EntityUpdate, MAX_LOC_UPDATES>::new();
 
         for train in self.trains.iter_mut() {
+            trace(b"train");
             if let Some(loc_updates) = train.advance() {
                 all_updates.extend(loc_updates.into_iter());
             }
         }
 
-        for platform in self.platforms.iter_mut() {
-            if let Some(loc_update) = platform.tick(&self.trains) {
-                // update score each time a platform is cleared
-                match loc_update.contents {
-                    Contents::Platform(Cargo::Empty) => {
-                        self.score += 1;
-                        self.board_digits.display_number(self.score).unwrap();
-                    }
-                    _ => {}
-                }
-                all_updates.push(loc_update).unwrap();
-            }
-        }
+        // for platform in self.platforms.iter_mut() {
+        //     trace(b"platform");
+        //     if let Some(loc_update) = platform.tick(&self.trains) {
+        //         // update score each time a platform is cleared
+        //         match loc_update.contents {
+        //             Contents::Platform(Cargo::Empty) => {
+        //                 self.score += 1;
+        //                 self.board_digits.display_number(self.score).unwrap();
+        //             }
+        //             _ => {}
+        //         }
+        //         all_updates.push(loc_update).unwrap();
+        //     }
+        // }
 
         for loc_update in all_updates.iter() {
+            trace(b"update");
             self.board_leds
                 .pixel_blocking(
                     loc_update.location.index(),

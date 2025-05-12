@@ -3,20 +3,23 @@
 #![feature(abi_avr_interrupt)]
 #![feature(const_trait_impl)]
 #![feature(panic_info_message)]
+#![allow(unused)]
 
 use core::cell::RefCell;
+use atmega_hal::adc;
 use embedded_hal::delay::DelayNs;
 use embedded_hal_bus::i2c;
+use random_trait::Random;
 
-//type Adc = atmega_hal::adc::Adc<CoreClock>;
-//type Channel = atmega_hal::adc::Channel;
+type Adc = atmega_hal::adc::Adc<CoreClock>;
+type Channel = atmega_hal::adc::Channel;
 type CoreClock = atmega_hal::clock::MHz8;
 type Delay = atmega_hal::delay::Delay<CoreClock>;
 type I2c = atmega_hal::i2c::I2c<CoreClock>;
 
 mod common;
-mod input;
 mod game;
+mod input;
 mod location;
 mod panic;
 mod platform;
@@ -69,29 +72,22 @@ fn main() -> ! {
     board_digits.clear().unwrap();
     board_digits.display_ascii(b"OHI").unwrap();
 
-    // TODO: which pins are not ADC?
-    // let mut board_floating_pins = [
-    //     pins.pb0.into_analog_input(&mut adc).into_channel(),
-    //     pins.pd2.into_analog_input(&mut adc).into_channel(),
-    //     pins.pd3.into_analog_input(&mut adc).into_channel(),
-    //     pins.pd5.into_analog_input(&mut adc).into_channel(),
-    //     pins.pf5.into_analog_input(&mut adc).into_channel(),
-    //     pins.pf6.into_analog_input(&mut adc).into_channel(),
-    //     pins.pf7.into_analog_input(&mut adc).into_channel(),
-    // ];
-    // let board_entropy = Adc::new(dp.ADC, Default::default());
-    random::Rng::seed(0x12345678);
+    // generate random seed from ADC temperature sensor
+    let mut adc = Adc::new(dp.ADC, Default::default());
+    let mut seed: u32 = 0;
+    for i in 0..8 {
+        // using 4 LSB bits x 8 readings for 32 bit seed
+        let reading = adc.read_blocking(&adc::channel::Temperature);
+        let lsb = (reading & 0xF) as u32;
+        seed |= lsb << (i * 4);
+    }
+    random::Rand::seed(seed);
 
     let mut board_leds =
         is31fl3731::IS31FL3731::new(i2c::RefCellDevice::new(&i2c_ref_cell), LEDS_I2C_ADDR);
     board_leds.setup_blocking(&mut delay).unwrap();
 
-    let mut game = game::Game::new(
-        board_buttons,
-        board_buzzer,
-        board_digits,
-        board_leds,
-    );
+    let mut game = game::Game::new(board_buttons, board_buzzer, board_digits, board_leds);
     game.restart();
 
     loop {

@@ -4,7 +4,7 @@ use random_trait::Random;
 
 // static struct holding state of the RNG
 #[derive(Clone, Copy, Debug)]
-struct RngState {
+pub struct RngState {
     value: u32,
     index: usize,
 }
@@ -12,10 +12,10 @@ struct RngState {
 static RNG_STATE: Mutex<Cell<RngState>> = Mutex::new(Cell::new(RngState { value: 0, index: 0 }));
 
 // zero-size type in front of the static state
-#[derive(Debug, Default)]
-pub struct Rng;
+#[derive(Default)]
+pub struct Rand;
 
-impl Rng {
+impl Rand {
     pub fn seed(seed: u32) {
         avr_device::interrupt::free(|cs| {
             RNG_STATE.borrow(cs).set(RngState {
@@ -26,7 +26,7 @@ impl Rng {
     }
 }
 
-impl Random for Rng {
+impl Random for Rand {
     type Error = ();
     fn try_fill_bytes(&mut self, buf: &mut [u8]) -> Result<(), Self::Error> {
         avr_device::interrupt::free(|cs| {
@@ -51,7 +51,3 @@ impl Random for Rng {
         Ok(())
     }
 }
-
-
-
-

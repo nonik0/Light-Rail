@@ -30,7 +30,7 @@ rev = "61cb477a398b53b0cbe6078fa285f4f008496da2"
 
 [dependencies.atmega-hal]
 git = "https://github.com/rahix/avr-hal"
-rev = "d02ab21d17f06baadb5c0f2abf7cf3ea9c0a35b3"
+rev = "fafaf587a32a4500239fd073f89d1b9c36b48092"
 features = ["atmega32u4"]
 
 [dependencies.random-trait]

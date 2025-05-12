@@ -1,3 +1,5 @@
+
+#![allow(unused)]
 use atmega_hal::port::{
     mode::{Input, PullUp},
     Dynamic, Pin,

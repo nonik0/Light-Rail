@@ -1,13 +1,12 @@
-
 use core::ptr::addr_of;
 use embedded_hal::delay::DelayNs;
 
 use crate::{Delay, I2c, NUM_DIGITS, DIGITS_I2C_ADDR, DIGITS_INTENSITY};
 
 #[macro_export]
-macro_rules! panic_to_digits {
+macro_rules! panic_with_msg {
     ($msg:expr) => {{
-        set_panic_msg($msg.as_bytes());
+        crate::panic::trace($msg.as_bytes());
         panic!();
     }};
 }
@@ -15,15 +14,16 @@ macro_rules! panic_to_digits {
 // temporary hack for debugging due to compilation issues with panic handler
 // using as both "breadcrumbs" and panic message
 // TODO: no scrolling for now, but if it would help debugging
-const PANIC_MSG_MAX_LEN: usize = 20;
+const PANIC_MSG_MAX_LEN: usize = 50;
 static mut PANIC_MSG: [u8; PANIC_MSG_MAX_LEN] = [0; PANIC_MSG_MAX_LEN];
-pub fn set_panic_msg(code: &[u8]) {
+pub fn trace(code: &[u8]) {
     // this unsafe is safe because we are only calling it from the main function
     // so don't call it from interrupt handlers (or use mutex)
     unsafe {
-        for (i, &byte) in code.iter().take(PANIC_MSG_MAX_LEN).enumerate() {
+        for (i, &byte) in code.iter().take(PANIC_MSG_MAX_LEN - 1).enumerate() {
             PANIC_MSG[i] = byte;
         }
+        PANIC_MSG[code.len().min(PANIC_MSG_MAX_LEN - 1)] = 0; // Add zero byte at the end
     }
 }
 

@@ -1,8 +1,12 @@
+#TODO
+
 [build]
 target = "avr-specs/avr-atmega32u4.json"
+#target = "avr-specs/avr-atmega328p.json"
 
 [target.'cfg(target_arch = "avr")']
 runner = "avrdude -p m32u4 -c usbasp -e -U"
+#runner = "avrdude -P COM6 -p m328p -c arduino -e -U"
 
 [unstable]
 build-std = ["core"]

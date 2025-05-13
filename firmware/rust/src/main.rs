@@ -9,11 +9,15 @@ use core::cell::RefCell;
 use atmega_hal::adc;
 use embedded_hal::delay::DelayNs;
 use embedded_hal_bus::i2c;
+use random::Rand;
 use random_trait::Random;
 
 type Adc = atmega_hal::adc::Adc<CoreClock>;
 type Channel = atmega_hal::adc::Channel;
+#[cfg(feature = "atmega32u4")]
 type CoreClock = atmega_hal::clock::MHz8;
+#[cfg(feature = "atmega328p")]
+type CoreClock = atmega_hal::clock::MHz16;
 type Delay = atmega_hal::delay::Delay<CoreClock>;
 type I2c = atmega_hal::i2c::I2c<CoreClock>;
 
@@ -24,7 +28,7 @@ mod location;
 mod panic;
 mod platform;
 mod random;
-mod tone;
+//mod tone;
 mod train;
 
 const BASE_DELAY: u32 = 10;
@@ -41,38 +45,55 @@ fn main() -> ! {
     let mut delay = Delay::new();
     let i2c = I2c::new(
         dp.TWI,
+        #[cfg(feature = "atmega32u4")]
         pins.pd1.into_pull_up_input(),
+        #[cfg(feature = "atmega328p")]
+        pins.pc4.into_pull_up_input(),
+        #[cfg(feature = "atmega32u4")]
         pins.pd0.into_pull_up_input(),
+        #[cfg(feature = "atmega328p")]
+        pins.pc5.into_pull_up_input(),
         400_000,
     );
     let i2c_ref_cell = RefCell::new(i2c);
 
-    // TODO: potentially create abstraction to simplify usage
-    let button_pins = [
-        pins.pb6.into_pull_up_input().downgrade(),
-        pins.pb7.into_pull_up_input().downgrade(),
-        pins.pc6.into_pull_up_input().downgrade(),
-        pins.pc7.into_pull_up_input().downgrade(),
-        pins.pd4.into_pull_up_input().downgrade(),
-        pins.pe2.into_pull_up_input().downgrade(),
-        pins.pd6.into_pull_up_input().downgrade(),
-        pins.pd7.into_pull_up_input().downgrade(),
-        pins.pf4.into_pull_up_input().downgrade(),
-        pins.pf1.into_pull_up_input().downgrade(),
-        pins.pf0.into_pull_up_input().downgrade(),
-        pins.pe6.into_pull_up_input().downgrade(),
-    ];
-    let board_buttons = input::Buttons::new(button_pins);
 
-    let board_buzzer = tone::Timer3Tone::new(dp.TC3, pins.pb4.into_output().downgrade());
+    // TODO: potentially create abstraction to simplify usage
+    // let button_pins = [
+    //     pins.pb6.into_pull_up_input().downgrade(),
+    //     pins.pb7.into_pull_up_input().downgrade(),
+    //     pins.pc6.into_pull_up_input().downgrade(),
+    //     pins.pc7.into_pull_up_input().downgrade(),
+    //     pins.pd4.into_pull_up_input().downgrade(),
+    //     pins.pe2.into_pull_up_input().downgrade(),
+    //     pins.pd6.into_pull_up_input().downgrade(),
+    //     pins.pd7.into_pull_up_input().downgrade(),
+    //     pins.pf4.into_pull_up_input().downgrade(),
+    //     pins.pf1.into_pull_up_input().downgrade(),
+    //     pins.pf0.into_pull_up_input().downgrade(),
+    //     pins.pe6.into_pull_up_input().downgrade(),
+    // ];
+    // let board_buttons = input::Buttons::new(button_pins);
+
+    //let board_buzzer = tone::Timer3Tone::new(dp.TC3, pins.pb4.into_output().downgrade());
 
     let mut board_digits =
         as1115::AS1115::new(i2c::RefCellDevice::new(&i2c_ref_cell), DIGITS_I2C_ADDR);
     board_digits.init(NUM_DIGITS, DIGITS_INTENSITY).unwrap();
     board_digits.clear().unwrap();
-    board_digits.display_ascii(b"OHI").unwrap();
+    
+    let mut board_leds =
+    is31fl3731::IS31FL3731::new(i2c::RefCellDevice::new(&i2c_ref_cell), LEDS_I2C_ADDR);
+    board_leds.setup_blocking(&mut delay).unwrap();
+    board_leds.clear_blocking().unwrap();
+    
 
     // generate random seed from ADC temperature sensor
+    panic::trace(b"seed");
+    board_digits.display_ascii(b"see").unwrap();
+    delay.delay_ms(500);
+    board_digits.display_ascii(b"dng").unwrap();
+    delay.delay_ms(500);
     let mut adc = Adc::new(dp.ADC, Default::default());
     let mut seed: u32 = 0;
     for i in 0..8 {
@@ -82,12 +103,13 @@ fn main() -> ! {
         seed |= lsb << (i * 4);
     }
     random::Rand::seed(seed);
+    board_digits.display_number(Rand::default().get_u8() as u16).unwrap();
+    delay.delay_ms(1000);
 
-    let mut board_leds =
-        is31fl3731::IS31FL3731::new(i2c::RefCellDevice::new(&i2c_ref_cell), LEDS_I2C_ADDR);
-    board_leds.setup_blocking(&mut delay).unwrap();
-
-    let mut game = game::Game::new(board_buttons, board_buzzer, board_digits, board_leds);
+    
+    panic::trace(b"game");
+    //let mut game = game::Game::new(board_buttons, board_digits, board_leds);
+    let mut game = game::Game::new(board_digits, board_leds);
     game.restart();
 
     loop {

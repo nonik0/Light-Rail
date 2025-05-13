@@ -48,10 +48,9 @@ impl Location {
         };
 
         // TODO: randomly choose fork path for now
-        trace(b"next random");
-        // if next_index_2 != NO_DATA && Rand::default().get_bool() {
-        //     next_index = next_index_2;
-        // }
+        if next_index_2 != NO_DATA && Rand::default().get_bool() {
+            next_index = next_index_2;
+        }
 
         // exit from next_loc from opposite direction of cur_loc
         trace(b"next loc data");

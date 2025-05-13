@@ -1,4 +1,5 @@
 use core::ptr::addr_of;
+use atmega_hal::delay;
 use embedded_hal::delay::DelayNs;
 
 use crate::{Delay, I2c, NUM_DIGITS, DIGITS_I2C_ADDR, DIGITS_INTENSITY};
@@ -14,7 +15,7 @@ macro_rules! panic_with_msg {
 // temporary hack for debugging due to compilation issues with panic handler
 // using as both "breadcrumbs" and panic message
 // TODO: no scrolling for now, but if it would help debugging
-const PANIC_MSG_MAX_LEN: usize = 50;
+const PANIC_MSG_MAX_LEN: usize = 32; // Reduce size to save memory
 static mut PANIC_MSG: [u8; PANIC_MSG_MAX_LEN] = [0; PANIC_MSG_MAX_LEN];
 pub fn trace(code: &[u8]) {
     // this unsafe is safe because we are only calling it from the main function
@@ -37,17 +38,28 @@ fn panic(_: &core::panic::PanicInfo) -> ! {
     let mut delay = Delay::new();
     let i2c = I2c::new(
         dp.TWI,
+        #[cfg(feature = "atmega32u4")]
         pins.pd1.into_pull_up_input(),
+        #[cfg(feature = "atmega328p")]
+        pins.pc4.into_pull_up_input(),
+        #[cfg(feature = "atmega32u4")]
         pins.pd0.into_pull_up_input(),
+        #[cfg(feature = "atmega328p")]
+        pins.pc5.into_pull_up_input(),
         400_000,
     );
     let mut board_digits = as1115::AS1115::new(i2c, DIGITS_I2C_ADDR);
     board_digits.init(NUM_DIGITS, DIGITS_INTENSITY).unwrap();
 
     let panic_msg_len = unsafe { PANIC_MSG.iter().position(|&x| x == 0).unwrap_or(PANIC_MSG_MAX_LEN) };
-    let mut padded_msg = [b' '; PANIC_MSG_MAX_LEN + NUM_DIGITS as usize];
-    let panic_msg_slice = unsafe { core::slice::from_raw_parts(addr_of!(PANIC_MSG) as *const u8, panic_msg_len) };
-    padded_msg[NUM_DIGITS as usize..NUM_DIGITS as usize + panic_msg_len].copy_from_slice(panic_msg_slice);
+
+    // Allocate `padded_msg` dynamically to reduce stack usage
+    let mut padded_msg = heapless::Vec::<u8, { PANIC_MSG_MAX_LEN + NUM_DIGITS as usize }>::new();
+    padded_msg.extend_from_slice(&[b' '; NUM_DIGITS as usize]).unwrap();
+    unsafe {
+        padded_msg.extend_from_slice(&PANIC_MSG[..panic_msg_len]).unwrap();
+    }
+    padded_msg.extend_from_slice(&[b' '; NUM_DIGITS as usize]).unwrap();
 
     let mut offset: usize = 0;
     loop {
@@ -55,5 +67,8 @@ fn panic(_: &core::panic::PanicInfo) -> ! {
         board_digits.display_ascii(display_slice).unwrap();
         offset = (offset + 1) % (panic_msg_len + NUM_DIGITS as usize);
         delay.delay_ms(300);
+    }
+    loop {
+        delay.delay_ms(1000);
     }
 }

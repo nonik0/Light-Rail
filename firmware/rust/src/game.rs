@@ -8,6 +8,7 @@ use heapless::Vec;
 use is31fl3731::IS31FL3731;
 
 use embedded_hal::delay::DelayNs;
+use random_trait::Random;
 
 use crate::{
     common::*,
@@ -15,7 +16,8 @@ use crate::{
     location::{Location, NUM_PLATFORMS},
     panic::trace,
     platform::Platform,
-    tone::Timer3Tone,
+    Rand,
+    //tone::Timer3Tone,
     train::Train,
 };
 
@@ -36,8 +38,8 @@ where
     I2C: I2c,
 {
     // board components
-    board_buttons: Buttons,
-    board_buzzer: Timer3Tone,
+    //board_buttons: Buttons,
+    //board_buzzer: Timer3Tone,
     pub board_digits: AS1115<I2C>,
     board_leds: IS31FL3731<I2C>,
 
@@ -57,15 +59,14 @@ where
 {
     // do we need singleton enforcement with ownership?
     pub fn new(
-        board_buttons: Buttons,
-        board_buzzer: Timer3Tone,
+        //board_buttons: Buttons,
+        //board_buzzer: Timer3Tone,
         board_digits: AS1115<I2C>,
         board_leds: IS31FL3731<I2C>,
     ) -> Self {
-        trace(b"100");
         Self {
-            board_buttons,
-            board_buzzer,
+            //board_buttons,
+            //board_buzzer,
             board_digits,
             board_leds,
             mode: GameMode::Animation,
@@ -99,9 +100,16 @@ where
         train2.add_car(Cargo::Full);
         train2.add_car(Cargo::Empty);
         self.trains.push(train2).unwrap();
+
+        // trace(b"restart");
+        // self.board_digits.display_number(Rand::default().get_u8() as u16).unwrap();
+        // crate::Delay::new().delay_ms(1000);
     }
 
     pub fn tick(&mut self) {
+        trace(b"tick");
+        // self.board_digits.display_number(Rand::default().get_u8() as u16).unwrap();
+        // crate::Delay::new().delay_ms(1000);
         //let event = self.board_buttons.update();
 
         // match event {
@@ -126,20 +134,20 @@ where
             }
         }
 
-        // for platform in self.platforms.iter_mut() {
-        //     trace(b"platform");
-        //     if let Some(loc_update) = platform.tick(&self.trains) {
-        //         // update score each time a platform is cleared
-        //         match loc_update.contents {
-        //             Contents::Platform(Cargo::Empty) => {
-        //                 self.score += 1;
-        //                 self.board_digits.display_number(self.score).unwrap();
-        //             }
-        //             _ => {}
-        //         }
-        //         all_updates.push(loc_update).unwrap();
-        //     }
-        // }
+        for platform in self.platforms.iter_mut() {
+            trace(b"platform");
+            if let Some(loc_update) = platform.tick(&self.trains) {
+                // update score each time a platform is cleared
+                match loc_update.contents {
+                    Contents::Platform(Cargo::Empty) => {
+                        self.score += 1;
+                        self.board_digits.display_number(self.score).unwrap();
+                    }
+                    _ => {}
+                }
+                all_updates.push(loc_update).unwrap();
+            }
+        }
 
         for loc_update in all_updates.iter() {
             trace(b"update");

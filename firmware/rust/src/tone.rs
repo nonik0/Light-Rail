@@ -18,9 +18,9 @@ struct ToneState {
 
 // TODO: try using trait to abstract the timer peripheral
 // TODO: use generic type for output pin
-pub struct Timer3Tone {}
+pub struct TimerTone {}
 
-impl Timer3Tone {
+impl TimerTone {
     // TODO: is singleton pattern needed if we take the Timer3 peripheral as input?
     pub fn new(timer: Timer, output_pin: Pin<Output, Dynamic>) -> Self {
         let state = ToneState {

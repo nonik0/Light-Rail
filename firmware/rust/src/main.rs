@@ -28,7 +28,8 @@ mod location;
 mod panic;
 mod platform;
 mod random;
-//mod tone;
+#[cfg_attr(not(feature = "atmega32u4"), path = "notone.rs")]
+mod tone;
 mod train;
 
 const BASE_DELAY: u32 = 10;
@@ -57,7 +58,10 @@ fn main() -> ! {
     );
     let i2c_ref_cell = RefCell::new(i2c);
 
-    //let board_buzzer = tone::Timer3Tone::new(dp.TC3, pins.pb4.into_output().downgrade());
+    #[cfg(feature = "atmega32u4")]
+    let board_buzzer = tone::TimerTone::new(dp.TC3, pins.pb4.into_output().downgrade());
+    #[cfg(feature = "atmega328p")]
+    let board_buzzer = tone::TimerTone::new();
 
     let mut board_digits =
         as1115::AS1115::new(i2c::RefCellDevice::new(&i2c_ref_cell), DIGITS_I2C_ADDR);
@@ -122,7 +126,7 @@ fn main() -> ! {
 
 
     panic::trace(b"game");
-    let mut game = game::Game::new(board_digits, board_input, board_leds);
+    let mut game = game::Game::new(board_buzzer, board_digits, board_input, board_leds);
     game.restart();
 
     loop {

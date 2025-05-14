@@ -12,7 +12,7 @@ use random_trait::Random;
 
 use crate::{
     common::*,
-    input::{Buttons, InputEvent},
+    input::{BoardInput, InputDirection, InputEvent},
     location::{Location, NUM_PLATFORMS},
     panic::trace,
     platform::Platform,
@@ -38,9 +38,9 @@ where
     I2C: I2c,
 {
     // board components
-    //board_buttons: Buttons,
     //board_buzzer: Timer3Tone,
     pub board_digits: AS1115<I2C>,
+    board_input: BoardInput,
     board_leds: IS31FL3731<I2C>,
 
     // game state
@@ -59,15 +59,15 @@ where
 {
     // do we need singleton enforcement with ownership?
     pub fn new(
-        //board_buttons: Buttons,
         //board_buzzer: Timer3Tone,
         board_digits: AS1115<I2C>,
+        board_input: BoardInput,
         board_leds: IS31FL3731<I2C>,
     ) -> Self {
         Self {
-            //board_buttons,
             //board_buzzer,
             board_digits,
+            board_input,
             board_leds,
             mode: GameMode::Animation,
             is_over: false,
@@ -110,32 +110,43 @@ where
         trace(b"tick");
         // self.board_digits.display_number(Rand::default().get_u8() as u16).unwrap();
         // crate::Delay::new().delay_ms(1000);
-        //let event = self.board_buttons.update();
 
-        // match event {
-        //     Some(InputEvent::TrackButtonPressed(index)) => {
-        //         self.board_digits
-        //             .display_number((index + 1) as u16)
-        //             .unwrap();
-        //         self.board_buzzer.tone((index + 1) as u16 * 1000, 100);
-        //     }
-        //     Some(InputEvent::TrackButtonReleased(index)) => {}
-        //     Some(InputEvent::DirectionButtonPressed(direction)) => {}
-        //     Some(InputEvent::DirectionButtonReleased(_)) => {}
-        //     _ => {}
-        // }
+        trace(b"input");
+        let event = self.board_input.update();
+        match event {
+            Some(InputEvent::SwitchButtonPressed(index)) => {
+                self.board_digits
+                    .display_number((index + 1) as u16)
+                    .unwrap();
+                crate::Delay::new().delay_ms(1000);
+                //self.board_buzzer.tone((index + 1) as u16 * 1000, 100);
+            }
+            Some(InputEvent::DirectionButtonPressed(direction)) => {
+                match direction {
+                    InputDirection::Up => self.board_digits.display_ascii(b" up").unwrap(),
+                    InputDirection::Down => self.board_digits.display_ascii(b" dn").unwrap(),
+                    InputDirection::Left => self.board_digits.display_ascii(b" lf").unwrap(),
+                    InputDirection::Right => self.board_digits.display_ascii(b" rt").unwrap(),
+                }
+                crate::Delay::new().delay_ms(1000);
+                //self.board_buzzer.tone((index + 1) as u16 * 1000, 100);
+            }
+            Some(InputEvent::SwitchButtonReleased(index)) => {}
+            Some(InputEvent::DirectionButtonReleased(_)) => {}
+            _ => {}
+        }
 
         let mut all_updates = Vec::<EntityUpdate, MAX_LOC_UPDATES>::new();
 
+        trace(b"train");
         for train in self.trains.iter_mut() {
-            trace(b"train");
             if let Some(loc_updates) = train.advance() {
                 all_updates.extend(loc_updates.into_iter());
             }
         }
 
+        trace(b"platform");
         for platform in self.platforms.iter_mut() {
-            trace(b"platform");
             if let Some(loc_update) = platform.tick(&self.trains) {
                 // update score each time a platform is cleared
                 match loc_update.contents {
@@ -149,8 +160,8 @@ where
             }
         }
 
+        trace(b"update");
         for loc_update in all_updates.iter() {
-            trace(b"update");
             self.board_leds
                 .pixel_blocking(
                     loc_update.location.index(),

@@ -17,7 +17,7 @@ use crate::{
     panic::trace,
     platform::Platform,
     Rand,
-    //tone::Timer3Tone,
+    tone::TimerTone,
     train::Train,
 };
 
@@ -38,8 +38,8 @@ where
     I2C: I2c,
 {
     // board components
-    //board_buzzer: Timer3Tone,
-    pub board_digits: AS1115<I2C>,
+    board_buzzer: TimerTone,
+    board_digits: AS1115<I2C>,
     board_input: BoardInput,
     board_leds: IS31FL3731<I2C>,
 
@@ -59,13 +59,13 @@ where
 {
     // do we need singleton enforcement with ownership?
     pub fn new(
-        //board_buzzer: Timer3Tone,
+        board_buzzer: TimerTone,
         board_digits: AS1115<I2C>,
         board_input: BoardInput,
         board_leds: IS31FL3731<I2C>,
     ) -> Self {
         Self {
-            //board_buzzer,
+            board_buzzer,
             board_digits,
             board_input,
             board_leds,
@@ -115,11 +115,8 @@ where
         let event = self.board_input.update();
         match event {
             Some(InputEvent::SwitchButtonPressed(index)) => {
-                self.board_digits
-                    .display_number((index + 1) as u16)
-                    .unwrap();
-                crate::Delay::new().delay_ms(1000);
-                //self.board_buzzer.tone((index + 1) as u16 * 1000, 100);
+                self.board_digits.display_number((index + 1) as u16).unwrap();
+                self.board_buzzer.tone((index + 1) as u16 * 1000, 100);
             }
             Some(InputEvent::DirectionButtonPressed(direction)) => {
                 match direction {
@@ -128,8 +125,7 @@ where
                     InputDirection::Left => self.board_digits.display_ascii(b" lf").unwrap(),
                     InputDirection::Right => self.board_digits.display_ascii(b" rt").unwrap(),
                 }
-                crate::Delay::new().delay_ms(1000);
-                //self.board_buzzer.tone((index + 1) as u16 * 1000, 100);
+                self.board_buzzer.tone(4000, 100);
             }
             Some(InputEvent::SwitchButtonReleased(index)) => {}
             Some(InputEvent::DirectionButtonReleased(_)) => {}

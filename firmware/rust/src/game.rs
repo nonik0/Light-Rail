@@ -100,17 +100,9 @@ where
         train2.add_car(Cargo::Full);
         train2.add_car(Cargo::Empty);
         self.trains.push(train2).unwrap();
-
-        // trace(b"restart");
-        // self.board_digits.display_number(Rand::default().get_u8() as u16).unwrap();
-        // crate::Delay::new().delay_ms(1000);
     }
 
     pub fn tick(&mut self) {
-        trace(b"tick");
-        // self.board_digits.display_number(Rand::default().get_u8() as u16).unwrap();
-        // crate::Delay::new().delay_ms(1000);
-
         trace(b"input");
         let event = self.board_input.update();
         match event {

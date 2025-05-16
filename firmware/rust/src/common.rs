@@ -13,7 +13,6 @@ pub enum Contents {
     Empty,
     SwitchIndicator(u8),
     Train(Cargo),
-    // platforms never move so will never be Contents::Empty like tracks/train locations
     Platform(Cargo),
 }
 

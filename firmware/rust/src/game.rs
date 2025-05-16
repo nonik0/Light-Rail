@@ -110,8 +110,7 @@ where
         let event = self.board_input.update();
         match event {
             Some(InputEvent::SwitchButtonPressed(index)) => {
-                //let switch_state = self.switches[index as usize];
-                //self.switches[index as usize] = !switch_state;
+                self.switches[index as usize].switch();
 
                 self.board_digits.display_number((index + 1) as u16).unwrap();
                 self.board_buzzer.tone((index + 1) as u16 * 1000, 100);
@@ -156,8 +155,8 @@ where
 
         trace(b"switch");
         for switch in self.switches.iter_mut() {
-            if let Some(loc_update) = switch.tick() {
-                all_updates.push(loc_update).unwrap();
+            if let Some(loc_updates) = switch.tick() {
+                all_updates.extend(loc_updates.into_iter());
             }
         }
 

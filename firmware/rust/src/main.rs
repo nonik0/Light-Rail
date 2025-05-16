@@ -109,10 +109,6 @@ fn main() -> ! {
 
     // generate random seed from ADC temperature sensor
     panic::trace(b"seed");
-    board_digits.display_ascii(b"see").unwrap();
-    delay.delay_ms(500);
-    board_digits.display_ascii(b"dng").unwrap();
-    delay.delay_ms(500);
     let mut adc = Adc::new(dp.ADC, Default::default());
     let mut seed: u32 = 0;
     for i in 0..8 {
@@ -123,7 +119,6 @@ fn main() -> ! {
     }
     random::Rand::seed(seed);
     board_digits.display_number(Rand::default().get_u8() as u16).unwrap();
-    delay.delay_ms(1000);
 
 
     panic::trace(b"game");

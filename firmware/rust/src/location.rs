@@ -84,10 +84,19 @@ impl Location {
             .unwrap()
     }
 
+
+
     pub fn switch_locs() -> [Location; NUM_SWITCHES] {
-        SWITCH_INDICES
+        let mut ordered_indices = [0u8; NUM_SWITCHES];
+        for (i, index) in SWITCH_INDICES.iter().enumerate() {
+            ordered_indices[i] = index;
+        }
+
+        // reorders switches according to board physical layout
+        const SWITCH_ORDER: [usize; NUM_SWITCHES] = [6, 5, 3, 1, 4, 7, 0, 2];
+        SWITCH_ORDER
             .iter()
-            .map(|node_index| Location { node_index })
+            .map(|&i| Location { node_index: ordered_indices[i] })
             .collect::<Vec<_, NUM_SWITCHES>>()
             .into_array()
             .unwrap()

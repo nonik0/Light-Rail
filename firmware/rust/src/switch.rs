@@ -1,4 +1,5 @@
 
+use heapless::Vec;
 use random_trait::Random;
 
 use crate::{
@@ -10,9 +11,12 @@ use crate::{
     train::Train,
 };
 
+pub const MAX_UPDATES: usize = 2; // TODO
+
 pub struct Switch {
     is_switched: bool, // false directs to next_location, true directs to fork_location
     location: Location,
+    brightness: u8,
     next_location: Location,
     fork_location: Location,
     // TODO cross has opposite fork locations
@@ -23,6 +27,7 @@ impl Switch {
         Self {
             is_switched: Rand::default().get_bool(),
             location,
+            brightness: 0,
             next_location,
             fork_location,
         }
@@ -62,10 +67,26 @@ impl Switch {
         switches
     }
 
-    pub fn tick(&mut self) -> Option<EntityUpdate> {
+    pub fn tick(&mut self) -> Option<Vec<EntityUpdate, MAX_UPDATES>> {
         trace(b"switch tick");
-        // TODO: switch lighting to indicate switch state
-        None
+        
+        let (active_loc, inactive_loc) = if self.is_switched {
+            (self.fork_location, self.next_location)
+        } else {
+            (self.next_location, self.fork_location)
+        };
+
+        self.brightness = (self.brightness + 1) % 100;
+
+        let mut loc_updates = Vec::new();
+
+        let inactive_loc_update = EntityUpdate::new(inactive_loc, Contents::Empty);
+        loc_updates.push(inactive_loc_update).unwrap();
+
+        let active_loc_update = EntityUpdate::new(active_loc, Contents::SwitchIndicator(self.brightness));
+        loc_updates.push(active_loc_update).unwrap();
+
+        Some(loc_updates)
     }
 
     pub fn location(&self) -> Location {

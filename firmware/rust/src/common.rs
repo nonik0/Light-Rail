@@ -1,4 +1,5 @@
 use crate::location::Location;
+use is31fl3731::gamma;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Cargo {
@@ -10,6 +11,7 @@ pub enum Cargo {
 #[derive(Debug)]
 pub enum Contents {
     Empty,
+    SwitchIndicator(u8),
     Train(Cargo),
     // platforms never move so will never be Contents::Empty like tracks/train locations
     Platform(Cargo),
@@ -19,6 +21,7 @@ impl Contents {
     pub fn to_pwm_value(&self) -> u8 {
         match self {
             Contents::Empty => 0,
+            Contents::SwitchIndicator(brightness) => gamma(*brightness),
             Contents::Train(cargo) => match cargo {
                 Cargo::Empty => 50,
                 Cargo::Full => 200,

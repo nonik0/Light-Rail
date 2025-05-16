@@ -28,6 +28,7 @@ mod location;
 mod panic;
 mod platform;
 mod random;
+mod switch;
 #[cfg_attr(not(feature = "atmega32u4"), path = "notone.rs")]
 mod tone;
 mod train;

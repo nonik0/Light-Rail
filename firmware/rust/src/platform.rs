@@ -3,9 +3,9 @@ use random_trait::Random;
 
 use crate::{
     common::*,
-    location::{Location, NUM_PLATFORMS},
+    location::{Direction, Location, NUM_PLATFORMS},
     panic::trace,
-    panic_with_msg,
+    panic_with_error,
     random::Rand,
     train::Train,
 };
@@ -29,13 +29,13 @@ impl Platform {
         static mut TAKEN: bool = false;
         unsafe {
             if TAKEN {
-                panic_with_msg!("take() called more than once");
+                panic_with_error!(200);
             }
             TAKEN = true;
         }
 
         let platforms = Location::platform_locs().map(|location| {
-            let track_location = location.adjacent_track();
+            let track_location = location.next_loc(Direction::Anode, false); // args are ignored
             Platform::new(location, track_location)
         });
         platforms

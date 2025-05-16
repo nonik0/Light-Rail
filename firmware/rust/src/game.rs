@@ -13,10 +13,11 @@ use random_trait::Random;
 use crate::{
     common::*,
     input::{BoardInput, InputDirection, InputEvent},
-    location::{Location, NUM_PLATFORMS},
+    location::{Location, NUM_PLATFORMS, NUM_SWITCHES},
     panic::trace,
     platform::Platform,
     Rand,
+    switch::Switch,
     tone::TimerTone,
     train::Train,
 };
@@ -48,8 +49,9 @@ where
     is_over: bool,
     score: u16,
 
-    // game entities
+    // game entities, hold their own state and return location updates for game to render
     platforms: [Platform; NUM_PLATFORMS],
+    switches: [Switch; NUM_SWITCHES],
     trains: heapless::Vec<Train, MAX_TRAINS>,
 }
 
@@ -74,6 +76,7 @@ where
             score: 0,
             trains: Vec::<Train, MAX_TRAINS>::new(),
             platforms: Platform::take(),
+            switches: Switch::take(),
         }
     }
 
@@ -95,11 +98,11 @@ where
         train.add_car(Cargo::Empty);
         self.trains.push(train).unwrap();
 
-        let mut train2 = Train::new(Location::new(90), Cargo::Full);
-        train2.add_car(Cargo::Empty);
-        train2.add_car(Cargo::Full);
-        train2.add_car(Cargo::Empty);
-        self.trains.push(train2).unwrap();
+        // let mut train2 = Train::new(Location::new(90), Cargo::Full);
+        // train2.add_car(Cargo::Empty);
+        // train2.add_car(Cargo::Full);
+        // train2.add_car(Cargo::Empty);
+        // self.trains.push(train2).unwrap();
     }
 
     pub fn tick(&mut self) {
@@ -107,6 +110,9 @@ where
         let event = self.board_input.update();
         match event {
             Some(InputEvent::SwitchButtonPressed(index)) => {
+                //let switch_state = self.switches[index as usize];
+                //self.switches[index as usize] = !switch_state;
+
                 self.board_digits.display_number((index + 1) as u16).unwrap();
                 self.board_buzzer.tone((index + 1) as u16 * 1000, 100);
             }
@@ -128,7 +134,7 @@ where
 
         trace(b"train");
         for train in self.trains.iter_mut() {
-            if let Some(loc_updates) = train.advance() {
+            if let Some(loc_updates) = train.advance(&self.switches) {
                 all_updates.extend(loc_updates.into_iter());
             }
         }
@@ -144,6 +150,13 @@ where
                     }
                     _ => {}
                 }
+                all_updates.push(loc_update).unwrap();
+            }
+        }
+
+        trace(b"switch");
+        for switch in self.switches.iter_mut() {
+            if let Some(loc_update) = switch.tick() {
                 all_updates.push(loc_update).unwrap();
             }
         }

@@ -10,6 +10,7 @@ use crate::{
     location::{Direction, Location},
     panic::trace,
     random::Rand,
+    switch::Switch,
 };
 
 pub const MAX_CARS: usize = 5;
@@ -53,7 +54,7 @@ impl Train {
         let caboose_loc = self.cars[self.cars.len() - 1].loc;
         let inv_caboose_dir = if self.cars.len() > 1 {
             let next_car_loc = self.cars[self.cars.len() - 2].loc;
-            if caboose_loc.next(Direction::Anode).0 == next_car_loc {
+            if caboose_loc.next(Direction::Anode, false).0 == next_car_loc { // TODO: check for switch
                 Direction::Cathode
             } else {
                 Direction::Anode
@@ -61,7 +62,7 @@ impl Train {
         } else {
             self.direction
         };
-        let loc = caboose_loc.next(inv_caboose_dir).0;
+        let loc = caboose_loc.next(inv_caboose_dir, false).0;
 
         self.cars.push(Car { loc, cargo }).unwrap();
 
@@ -78,10 +79,8 @@ impl Train {
         Some(EntityUpdate::new(loc, Contents::Empty))
     }
 
-    pub fn advance(&mut self) -> Option<Vec<EntityUpdate, MAX_UPDATES>> {
+    pub fn advance(&mut self, switches: &[Switch]) -> Option<Vec<EntityUpdate, MAX_UPDATES>> {
         trace(b"advance");
-        Rand::default().get_u8();
-
         self.speed_counter += self.speed;
 
         if self.speed_counter < MAX_SPEED {
@@ -92,16 +91,16 @@ impl Train {
 
         let mut loc_updates = Vec::new();
 
-        // randomly add or remove car
-        trace(b"addcar");
-        if self.cars.len() < MAX_CARS && Rand::default().get_u8() == 0 {
-            let loc_update = self.add_car(Cargo::Empty).unwrap(); // just checked for space
-            loc_updates.push(loc_update).unwrap();
-        }
-        else if self.cars.len() > 1 && Rand::default().get_u8() == 0 {
-            let loc_update = self.remove_car().unwrap(); // just checked for space
-            loc_updates.push(loc_update).unwrap();
-        }
+        // // randomly add or remove car
+        // trace(b"addcar");
+        // if self.cars.len() < MAX_CARS && Rand::default().get_u8() == 0 {
+        //     let loc_update = self.add_car(Cargo::Empty).unwrap(); // just checked for space
+        //     loc_updates.push(loc_update).unwrap();
+        // }
+        // else if self.cars.len() > 1 && Rand::default().get_u8() == 0 {
+        //     let loc_update = self.remove_car().unwrap(); // just checked for space
+        //     loc_updates.push(loc_update).unwrap();
+        // }
 
         // move train from the rear, keeping track of location updates
         let last_loc_update = EntityUpdate::new(self.cars.last().unwrap().loc, Contents::Empty);
@@ -118,7 +117,7 @@ impl Train {
 
         // advance front car to next location, adding final location update
         (self.cars.first_mut().unwrap().loc, self.direction) =
-            self.cars.first().unwrap().loc.next(self.direction);
+            self.cars.first().unwrap().loc.next(self.direction, false); // TODO: check for switch
         let loc_update = EntityUpdate::new(
             self.cars.first().unwrap().loc,
             Contents::Train(self.cars.first().unwrap().cargo),

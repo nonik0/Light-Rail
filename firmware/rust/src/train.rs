@@ -115,9 +115,19 @@ impl Train {
             }
         }
 
+        // check switch state, if front car is on a switch
+        let front_loc = self.cars.first().unwrap().loc;
+        let mut is_switched = false;
+        for switch in switches {
+            if front_loc == switch.location() {
+                is_switched = switch.is_switched();
+                break;
+            }
+        }
+
         // advance front car to next location, adding final location update
         (self.cars.first_mut().unwrap().loc, self.direction) =
-            self.cars.first().unwrap().loc.next(self.direction, false); // TODO: check for switch
+            self.cars.first().unwrap().loc.next(self.direction, is_switched);
         let loc_update = EntityUpdate::new(
             self.cars.first().unwrap().loc,
             Contents::Train(self.cars.first().unwrap().cargo),

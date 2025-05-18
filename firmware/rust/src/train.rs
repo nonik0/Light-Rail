@@ -79,6 +79,7 @@ impl Train {
         Some(EntityUpdate::new(loc, Contents::Empty))
     }
 
+    /// Game tick for train, returns location updates as cars move along track
     pub fn advance(&mut self, switches: &[Switch]) -> Option<Vec<EntityUpdate, MAX_UPDATES>> {
         trace(b"advance");
         self.speed_counter += self.speed;
@@ -120,7 +121,7 @@ impl Train {
         let mut is_switched = false;
         for switch in switches {
             if front_loc == switch.location() {
-                is_switched = switch.is_switched();
+                is_switched = switch.is_switched(self.direction);
                 break;
             }
         }
@@ -137,8 +138,14 @@ impl Train {
         Some(loc_updates)
     }
 
+    /// Returns the location of the front car
     pub fn front(&self) -> Location {
         self.cars.first().unwrap().loc
+    }
+
+    /// Returns bool if any car is at the given location
+    pub fn at_location(&self, loc: Location) -> bool {
+        self.cars.iter().any(|car| car.loc == loc)
     }
 }
 

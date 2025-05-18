@@ -12,11 +12,13 @@ use crate::{
 };
 
 pub const MAX_UPDATES: usize = 2; // TODO
+pub const MAX_BRIGHTNESS: u8 = 100;
 
 pub struct Switch {
     is_switched: bool, // false directs to next_location, true directs to fork_location
     location: Location,
     brightness: u8,
+    brightness_delta: i8,
     next_location: Location,
     fork_location: Location,
     // TODO cross has opposite fork locations
@@ -28,6 +30,7 @@ impl Switch {
             is_switched: Rand::default().get_bool(),
             location,
             brightness: 0,
+            brightness_delta: 1,
             next_location,
             fork_location,
         }
@@ -76,7 +79,14 @@ impl Switch {
             (self.next_location, self.fork_location)
         };
 
-        self.brightness = (self.brightness + 1) % 100;
+        // TODO: experiment with switch indicators
+        // simple dim pulse effect on active switch location
+        let new_brightness = (self.brightness as i16) + (self.brightness_delta as i16);
+        self.brightness = new_brightness.clamp(0, MAX_BRIGHTNESS as i16) as u8;
+        if (self.brightness_delta > 0 && self.brightness >= MAX_BRIGHTNESS) ||
+           (self.brightness_delta < 0 && self.brightness == 0) {
+                self.brightness_delta = -self.brightness_delta;
+        }
 
         let mut loc_updates = Vec::new();
 
@@ -87,6 +97,10 @@ impl Switch {
         loc_updates.push(active_loc_update).unwrap();
 
         Some(loc_updates)
+    }
+
+    pub fn is_switched(&self) -> bool {
+        self.is_switched
     }
 
     pub fn location(&self) -> Location {

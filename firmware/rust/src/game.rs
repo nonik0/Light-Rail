@@ -113,7 +113,7 @@ where
                 self.switches[index as usize].switch();
 
                 self.board_digits.display_number((index + 1) as u16).unwrap();
-                self.board_buzzer.tone((index + 1) as u16 * 1000, 100);
+                //self.board_buzzer.tone((index + 1) as u16 * 1000, 100);
             }
             Some(InputEvent::DirectionButtonPressed(direction)) => {
                 match direction {
@@ -122,7 +122,7 @@ where
                     InputDirection::Left => self.board_digits.display_ascii(b" lf").unwrap(),
                     InputDirection::Right => self.board_digits.display_ascii(b" rt").unwrap(),
                 }
-                self.board_buzzer.tone(4000, 100);
+                //self.board_buzzer.tone(4000, 100);
             }
             Some(InputEvent::SwitchButtonReleased(index)) => {}
             Some(InputEvent::DirectionButtonReleased(_)) => {}
@@ -130,6 +130,13 @@ where
         }
 
         let mut all_updates = Vec::<EntityUpdate, MAX_LOC_UPDATES>::new();
+
+        trace(b"switch");
+        for switch in self.switches.iter_mut() {
+            if let Some(loc_updates) = switch.tick(&self.trains) {
+                all_updates.extend(loc_updates.into_iter());
+            }
+        }
 
         trace(b"train");
         for train in self.trains.iter_mut() {
@@ -150,13 +157,6 @@ where
                     _ => {}
                 }
                 all_updates.push(loc_update).unwrap();
-            }
-        }
-
-        trace(b"switch");
-        for switch in self.switches.iter_mut() {
-            if let Some(loc_updates) = switch.tick() {
-                all_updates.extend(loc_updates.into_iter());
             }
         }
 

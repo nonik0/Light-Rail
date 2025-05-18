@@ -54,7 +54,7 @@ impl Platform {
                 }
             }
         } else {
-            if Rand::default().get_u16() <= 100 {
+            if Rand::default().get_u16() <= 50 {
                 self.cargo = Cargo::Full;
                 return Some(EntityUpdate::new(
                     self.location,

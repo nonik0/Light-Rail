@@ -6,9 +6,9 @@
 #![feature(type_alias_impl_trait)]
 #![allow(unused)]
 
-use core::cell::RefCell;
 use atmega_hal::adc;
 use atmega_hal::port::{mode::Input, *};
+use core::cell::RefCell;
 use embedded_hal::delay::DelayNs;
 use embedded_hal_bus::i2c::{self, RefCellDevice};
 use random::Rand;
@@ -69,11 +69,10 @@ fn main() -> ! {
     let board_buzzer = tone::TimerTone::new();
 
     let digits_i2c = i2c::RefCellDevice::new(i2c_ref_cell);
-    let mut board_digits =
-        as1115::AS1115::new(digits_i2c, DIGITS_I2C_ADDR);
+    let mut board_digits = as1115::AS1115::new(digits_i2c, DIGITS_I2C_ADDR);
     board_digits.init(NUM_DIGITS, DIGITS_INTENSITY).unwrap();
     board_digits.clear().unwrap();
-    
+
     #[cfg(feature = "atmega32u4")]
     let input_pins = [
         pins.pb6.into_pull_up_input().downgrade(),
@@ -110,7 +109,6 @@ fn main() -> ! {
     let mut board_leds = is31fl3731::IS31FL3731::new(leds_i2c, LEDS_I2C_ADDR);
     board_leds.setup_blocking(&mut delay).unwrap();
     board_leds.clear_blocking().unwrap();
-    
 
     // generate random seed from ADC temperature sensor
     panic::trace(b"seed");
@@ -123,7 +121,9 @@ fn main() -> ! {
         seed |= lsb << (i * 4);
     }
     random::Rand::seed(seed);
-    board_digits.display_number(Rand::default().get_u8() as u16).unwrap();
+    board_digits
+        .display_number(Rand::default().get_u8() as u16)
+        .unwrap();
 
     panic::trace(b"game");
     let mut game = game::Game::new(board_buzzer, board_digits, board_input, board_leds);

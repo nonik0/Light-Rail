@@ -15,7 +15,7 @@ impl GameModeHandler for SnakeMode
         1
     }
 
-    fn on_event(&self, event: InputEvent, entities: &mut GameEntities) {
+    fn on_input_event(&self, event: InputEvent, entities: &mut GameEntities) {
         // Implement Snake behavior here
     }
 }

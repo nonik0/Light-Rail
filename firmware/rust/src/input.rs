@@ -76,6 +76,7 @@ impl BoardInput {
     }
 
     pub fn update(&mut self) -> Option<InputEvent> {
+        // TODO: support multiple events?
         for (i, button_pin) in self.button_pins.iter_mut().enumerate() {
             let mut pressed = button_pin.is_low().unwrap();
 

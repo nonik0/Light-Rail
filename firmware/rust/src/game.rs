@@ -83,7 +83,7 @@ where
         if let Some(event) = self.board_input.update() {
             // shared events for all game modes
             match event {
-                // toggle switch (TODO: maybe specialized for specific modes?)
+                // toggle switches (TODO: maybe specialized for specific modes?)
                 InputEvent::SwitchButtonPressed(index) => {
                     self.board_buzzer.tone(4000, 100);
                     let index = index as usize;
@@ -99,17 +99,16 @@ where
             }
 
             // handle event for active game mode
-            let mode_ptr = self.active_mode_index;
-            let entities = &mut self.entities;
-            let mode = &self.modes[mode_ptr];
-            mode.on_event(event, entities);
+            let mode = &self.modes[self.active_mode_index];
+            mode.on_input_event(event, &mut self.entities);
         }
 
-        let mut all_updates = Vec::<EntityUpdate, MAX_LOC_UPDATES>::new();
-        self.update_switches(&mut all_updates);
-        self.update_trains(&mut all_updates);
-        self.update_platforms(&mut all_updates);
-        self.render_updates(&all_updates);
+        let mut updates = Vec::<EntityUpdate, MAX_LOC_UPDATES>::new();
+        self.advance_trains(&mut updates);
+        // TODO: enshrine more that platform and switch updates are for display rendering only, state updates should be handled by train event handlers and future game tick handler
+        self.update_platforms(&mut updates); 
+        self.update_switches(&mut updates);
+        self.render_updates(&updates);
     }
     
     fn is_over(&self) -> bool {
@@ -145,12 +144,21 @@ where
         }
     }
 
-    fn update_trains(&mut self, updates: &mut Vec<EntityUpdate, MAX_LOC_UPDATES>) {
+    fn advance_trains(&mut self, updates: &mut Vec<EntityUpdate, MAX_LOC_UPDATES>) {
         trace(b"train");
-        for train in self.entities.trains.iter_mut() {
+        let mode = &self.modes[self.active_mode_index];
+        let mut train_indices = heapless::Vec::<usize, MAX_TRAINS>::new();
+
+        for (i, train) in self.entities.trains.iter_mut().enumerate() {
             if let Some(u) = train.advance(&self.entities.switches) {
+                train_indices.push(i).ok();
                 updates.extend(u.into_iter());
             }
+        }
+
+        // train event handler
+        for &i in train_indices.iter() {
+            mode.on_train_event(i, &mut self.entities);
         }
     }
 

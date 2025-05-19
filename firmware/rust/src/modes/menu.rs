@@ -1,9 +1,14 @@
 use embedded_hal::i2c::I2c;
+use random_trait::Random;
 
 use crate::{
     game::GameEntities,
     input::InputEvent,
+    location::Direction,
     modes::{GameModeHandler, SnakeMode},
+    random::Rand,
+    switch,
+    train::Train,
 };
 
 #[derive(Default)]
@@ -18,7 +23,7 @@ impl GameModeHandler for MenuMode {
         2
     }
 
-    fn on_event(&self, event: InputEvent, entities: &mut GameEntities) {
+    fn on_input_event(&self, event: InputEvent, entities: &mut GameEntities) {
         // if let InputEvent::Select = event {
         //     game.set_mode(GameMode::Snake(SnakeMode::default()));
         // }
@@ -35,6 +40,23 @@ impl GameModeHandler for MenuMode {
             InputEvent::SwitchButtonReleased(index) => {}
             InputEvent::DirectionButtonReleased(_) => {}
             _ => {}
+        }
+    }
+
+    fn on_train_event(&self, train_index: usize, entities: &mut GameEntities) {
+        // after a train moves away from a switch, randomly switch the switch
+        let train = &entities.trains[train_index];
+        let last_loc = train.last_loc();
+        for switch in entities.switches.iter_mut() {
+            if last_loc == switch.next_location(Direction::Anode)
+                || last_loc == switch.fork_location(Direction::Anode)
+                || last_loc == switch.next_location(Direction::Cathode)
+                || last_loc == switch.fork_location(Direction::Cathode)
+            {
+                if Rand::default().get_bool() {
+                    switch.switch();
+                }
+            }
         }
     }
 }

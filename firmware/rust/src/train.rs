@@ -32,6 +32,7 @@ pub struct Train {
     speed: u8,
     speed_counter: u8,
     cars: Vec<Car, MAX_CARS>,
+    last_caboose_loc: Location,
 }
 
 impl Train {
@@ -43,6 +44,7 @@ impl Train {
             speed: DEFAULT_SPEED,
             speed_counter: 0,
             cars,
+            last_caboose_loc: loc,
         }
     }
 
@@ -93,7 +95,8 @@ impl Train {
         let mut loc_updates = Vec::new();
 
         // move train from the rear, keeping track of location updates
-        let last_loc_update = EntityUpdate::new(self.cars.last().unwrap().loc, Contents::Empty);
+        self.last_caboose_loc = self.cars.last().unwrap().loc;
+        let last_loc_update = EntityUpdate::new(self.last_caboose_loc, Contents::Empty);
         loc_updates.push(last_loc_update).unwrap();
         if !self.cars.is_empty() {
             for i in (1..self.cars.len()).rev() {
@@ -130,6 +133,18 @@ impl Train {
     /// Returns the location of the front car
     pub fn front(&self) -> Location {
         self.cars.first().unwrap().loc
+    }
+
+    pub fn engine(&self) -> Location {
+        self.cars.first().unwrap().loc
+    }
+
+    pub fn caboose(&self) -> Location {
+        self.cars.last().unwrap().loc
+    }
+
+    pub fn last_loc(&self) -> Location {
+        self.last_caboose_loc
     }
 
     /// Returns bool if any car is at the given location

@@ -6,37 +6,27 @@ use as1115::AS1115;
 use embedded_hal::i2c::I2c;
 use heapless::Vec;
 use is31fl3731::IS31FL3731;
+use static_cell::make_static;
 
-use embedded_hal::delay::DelayNs;
+// use embedded_hal::delay::DelayNs;
 use random_trait::Random;
 
 use crate::{
-    common::*,
-    input::{BoardInput, InputDirection, InputEvent},
-    location::{Location, NUM_PLATFORMS, NUM_SWITCHES},
-    panic::trace,
-    platform::Platform,
-    Rand,
-    switch::Switch,
-    tone::TimerTone,
-    train::Train,
+    common::*, input::{BoardInput, InputDirection, InputEvent}, location::{Direction, Location, NUM_PLATFORMS, NUM_SWITCHES}, modes::*, panic::trace, platform::Platform, switch::Switch, tone::TimerTone, train::Train, Rand
 };
-
-#[derive(Copy, Clone)]
-enum GameMode {
-    Animation,
-    Freeplay,
-    Puzzle,
-    Race,
-    Survival,
-}
 
 const MAX_TRAINS: usize = 5;
 const MAX_LOC_UPDATES: usize = crate::train::MAX_UPDATES * MAX_TRAINS + NUM_PLATFORMS;
 
+pub struct GameEntities {
+    pub trains: Vec<Train, MAX_TRAINS>,
+    pub platforms: [Platform; NUM_PLATFORMS],
+    pub switches: [Switch; NUM_SWITCHES],
+}
+
 pub struct Game<I2C>
 where
-    I2C: I2c,
+    I2C: I2c + 'static,
 {
     // board components
     board_buzzer: TimerTone,
@@ -44,130 +34,152 @@ where
     board_input: BoardInput,
     board_leds: IS31FL3731<I2C>,
 
-    // game state
-    mode: GameMode,
+    // game mode state
+    active_mode_index: usize,
+    modes: [&'static mut dyn GameModeHandler; 2], // TODO refine?
     is_over: bool,
     score: u16,
 
-    // game entities, hold their own state and return location updates for game to render
-    platforms: [Platform; NUM_PLATFORMS],
-    switches: [Switch; NUM_SWITCHES],
-    trains: heapless::Vec<Train, MAX_TRAINS>,
+    // game entities, are state passed to game modes and create update events rendered by game
+    entities: GameEntities,
 }
 
 impl<I2C> Game<I2C>
 where
-    I2C: I2c,
+    I2C: I2c + 'static,
 {
-    // do we need singleton enforcement with ownership?
     pub fn new(
         board_buzzer: TimerTone,
         board_digits: AS1115<I2C>,
         board_input: BoardInput,
         board_leds: IS31FL3731<I2C>,
     ) -> Self {
-        Self {
+        let menu_mode = make_static!(MenuMode::default());
+        let snake_mode = make_static!(SnakeMode::default());
+
+        let entities = GameEntities {
+            trains: Vec::<Train, MAX_TRAINS>::new(),
+            platforms: Platform::take(),
+            switches: Switch::take(),
+        };
+
+        let mut self_ = Self {
             board_buzzer,
             board_digits,
             board_input,
             board_leds,
-            mode: GameMode::Animation,
+            active_mode_index: 0,
+            modes: [menu_mode, snake_mode],
             is_over: false,
             score: 0,
-            trains: Vec::<Train, MAX_TRAINS>::new(),
-            platforms: Platform::take(),
-            switches: Switch::take(),
-        }
-    }
+            entities,
+        };
 
-    pub fn is_over(&self) -> bool {
-        self.is_over
-    }
-
-    // TODO: mode
-    pub fn restart(&mut self) {
-        self.mode = GameMode::Animation; // TODO
-        self.is_over = false;
-
-        self.board_digits.clear().ok();
-        self.board_leds.clear_blocking().unwrap();
-        self.trains.clear();
-
-        let mut train = Train::new(Location::new(69), Cargo::Full);
-        train.add_car(Cargo::Empty);
-        train.add_car(Cargo::Empty);
-        self.trains.push(train).unwrap();
-
-        // let mut train2 = Train::new(Location::new(90), Cargo::Full);
-        // train2.add_car(Cargo::Empty);
-        // train2.add_car(Cargo::Full);
-        // train2.add_car(Cargo::Empty);
-        // self.trains.push(train2).unwrap();
+        self_.restart();
+        self_
     }
 
     pub fn tick(&mut self) {
-        trace(b"input");
-        let event = self.board_input.update();
-        match event {
-            Some(InputEvent::SwitchButtonPressed(index)) => {
-                self.switches[index as usize].switch();
+        if let Some(event) = self.board_input.update() {
+            // shared events for all game modes
+            match event {
+                // toggle switch (TODO: maybe specialized for specific modes?)
+                InputEvent::SwitchButtonPressed(index) => {
+                    self.board_buzzer.tone(4000, 100);
+                    let index = index as usize;
+                    if index < self.entities.switches.len() {
+                        self.entities.switches[index].switch();
+                    }
+                },
+                // go to menu
+                InputEvent::DirectionButtonHeld(InputDirection::Left) => {
+                    // TODO: to menu
+                },
+                _ => {}
+            }
 
-                self.board_digits.display_number((index + 1) as u16).unwrap();
-                //self.board_buzzer.tone((index + 1) as u16 * 1000, 100);
-            }
-            Some(InputEvent::DirectionButtonPressed(direction)) => {
-                match direction {
-                    InputDirection::Up => self.board_digits.display_ascii(b" up").unwrap(),
-                    InputDirection::Down => self.board_digits.display_ascii(b" dn").unwrap(),
-                    InputDirection::Left => self.board_digits.display_ascii(b" lf").unwrap(),
-                    InputDirection::Right => self.board_digits.display_ascii(b" rt").unwrap(),
-                }
-                //self.board_buzzer.tone(4000, 100);
-            }
-            Some(InputEvent::SwitchButtonReleased(index)) => {}
-            Some(InputEvent::DirectionButtonReleased(_)) => {}
-            _ => {}
+            // handle event for active game mode
+            let mode_ptr = self.active_mode_index;
+            let entities = &mut self.entities;
+            let mode = &self.modes[mode_ptr];
+            mode.on_event(event, entities);
         }
 
         let mut all_updates = Vec::<EntityUpdate, MAX_LOC_UPDATES>::new();
+        self.update_switches(&mut all_updates);
+        self.update_trains(&mut all_updates);
+        self.update_platforms(&mut all_updates);
+        self.render_updates(&all_updates);
+    }
+    
+    fn is_over(&self) -> bool {
+        self.is_over
+    }
 
+    fn mode(&self) -> &dyn GameModeHandler {
+        self.modes[self.active_mode_index]
+    }
+
+    fn restart(&mut self) {
+        self.is_over = false;
+        self.board_digits.clear().ok();
+        self.board_leds.clear_blocking().unwrap();
+        self.entities.trains.clear();
+
+        for _ in 0..self.mode().num_trains() {
+            let rand_platform_index = Rand::default().get_usize() % self.entities.platforms.len();
+            let rand_platform = &self.entities.platforms[rand_platform_index];
+            let mut train = Train::new(rand_platform.track_location(), Cargo::Full);
+            train.add_car(Cargo::Empty);
+            train.add_car(Cargo::Empty);
+            self.entities.trains.push(train).ok();
+        }
+    }
+
+    fn update_switches(&mut self, updates: &mut Vec<EntityUpdate, MAX_LOC_UPDATES>) {
         trace(b"switch");
-        for switch in self.switches.iter_mut() {
-            if let Some(loc_updates) = switch.tick(&self.trains) {
-                all_updates.extend(loc_updates.into_iter());
+        for switch in self.entities.switches.iter_mut() {
+            if let Some(u) = switch.tick(&self.entities.trains) {
+                updates.extend(u.into_iter());
             }
         }
+    }
 
+    fn update_trains(&mut self, updates: &mut Vec<EntityUpdate, MAX_LOC_UPDATES>) {
         trace(b"train");
-        for train in self.trains.iter_mut() {
-            if let Some(loc_updates) = train.advance(&self.switches) {
-                all_updates.extend(loc_updates.into_iter());
+        for train in self.entities.trains.iter_mut() {
+            if let Some(u) = train.advance(&self.entities.switches) {
+                updates.extend(u.into_iter());
             }
         }
+    }
 
+    fn update_platforms(&mut self, updates: &mut Vec<EntityUpdate, MAX_LOC_UPDATES>) {
         trace(b"platform");
-        for platform in self.platforms.iter_mut() {
-            if let Some(loc_update) = platform.tick(&self.trains) {
+        for platform in self.entities.platforms.iter_mut() {
+            if let Some(u) = platform.tick(&self.entities.trains) {
+                // TODO: mode specific updates
+
                 // update score each time a platform is cleared
-                match loc_update.contents {
+                match u.contents {
                     Contents::Platform(Cargo::Empty) => {
                         self.score += 1;
                         self.board_digits.display_number(self.score).unwrap();
                     }
                     _ => {}
                 }
-                all_updates.push(loc_update).unwrap();
+                updates.push(u).ok();
             }
         }
+    }
 
+    fn render_updates(&mut self, updates: &[EntityUpdate]) {
         trace(b"update");
-        for loc_update in all_updates.iter() {
+        for u in updates {
             self.board_leds
-                .pixel_blocking(
-                    loc_update.location.index(),
-                    loc_update.contents.to_pwm_value(),
-                )
-                .unwrap();
+                .pixel_blocking(u.location.index(), u.contents.to_pwm_value())
+                .ok();
         }
     }
 }
+

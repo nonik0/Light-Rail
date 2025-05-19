@@ -3,14 +3,17 @@
 #![feature(abi_avr_interrupt)]
 #![feature(const_trait_impl)]
 #![feature(panic_info_message)]
+#![feature(type_alias_impl_trait)]
 #![allow(unused)]
 
 use core::cell::RefCell;
 use atmega_hal::adc;
+use atmega_hal::port::{mode::Input, *};
 use embedded_hal::delay::DelayNs;
-use embedded_hal_bus::i2c;
+use embedded_hal_bus::i2c::{self, RefCellDevice};
 use random::Rand;
 use random_trait::Random;
+use static_cell::make_static;
 
 type Adc = atmega_hal::adc::Adc<CoreClock>;
 type Channel = atmega_hal::adc::Channel;
@@ -25,6 +28,7 @@ mod common;
 mod game;
 mod input;
 mod location;
+mod modes;
 mod panic;
 mod platform;
 mod random;
@@ -57,15 +61,16 @@ fn main() -> ! {
         pins.pc5.into_pull_up_input(),
         400_000,
     );
-    let i2c_ref_cell = RefCell::new(i2c);
+    let i2c_ref_cell = make_static!(RefCell::new(i2c));
 
     #[cfg(feature = "atmega32u4")]
     let board_buzzer = tone::TimerTone::new(dp.TC3, pins.pb4.into_output().downgrade());
     #[cfg(feature = "atmega328p")]
     let board_buzzer = tone::TimerTone::new();
 
+    let digits_i2c = i2c::RefCellDevice::new(i2c_ref_cell);
     let mut board_digits =
-        as1115::AS1115::new(i2c::RefCellDevice::new(&i2c_ref_cell), DIGITS_I2C_ADDR);
+        as1115::AS1115::new(digits_i2c, DIGITS_I2C_ADDR);
     board_digits.init(NUM_DIGITS, DIGITS_INTENSITY).unwrap();
     board_digits.clear().unwrap();
     
@@ -101,8 +106,8 @@ fn main() -> ! {
     ];
     let board_input = input::BoardInput::new(input_pins);
 
-    let mut board_leds = 
-        is31fl3731::IS31FL3731::new(i2c::RefCellDevice::new(&i2c_ref_cell), LEDS_I2C_ADDR);
+    let leds_i2c = i2c::RefCellDevice::new(i2c_ref_cell);
+    let mut board_leds = is31fl3731::IS31FL3731::new(leds_i2c, LEDS_I2C_ADDR);
     board_leds.setup_blocking(&mut delay).unwrap();
     board_leds.clear_blocking().unwrap();
     
@@ -120,19 +125,11 @@ fn main() -> ! {
     random::Rand::seed(seed);
     board_digits.display_number(Rand::default().get_u8() as u16).unwrap();
 
-
     panic::trace(b"game");
     let mut game = game::Game::new(board_buzzer, board_digits, board_input, board_leds);
-    game.restart();
 
     loop {
         game.tick();
-
-        if game.is_over() {
-            // TODO: mode selection
-            game.restart();
-        }
-
         delay.delay_ms(BASE_DELAY);
     }
 }

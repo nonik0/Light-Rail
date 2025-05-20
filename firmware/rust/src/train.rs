@@ -145,6 +145,10 @@ impl Train {
         self.cars.last().unwrap().loc
     }
 
+    pub fn cars(&self) -> usize {
+        self.cars.len()
+    }
+
     /// Returns the previous location of the caboose before the last move
     pub fn last_loc(&self) -> Location {
         self.last_caboose_loc
@@ -153,6 +157,14 @@ impl Train {
     /// Returns bool if any car is at the given location
     pub fn at_location(&self, loc: Location) -> bool {
         self.cars.iter().any(|car| car.loc == loc)
+    }
+}
+
+impl core::ops::Index<usize> for Train {
+    type Output = Car;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.cars[index]
     }
 }
 

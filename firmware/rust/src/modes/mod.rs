@@ -14,6 +14,13 @@ pub trait GameModeHandler
 {
     fn short_name(&self) -> &[u8];
     fn num_trains(&self) -> usize { 1 }
+
+    // on each game tick
+    fn on_game_tick(&self, entities: &mut GameEntities) {}
+
+    // when a button is pressed
     fn on_input_event(&self, event: InputEvent, entities: &mut GameEntities) {}
+
+    // when a train advances
     fn on_train_event(&self, train_index: usize, entities: &mut GameEntities) {}
 }

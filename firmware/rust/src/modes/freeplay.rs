@@ -3,12 +3,12 @@ use embedded_hal::i2c::I2c;
 use crate::{game::GameState, input::InputEvent, modes::GameModeHandler};
 
 #[derive(Default)]
-pub struct SnakeMode;
+pub struct FreeplayMode;
 
-impl GameModeHandler for SnakeMode
+impl GameModeHandler for FreeplayMode
 {
     fn short_name(&self) -> &[u8] {
-        b"snk"
+        b"ply"
     }
 
     fn num_trains(&self) -> usize {
@@ -16,6 +16,7 @@ impl GameModeHandler for SnakeMode
     }
 
     fn on_input_event(&mut self, event: InputEvent, state: &mut GameState) {
-        // Implement Snake behavior here
+        // Implement freeplay behavior here
+        // create/destroy trains, add cars, etc.
     }
 }

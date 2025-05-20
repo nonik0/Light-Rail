@@ -92,7 +92,8 @@ where
         for _ in 0..self.mode().num_trains() {
             let rand_platform_index = Rand::default().get_usize() % self.entities.platforms.len();
             let rand_platform = &self.entities.platforms[rand_platform_index];
-            let mut train = Train::new(rand_platform.track_location(), Cargo::Full);
+            let rand_speed = 5 + Rand::default().get_u8() % 10;
+            let mut train = Train::new(rand_platform.track_location(), Cargo::Full, Some(rand_speed));
             let num_cars = 1 + Rand::default().get_usize() % 3;
             for _ in 0..num_cars {
                 train.add_car(Cargo::Full);

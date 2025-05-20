@@ -1,4 +1,3 @@
-
 use core::panic;
 use heapless::Vec;
 use random_trait::Random;
@@ -21,50 +20,55 @@ pub struct Switch {
     brightness: u8,
     brightness_delta: i8,
 
-    // switches only have one active direction at a time
+    // switches only have one active direction (one direction has None values)
     // crosses have two active directions
-    anode_switched: Option<bool>, // false directs to next_location, true directs to fork_location
-    anode_last_switched: Option<bool>,
+
+    // false directs to next_location, true directs to fork_location, none means no switch in that direction
+    anode_switched: Option<bool>, 
+    anode_last_switched: Option<bool>, // entity update tracking
     anode_next_location: Location,
-    anode_fork_location: Location,
-    cathode_switched: Option<bool>, // false directs to next_location, true directs to fork_location
-    cathode_last_switched: Option<bool>,
+    anode_fork_location: Option<Location>, // None means no switch in that direction
+
+    // false directs to next_location, true directs to fork_location, none means no switch in that direction
+    cathode_switched: Option<bool>, 
+    cathode_last_switched: Option<bool>, // entity update tracking
     cathode_next_location: Location,
-    cathode_fork_location: Location,
+    cathode_fork_location: Option<Location>, // None means no switch in that direction
 }
 
 impl Switch {
     fn new(location: Location) -> Self {
-        let anode_next_location = location.next_loc(Direction::Anode, false);
-        let anode_fork_location = location.next_loc(Direction::Anode, true);
-        let anode_switched = if anode_fork_location == anode_next_location {
-            None
-        } else {
-            Some(Rand::default().get_bool())
-        };
-        let anode_last_switched = None;
+        // set up switch in a direction
+        fn setup(
+            location: Location,
+            direction: Direction,
+        ) -> (Option<bool>, Location, Option<Location>) {
+            let next = location.next_loc(direction, false);
+            let fork = location.next_loc(direction, true);
+            if next == fork {
+                (None, next, None)
+            } else {
+                (Some(Rand::default().get_bool()), next, Some(fork))
+            }
+        }
 
-        let cathode_next_location = location.next_loc(Direction::Cathode, false);
-        let cathode_fork_location = location.next_loc(Direction::Cathode, true);
-        let cathode_switched = if cathode_fork_location == cathode_next_location {
-            None
-        } else {
-            Some(Rand::default().get_bool())
-        };
-        let cathode_last_switched = None;
+        let (anode_switched, anode_next_location, anode_fork_location) =
+            setup(location, Direction::Anode);
+        let (cathode_switched, cathode_next_location, cathode_fork_location) =
+            setup(location, Direction::Cathode);
 
         Self {
             location,
-            brightness: MAX_BRIGHTNESS,
-            brightness_delta: 1,  
             anode_switched,
-            anode_last_switched,
+            anode_last_switched: None,
             anode_next_location,
             anode_fork_location,
             cathode_switched,
-            cathode_last_switched,
+            cathode_last_switched: None,
             cathode_next_location,
             cathode_fork_location,
+            brightness: MAX_BRIGHTNESS,
+            brightness_delta: 1,
         }
     }
 
@@ -115,7 +119,11 @@ impl Switch {
 
         let mut loc_updates = Vec::new();
 
-        let mut handle_direction = |is_switched: Option<bool>, last_switched: Option<bool>, next_location: Location, fork_location: Location, brightness: u8| {
+        let mut handle_direction = |is_switched: Option<bool>,
+                                    last_switched: Option<bool>,
+                                    next_location: Location,
+                                    fork_location: Option<Location>,
+                                    brightness: u8| {
             if let Some(switched) = is_switched {
                 // no update if no change
                 if let Some(last_switched) = last_switched {
@@ -125,9 +133,9 @@ impl Switch {
                 }
 
                 let (active_loc, inactive_loc) = if switched {
-                    (fork_location, next_location)
+                    (fork_location.unwrap(), next_location)
                 } else {
-                    (next_location, fork_location)
+                    (next_location, fork_location.unwrap())
                 };
 
                 // Only update inactive_loc if no train is present
@@ -140,14 +148,27 @@ impl Switch {
                 // Only update active_loc if no train is present
                 let active_occupied = trains.iter().any(|train| train.at_location(active_loc));
                 if !active_occupied {
-                    let active_loc_update = EntityUpdate::new(active_loc, Contents::SwitchIndicator(brightness));
+                    let active_loc_update =
+                        EntityUpdate::new(active_loc, Contents::SwitchIndicator(brightness));
                     loc_updates.push(active_loc_update).ok();
                 }
             }
         };
 
-        handle_direction(self.anode_switched, self.anode_last_switched, self.anode_next_location, self.anode_fork_location, self.brightness);
-        handle_direction(self.cathode_switched, self.cathode_last_switched, self.cathode_next_location, self.cathode_fork_location, self.brightness);
+        handle_direction(
+            self.anode_switched,
+            self.anode_last_switched,
+            self.anode_next_location,
+            self.anode_fork_location,
+            self.brightness,
+        );
+        handle_direction(
+            self.cathode_switched,
+            self.cathode_last_switched,
+            self.cathode_next_location,
+            self.cathode_fork_location,
+            self.brightness,
+        );
 
         if loc_updates.is_empty() {
             None
@@ -166,7 +187,38 @@ impl Switch {
     pub fn location(&self) -> Location {
         self.location
     }
- 
+
+    /// Returns the location a train at this switch will go in the given direction, or None if there is no switch in that direction.
+    pub fn active_location(&self, direction: Direction) -> Option<Location> {
+        match direction {
+            Direction::Anode => {
+                match self.anode_switched {
+                    Some(switched) => {
+                        if switched {
+                            self.anode_fork_location
+                        } else {
+                            Some(self.anode_next_location)
+                        }
+                    }
+                    None => None,
+                }
+            }
+            Direction::Cathode => {
+                match self.cathode_switched {
+                    Some(switched) => {
+                        if switched {
+                            self.cathode_fork_location
+                        } else {
+                            Some(self.cathode_next_location)
+                        }
+                    }
+                    None => None,
+                }
+            }
+        }
+    }
+
+    /// Returns the location a train at this switch will go in the given direction if the switch is not switched.
     pub fn next_location(&self, direction: Direction) -> Location {
         match direction {
             Direction::Anode => self.anode_next_location,
@@ -174,7 +226,8 @@ impl Switch {
         }
     }
 
-    pub fn fork_location(&self, direction: Direction) -> Location {
+    /// Returns the location a train at this switch will go in the given direction if the switch is switched.
+    pub fn fork_location(&self, direction: Direction) -> Option<Location> {
         match direction {
             Direction::Anode => self.anode_fork_location,
             Direction::Cathode => self.cathode_fork_location,

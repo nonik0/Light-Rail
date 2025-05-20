@@ -45,7 +45,6 @@ impl Location {
     /// For switches, returns the fork location and direction if is_switched is true.
     /// For platforms, returns the adjacent track location.
     pub fn next(&self, direction: Direction, is_switched: bool) -> (Location, Direction) {
-        trace(b"next start");
         let loc_data = self.location_data();
 
         if loc_data.is_platform() {
@@ -62,7 +61,6 @@ impl Location {
         let next_index = if next_index_2 != NO_DATA && use_switch_index { next_index_2 } else { next_index };
 
         // exit from next_loc from opposite direction of cur_loc
-        trace(b"next loc data");
         let next_loc_data = NODE_DATA.load_at(next_index as usize);
         let next_direction = if next_loc_data.cathode_neighbor == self.node_index
             || next_loc_data.cathode_neighbor_2 == self.node_index

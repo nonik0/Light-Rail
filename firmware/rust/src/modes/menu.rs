@@ -60,6 +60,9 @@ impl GameModeHandler for MenuMode {
                 InputDirection::Down => {
                     state.display = DisplayState::Text(self.next_game_mode(false));
                 }
+                InputDirection::Right => {
+                    state.target_mode_index = self.index + 1; // offset by 1 for menu mode
+                }
                 _ => {}
             },
             _ => {}

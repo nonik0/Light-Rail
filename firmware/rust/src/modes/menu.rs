@@ -2,13 +2,7 @@ use embedded_hal::i2c::I2c;
 use random_trait::Random;
 
 use crate::{
-    game::GameEntities,
-    input::InputEvent,
-    location::Direction,
-    modes::{GameModeHandler, SnakeMode},
-    random::Rand,
-    switch,
-    train::Train,
+    game::GameEntities, input::InputEvent, location::Direction, modes::{GameModeHandler, SnakeMode}, platform, random::Rand, switch, train::Train
 };
 
 #[derive(Default)]
@@ -21,6 +15,15 @@ impl GameModeHandler for MenuMode {
 
     fn num_trains(&self) -> usize {
         2
+    }
+
+    fn on_game_tick(&self, entities: &mut GameEntities) {
+        for platform in entities.platforms.iter_mut() {
+            if platform.is_empty() && Rand::default().get_u16() <= 50 {
+                platform.set_cargo();
+                // TODO: score?
+            }
+        }   
     }
 
     fn on_input_event(&self, event: InputEvent, entities: &mut GameEntities) {
@@ -43,6 +46,8 @@ impl GameModeHandler for MenuMode {
         }
     }
 
+
+
     fn on_train_event(&self, train_index: usize, entities: &mut GameEntities) {
         // after a train moves away from a switch, randomly switch the switch
         let train = &entities.trains[train_index];
@@ -58,5 +63,15 @@ impl GameModeHandler for MenuMode {
                 }
             }
         }
+
+        for platform in entities.platforms.iter_mut() {
+            if !platform.is_empty() && train.front() == platform.track_location() {
+                platform.clear_cargo();
+                //self.score += 1;
+                //self.board_digits.display_number(self.score).unwrap();
+            }
+        }
     }
+
+
 }

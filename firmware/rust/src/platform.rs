@@ -10,10 +10,13 @@ use crate::{
     train::Train,
 };
 
+// TODO: update so it only tracks what updates it has sent based on its state that is controlled elsewhere
+
 pub struct Platform {
     location: Location,
     track_location: Location,
     cargo: Cargo,
+    last_cargo: Cargo,
 }
 
 impl Platform {
@@ -22,6 +25,7 @@ impl Platform {
             location,
             track_location,
             cargo: Cargo::Empty,
+            last_cargo: Cargo::Full,
         }
     }
 
@@ -41,26 +45,13 @@ impl Platform {
         platforms
     }
 
-    pub fn tick(&mut self, trains: &[Train]) -> Option<EntityUpdate> {
-        trace(b"platform tick");
-        if self.cargo == Cargo::Full {
-            for train in trains {
-                if train.front() == self.track_location {
-                    self.clear_cargo();
-                    return Some(EntityUpdate::new(
-                        self.location,
-                        Contents::Platform(Cargo::Empty),
-                    ));
-                }
-            }
-        } else {
-            if Rand::default().get_u16() <= 50 {
-                self.cargo = Cargo::Full;
-                return Some(EntityUpdate::new(
-                    self.location,
-                    Contents::Platform(Cargo::Full),
-                ));
-            }
+    pub fn get_update(&mut self) -> Option<EntityUpdate> {
+        if self.cargo != self.last_cargo {
+            self.last_cargo = self.cargo;
+            return Some(EntityUpdate::new(
+                self.location,
+                Contents::Platform(self.cargo),
+            ));
         }
 
         None
@@ -72,6 +63,10 @@ impl Platform {
 
     pub fn track_location(&self) -> Location {
         self.track_location
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.cargo == Cargo::Empty
     }
 
     pub fn set_cargo(&mut self) {

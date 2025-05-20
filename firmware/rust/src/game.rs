@@ -79,7 +79,31 @@ where
         self_
     }
 
+    fn mode(&self) -> &dyn GameModeHandler {
+        self.modes[self.active_mode_index]
+    }
+
+    fn restart(&mut self) {
+        self.is_over = false;
+        self.board_digits.clear().ok();
+        self.board_leds.clear_blocking().unwrap();
+        self.entities.trains.clear();
+
+        for _ in 0..self.mode().num_trains() {
+            let rand_platform_index = Rand::default().get_usize() % self.entities.platforms.len();
+            let rand_platform = &self.entities.platforms[rand_platform_index];
+            let mut train = Train::new(rand_platform.track_location(), Cargo::Full);
+            let num_cars = 1 + Rand::default().get_usize() % 3;
+            for _ in 0..num_cars {
+                train.add_car(Cargo::Full);
+            }
+            self.entities.trains.push(train).unwrap();
+        }
+    }
+
     pub fn tick(&mut self) {
+        let mode = &self.modes[self.active_mode_index];
+
         if let Some(event) = self.board_input.update() {
             // shared events for all game modes
             match event {
@@ -98,94 +122,48 @@ where
                 _ => {}
             }
 
-            // handle event for active game mode
-            let mode = &self.modes[self.active_mode_index];
+            // mode specific events
             mode.on_input_event(event, &mut self.entities);
         }
 
+        mode.on_game_tick(&mut self.entities);
+
         let mut updates = Vec::<EntityUpdate, MAX_LOC_UPDATES>::new();
         self.advance_trains(&mut updates);
-        // TODO: enshrine more that platform and switch updates are for display rendering only, state updates should be handled by train event handlers and future game tick handler
-        self.update_platforms(&mut updates); 
-        self.update_switches(&mut updates);
-        self.render_updates(&updates);
-    }
-    
-    fn is_over(&self) -> bool {
-        self.is_over
-    }
-
-    fn mode(&self) -> &dyn GameModeHandler {
-        self.modes[self.active_mode_index]
-    }
-
-    fn restart(&mut self) {
-        self.is_over = false;
-        self.board_digits.clear().ok();
-        self.board_leds.clear_blocking().unwrap();
-        self.entities.trains.clear();
-
-        for _ in 0..self.mode().num_trains() {
-            let rand_platform_index = Rand::default().get_usize() % self.entities.platforms.len();
-            let rand_platform = &self.entities.platforms[rand_platform_index];
-            let mut train = Train::new(rand_platform.track_location(), Cargo::Full);
-            train.add_car(Cargo::Empty);
-            train.add_car(Cargo::Empty);
-            self.entities.trains.push(train).ok();
-        }
-    }
-
-    fn update_switches(&mut self, updates: &mut Vec<EntityUpdate, MAX_LOC_UPDATES>) {
-        trace(b"switch");
-        for switch in self.entities.switches.iter_mut() {
-            if let Some(u) = switch.tick(&self.entities.trains) {
-                updates.extend(u.into_iter());
-            }
-        }
+        self.render_updates(&mut updates);
     }
 
     fn advance_trains(&mut self, updates: &mut Vec<EntityUpdate, MAX_LOC_UPDATES>) {
-        trace(b"train");
-        let mode = &self.modes[self.active_mode_index];
-        let mut train_indices = heapless::Vec::<usize, MAX_TRAINS>::new();
-
-        for (i, train) in self.entities.trains.iter_mut().enumerate() {
+        let mut event_indices = heapless::Vec::<usize, MAX_TRAINS>::new();
+        for (train_index, train) in self.entities.trains.iter_mut().enumerate() {
             if let Some(u) = train.advance(&self.entities.switches) {
-                train_indices.push(i).ok();
+                event_indices.push(train_index).ok();
                 updates.extend(u.into_iter());
             }
         }
 
-        // train event handler
-        for &i in train_indices.iter() {
-            mode.on_train_event(i, &mut self.entities);
+        let mode = &self.modes[self.active_mode_index];
+        for &train_index in event_indices.iter() {
+            mode.on_train_event(train_index, &mut self.entities);
         }
     }
 
-    fn update_platforms(&mut self, updates: &mut Vec<EntityUpdate, MAX_LOC_UPDATES>) {
-        trace(b"platform");
+    fn render_updates(&mut self, updates: &mut Vec<EntityUpdate, MAX_LOC_UPDATES>) {
         for platform in self.entities.platforms.iter_mut() {
-            if let Some(u) = platform.tick(&self.entities.trains) {
-                // TODO: mode specific updates
-
-                // update score each time a platform is cleared
-                match u.contents {
-                    Contents::Platform(Cargo::Empty) => {
-                        self.score += 1;
-                        self.board_digits.display_number(self.score).unwrap();
-                    }
-                    _ => {}
-                }
+            if let Some(u) = platform.get_update() {
                 updates.push(u).ok();
             }
         }
-    }
 
-    fn render_updates(&mut self, updates: &[EntityUpdate]) {
-        trace(b"update");
-        for u in updates {
+        for switch in self.entities.switches.iter_mut() {
+            if let Some(u) = switch.get_updates(&self.entities.trains) {
+                updates.extend(u.into_iter());
+            }
+        }
+
+        for update in updates {
             self.board_leds
-                .pixel_blocking(u.location.index(), u.contents.to_pwm_value())
+                .pixel_blocking(update.location.index(), update.contents.to_pwm_value())
                 .ok();
         }
     }

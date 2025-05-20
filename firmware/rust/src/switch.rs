@@ -24,9 +24,11 @@ pub struct Switch {
     // switches only have one active direction at a time
     // crosses have two active directions
     anode_switched: Option<bool>, // false directs to next_location, true directs to fork_location
+    anode_last_switched: Option<bool>,
     anode_next_location: Location,
     anode_fork_location: Location,
     cathode_switched: Option<bool>, // false directs to next_location, true directs to fork_location
+    cathode_last_switched: Option<bool>,
     cathode_next_location: Location,
     cathode_fork_location: Location,
 }
@@ -40,6 +42,7 @@ impl Switch {
         } else {
             Some(Rand::default().get_bool())
         };
+        let anode_last_switched = None;
 
         let cathode_next_location = location.next_loc(Direction::Cathode, false);
         let cathode_fork_location = location.next_loc(Direction::Cathode, true);
@@ -48,15 +51,18 @@ impl Switch {
         } else {
             Some(Rand::default().get_bool())
         };
+        let cathode_last_switched = None;
 
         Self {
             location,
             brightness: MAX_BRIGHTNESS,
-            brightness_delta: 1,
+            brightness_delta: 1,  
             anode_switched,
+            anode_last_switched,
             anode_next_location,
             anode_fork_location,
             cathode_switched,
+            cathode_last_switched,
             cathode_next_location,
             cathode_fork_location,
         }
@@ -104,13 +110,20 @@ impl Switch {
         Location::switch_locs().map(|location| Switch::new(location))
     }
 
-    pub fn tick(&mut self, trains: &[Train]) -> Option<Vec<EntityUpdate, MAX_UPDATES>> {
+    pub fn get_updates(&mut self, trains: &[Train]) -> Option<Vec<EntityUpdate, MAX_UPDATES>> {
         trace(b"switch tick");
 
         let mut loc_updates = Vec::new();
 
-        let mut handle_direction = |is_switched: Option<bool>, next_location: Location, fork_location: Location, brightness: u8| {
+        let mut handle_direction = |is_switched: Option<bool>, last_switched: Option<bool>, next_location: Location, fork_location: Location, brightness: u8| {
             if let Some(switched) = is_switched {
+                // no update if no change
+                if let Some(last_switched) = last_switched {
+                    if switched == last_switched {
+                        return;
+                    }
+                }
+
                 let (active_loc, inactive_loc) = if switched {
                     (fork_location, next_location)
                 } else {
@@ -133,8 +146,8 @@ impl Switch {
             }
         };
 
-        handle_direction(self.anode_switched, self.anode_next_location, self.anode_fork_location, self.brightness);
-        handle_direction(self.cathode_switched, self.cathode_next_location, self.cathode_fork_location, self.brightness);
+        handle_direction(self.anode_switched, self.anode_last_switched, self.anode_next_location, self.anode_fork_location, self.brightness);
+        handle_direction(self.cathode_switched, self.cathode_last_switched, self.cathode_next_location, self.cathode_fork_location, self.brightness);
 
         if loc_updates.is_empty() {
             None

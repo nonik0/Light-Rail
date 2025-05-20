@@ -49,26 +49,27 @@ impl GameModeHandler for MenuMode {
 
 
     fn on_train_event(&self, train_index: usize, entities: &mut GameEntities) {
-        // after a train moves away from a switch, randomly switch the switch
         let train = &entities.trains[train_index];
+        let caboose_loc = train.caboose();
         let last_loc = train.last_loc();
+
+        // If train just left a switch, randomly switch it
         for switch in entities.switches.iter_mut() {
-            if last_loc == switch.next_location(Direction::Anode)
-                || last_loc == switch.fork_location(Direction::Anode)
-                || last_loc == switch.next_location(Direction::Cathode)
-                || last_loc == switch.fork_location(Direction::Cathode)
-            {
-                if Rand::default().get_bool() {
+            if caboose_loc == switch.location() {
+                continue; // Train is entering, not leaving
+            }
+            for dir in [Direction::Anode, Direction::Cathode] {
+                if switch.active_location(dir) == Some(last_loc) && Rand::default().get_bool() {
                     switch.switch();
+                    break;
                 }
             }
         }
 
+        // Clear cargo if train front is at a platform with cargo
         for platform in entities.platforms.iter_mut() {
-            if !platform.is_empty() && train.front() == platform.track_location() {
+            if !platform.is_empty() && train.engine() == platform.track_location() {
                 platform.clear_cargo();
-                //self.score += 1;
-                //self.board_digits.display_number(self.score).unwrap();
             }
         }
     }

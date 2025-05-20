@@ -36,12 +36,12 @@ pub struct Train {
 }
 
 impl Train {
-    pub fn new(loc: Location, cargo: Cargo) -> Self {
+    pub fn new(loc: Location, cargo: Cargo, speed: Option<u8>) -> Self {
         let mut cars = Vec::new();
         cars.push(Car { loc, cargo }).unwrap();
         Self {
             direction: Direction::Anode, // TODO: random?
-            speed: DEFAULT_SPEED,
+            speed: speed.unwrap_or(DEFAULT_SPEED),
             speed_counter: 0,
             cars,
             last_caboose_loc: loc,
@@ -135,14 +135,17 @@ impl Train {
         self.cars.first().unwrap().loc
     }
 
+    /// Returns the location of the engine (first car of the train)
     pub fn engine(&self) -> Location {
         self.cars.first().unwrap().loc
     }
 
+    /// Returns the location of the caboose (last car of the train)
     pub fn caboose(&self) -> Location {
         self.cars.last().unwrap().loc
     }
 
+    /// Returns the previous location of the caboose before the last move
     pub fn last_loc(&self) -> Location {
         self.last_caboose_loc
     }

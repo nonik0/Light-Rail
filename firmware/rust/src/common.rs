@@ -1,4 +1,4 @@
-use crate::location::Location;
+use crate::{location::Location, NUM_DIGITS};
 use is31fl3731::gamma;
 
 #[derive(Clone, Copy, Debug, PartialEq)]

@@ -11,6 +11,7 @@ use atmega_hal::port::{mode::Input, *};
 use core::cell::RefCell;
 use embedded_hal::delay::DelayNs;
 use embedded_hal_bus::i2c::{self, RefCellDevice};
+use panic_halt as _;
 use random::Rand;
 use random_trait::Random;
 use static_cell::make_static;
@@ -111,7 +112,6 @@ fn main() -> ! {
     board_leds.clear_blocking().unwrap();
 
     // generate random seed from ADC temperature sensor
-    panic::trace(b"seed");
     let mut adc = Adc::new(dp.ADC, Default::default());
     let mut seed: u32 = 0;
     for i in 0..8 {
@@ -125,7 +125,6 @@ fn main() -> ! {
         .display_number(Rand::default().get_u8() as u16)
         .unwrap();
 
-    panic::trace(b"game");
     let mut game = game::Game::new(board_buzzer, board_digits, board_input, board_leds);
 
     loop {

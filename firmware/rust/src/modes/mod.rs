@@ -16,6 +16,7 @@ pub const NUM_GAME_MODES: usize = 2;
 
 pub trait GameModeHandler
 {
+    // TODO: collapse into config struct?
     fn short_name(&self) -> &[u8];
     fn num_trains(&self) -> usize { 1 }
 

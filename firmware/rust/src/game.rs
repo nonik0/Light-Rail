@@ -16,7 +16,6 @@ use crate::{
     input::{BoardInput, InputDirection, InputEvent},
     location::{Direction, Location, NUM_PLATFORMS, NUM_SWITCHES},
     modes::*,
-    panic::trace,
     platform::Platform,
     switch::Switch,
     tone::TimerTone,
@@ -25,7 +24,6 @@ use crate::{
 };
 
 const MAX_TRAINS: usize = 5;
-const MAX_LOC_UPDATES: usize = crate::train::MAX_UPDATES * MAX_TRAINS + NUM_PLATFORMS;
 
 pub enum DisplayState {
     None,
@@ -109,7 +107,6 @@ where
         self.board_digits.clear().ok();
         self.board_leds.clear_blocking().unwrap();
 
-        // instead of clearing the trains, we just adjust the number of trains and set to known state
         let actual_num_trains = self.state.trains.len();
         let target_num_trains = self.mode().num_trains();
         if actual_num_trains > target_num_trains {
@@ -118,7 +115,6 @@ where
             }
         } else if actual_num_trains < target_num_trains {
             for _ in 0..target_num_trains - actual_num_trains {
-                // TODO: move to separate function
                 let rand_platform_index = Rand::default().get_usize() % self.state.platforms.len();
                 let rand_platform = &self.state.platforms[rand_platform_index];
                 let rand_speed = 5 + Rand::default().get_u8() % 10;
@@ -149,29 +145,11 @@ where
                 }
             }
         }
-
-        // self.state.trains.clear();
-
-        // for _ in 0..self.mode().num_trains() {
-        //     let rand_platform_index = Rand::default().get_usize() % self.state.platforms.len();
-        //     let rand_platform = &self.state.platforms[rand_platform_index];
-        //     let rand_speed = 5 + Rand::default().get_u8() % 10;
-        //     let mut train = Train::new(rand_platform.track_location(), Cargo::Full, Some(rand_speed));
-        //     let num_cars = 1 + Rand::default().get_usize() % 3;
-        //     for _ in 0..num_cars {
-        //         train.add_car(Cargo::Full);
-        //     }
-        //     self.state.trains.push(train).unwrap();
-        // }
     }
 
     pub fn tick(&mut self) {
-
-
         if let Some(event) = self.board_input.update() {
-            // shared events for all game modes
             match event {
-                // toggle switches (TODO: maybe specialized for specific modes?)
                 InputEvent::SwitchButtonPressed(index) => {
                     self.board_buzzer.tone(4000, 100);
                     let index = index as usize;
@@ -179,7 +157,6 @@ where
                         self.state.switches[index].switch();
                     }
                 }
-                // go to menu
                 InputEvent::DirectionButtonHeld(InputDirection::Left) => {
                     self.state.target_mode_index = 0;
                     self.active_mode_index = 0;
@@ -188,14 +165,8 @@ where
                 _ => {}
             }
 
-            // mode specific events
             let mode = &mut self.modes[self.active_mode_index];
             mode.on_input_event(event, &mut self.state);
-        }
-
-        // no entity updates if game is over, wait for input event to restart or exit mode
-        if self.state.is_over {
-            return;
         }
 
         if self.state.target_mode_index != self.active_mode_index {
@@ -203,52 +174,40 @@ where
             self.restart();
         }
 
-        let mode = &mut self.modes[self.active_mode_index];
-        mode.on_game_tick(&mut self.state);
-
-        let mut updates = Vec::<EntityUpdate, MAX_LOC_UPDATES>::new();
-        self.advance_trains(&mut updates);
-        self.render_updates(&mut updates);
-    }
-
-    fn advance_trains(&mut self, updates: &mut Vec<EntityUpdate, MAX_LOC_UPDATES>) {
-        let mut event_indices = heapless::Vec::<usize, MAX_TRAINS>::new();
-        for (train_index, train) in self.state.trains.iter_mut().enumerate() {
-            if let Some(u) = train.advance(&self.state.switches) {
-                event_indices.push(train_index).ok();
-                updates.extend(u.into_iter());
-            }
+        if self.state.is_over {
+            return;
         }
 
-        let mode = &mut self.modes[self.active_mode_index];
-        for &train_index in event_indices.iter() {
-            mode.on_train_event(train_index, &mut self.state);
-        }
-    }
-
-    fn render_updates(&mut self, updates: &mut Vec<EntityUpdate, MAX_LOC_UPDATES>) {
-        for platform in self.state.platforms.iter_mut() {
-            if let Some(u) = platform.get_update() {
-                updates.push(u).ok();
-            }
-        }
-
-        for switch in self.state.switches.iter_mut() {
-            if let Some(u) = switch.get_updates(&self.state.trains) {
-                updates.extend(u.into_iter());
-            }
-        }
-
-        for update in updates {
+        let mut do_entity_update = |update: EntityUpdate| {
             self.board_leds
                 .pixel_blocking(update.location.index(), update.contents.to_pwm_value())
                 .ok();
+        };
+        let mode = &mut self.modes[self.active_mode_index];
+        
+        mode.on_game_tick(&mut self.state);
+
+        let mut event_indices = heapless::Vec::<usize, MAX_TRAINS>::new();
+        for (train_index, train) in self.state.trains.iter_mut().enumerate() {
+            if train.advance(&self.state.switches, &mut do_entity_update) {
+                event_indices.push(train_index).ok();
+            }
+        }
+        for &train_index in event_indices.iter() {
+            mode.on_train_event(train_index, &mut self.state);
+        }
+
+        for platform in self.state.platforms.iter_mut() {
+            platform.update( &mut do_entity_update);
+        }
+        for switch in self.state.switches.iter_mut() {
+            switch.update(&self.state.trains, &mut do_entity_update);
         }
 
         match self.state.display {
-            DisplayState::None => self.board_digits.clear().unwrap(),
-            DisplayState::Score(score) => self.board_digits.display_number(score).unwrap(),
-            DisplayState::Text(text) => self.board_digits.display_ascii(&text).unwrap(),
+            DisplayState::None => { self.board_digits.clear().ok(); }
+            DisplayState::Score(score) => { self.board_digits.display_number(score).ok(); }
+            DisplayState::Text(ref text) => { self.board_digits.display_ascii(text).ok(); }
         }
     }
 }

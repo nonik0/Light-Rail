@@ -1,12 +1,11 @@
 /// Represents a location on the board, either a track or platform.
 /// All data here is const/static and evaluated as much as possible at compile time.
 /// Game state is all held within the Game struct.
-
 use avr_progmem::progmem;
 use heapless::Vec;
 use random_trait::Random;
 
-use crate::{panic::trace, panic_with_error, random::Rand};
+use crate::{panic_with_error, random::Rand};
 
 /// Direction of travel for a train from LED/node location.
 /// Anode is "exiting" a location from the LED's anode,
@@ -48,7 +47,12 @@ impl Location {
         let loc_data = self.location_data();
 
         if loc_data.is_platform() {
-            return (Location { node_index: loc_data.anode_neighbor }, Direction::Anode);
+            return (
+                Location {
+                    node_index: loc_data.anode_neighbor,
+                },
+                Direction::Anode,
+            );
         }
 
         let (next_index, next_index_2) = match direction {
@@ -58,7 +62,11 @@ impl Location {
 
         // is_switched only goes to next_index_2 if it exists, i.e. is_switched has no effect on straight tracks
         let use_switch_index = is_switched && next_index_2 != NO_DATA;
-        let next_index = if next_index_2 != NO_DATA && use_switch_index { next_index_2 } else { next_index };
+        let next_index = if next_index_2 != NO_DATA && use_switch_index {
+            next_index_2
+        } else {
+            next_index
+        };
 
         // exit from next_loc from opposite direction of cur_loc
         let next_loc_data = NODE_DATA.load_at(next_index as usize);
@@ -82,8 +90,6 @@ impl Location {
             .unwrap()
     }
 
-
-
     pub fn switch_locs() -> [Location; NUM_SWITCHES] {
         let mut ordered_indices = [0u8; NUM_SWITCHES];
         for (i, index) in SWITCH_INDICES.iter().enumerate() {
@@ -94,7 +100,9 @@ impl Location {
         const SWITCH_ORDER: [usize; NUM_SWITCHES] = [6, 5, 3, 1, 4, 7, 0, 2];
         SWITCH_ORDER
             .iter()
-            .map(|&i| Location { node_index: ordered_indices[i] })
+            .map(|&i| Location {
+                node_index: ordered_indices[i],
+            })
             .collect::<Vec<_, NUM_SWITCHES>>()
             .into_array()
             .unwrap()
@@ -220,7 +228,8 @@ const fn is_node_platform(location: LocationNode) -> bool {
 }
 
 const fn is_node_switch(location: LocationNode) -> bool {
-    !is_node_platform(location) && (location.anode_neighbor_2 != NO_DATA || location.cathode_neighbor_2 != NO_DATA)
+    !is_node_platform(location)
+        && (location.anode_neighbor_2 != NO_DATA || location.cathode_neighbor_2 != NO_DATA)
 }
 
 const fn unpack_node_data(data: u32) -> LocationNode {
@@ -378,6 +387,6 @@ const fn get_node_data(index: usize) -> LocationNode {
         141 => unpack_node_data(0x2E5EFF7D), // track 141/0x8D SWITCH
         142 => unpack_node_data(0x6B3FFFFF), // track 142/0x8E
         143 => unpack_node_data(0x896EFFFF), // track 143/0x8F
-        _ => LocationNode::default(),            // Default for out-of-range
+        _ => LocationNode::default(),        // Default for out-of-range
     }
 }

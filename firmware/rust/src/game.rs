@@ -6,7 +6,6 @@ use as1115::AS1115;
 use embedded_hal::i2c::I2c;
 use heapless::Vec;
 use is31fl3731::IS31FL3731;
-use static_cell::make_static;
 
 // use embedded_hal::delay::DelayNs;
 use random_trait::Random;
@@ -44,9 +43,9 @@ pub struct GameState {
     pub switches: [Switch; NUM_SWITCHES],
 }
 
-pub struct Game<I2C>
+pub struct Game<'a, I2C>
 where
-    I2C: I2c + 'static,
+    I2C: I2c,
 {
     // board components
     board_buzzer: TimerTone,
@@ -56,26 +55,23 @@ where
 
     // game mode state
     active_mode_index: usize,
-    modes: [&'static mut dyn GameModeHandler; NUM_GAME_MODES + 1],
+    modes: &'a mut [&'a mut (dyn GameModeHandler + 'a)],
 
     // state passed to game modes, changes to state entities are rendered into updates for digits and LEDs
     state: GameState,
 }
 
-impl<I2C> Game<I2C>
+impl<'a, I2C> Game<'a, I2C>
 where
-    I2C: I2c + 'static,
+    I2C: I2c,
 {
     pub fn new(
         board_buzzer: TimerTone,
         board_digits: AS1115<I2C>,
         board_input: BoardInput,
         board_leds: IS31FL3731<I2C>,
+        modes: &'a mut [&'a mut dyn GameModeHandler],
     ) -> Self {
-        let menu_mode = make_static!(MenuMode::default());
-        let freeplay_mode = make_static!(FreeplayMode::default());
-        let snake_mode = make_static!(SnakeMode::default());
-
         let state = GameState {
             target_mode_index: 0,
             is_over: false,
@@ -91,7 +87,7 @@ where
             board_input,
             board_leds,
             active_mode_index: 0,
-            modes: [menu_mode, freeplay_mode, snake_mode],
+            modes,
             state,
         };
 

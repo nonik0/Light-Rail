@@ -12,7 +12,7 @@ use crate::{
     switch::Switch,
 };
 
-pub const MAX_CARS: usize = 10;
+pub const MAX_CARS: usize = 100;
 pub const MAX_UPDATES: usize = MAX_CARS + 2; // train length + 1 movement + 1 new car
 const MIN_SPEED: u8 = 0;
 const MAX_SPEED: u8 = 100;

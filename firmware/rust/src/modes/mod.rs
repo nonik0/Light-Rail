@@ -14,11 +14,13 @@ pub use snake::*;
 
 pub const NUM_GAME_MODES: usize = 2;
 
+
+
+
 pub trait GameModeHandler
 {
-    // TODO: collapse into config struct?
-    fn short_name(&self) -> &[u8];
-    fn num_trains(&self) -> usize { 1 }
+    // on restart
+    fn on_restart(&mut self, state: &mut GameState) {}
 
     // on each game tick
     fn on_game_tick(&mut self, entities: &mut GameState) {}
@@ -27,5 +29,5 @@ pub trait GameModeHandler
     fn on_input_event(&mut self, event: InputEvent, state: &mut GameState) {}
 
     // when a train advances
-    fn on_train_event(&mut self, train_index: usize, state: &mut GameState) {}
+    fn on_train_advance(&mut self, train_index: usize, state: &mut GameState) {}
 }

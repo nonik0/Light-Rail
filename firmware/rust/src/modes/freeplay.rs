@@ -15,12 +15,21 @@ impl Default for FreeplayMode {
 
 impl GameModeHandler for FreeplayMode
 {
-    fn short_name(&self) -> &[u8] {
-        b"ply"
-    }
+    fn on_restart(&mut self, state: &mut GameState) {
+        self.score = 1;
+        state.display = DisplayState::Score(self.score);
 
-    fn num_trains(&self) -> usize {
-        1
+        while state.trains.len() > 1 {
+            state.trains.pop();
+        }
+
+        while state.trains[0].cars() > 3 {
+            state.trains[0].remove_car();
+        }
+
+        while state.trains[0].cars() < 3 {
+            state.trains[0].add_car(Cargo::Full);
+        }
     }
 
     fn on_game_tick(&mut self, state: &mut GameState) {
@@ -35,7 +44,7 @@ impl GameModeHandler for FreeplayMode
         // TODO: add/remove trains, etc.
     }
 
-    fn on_train_event(&mut self, train_index: usize, state: &mut GameState) {
+    fn on_train_advance(&mut self, train_index: usize, state: &mut GameState) {
         let train = &state.trains[train_index];
         let caboose_loc = train.caboose();
         let last_loc = train.last_loc();

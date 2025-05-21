@@ -15,12 +15,17 @@ impl Default for SnakeMode {
 
 impl GameModeHandler for SnakeMode
 {
-    fn short_name(&self) -> &[u8] {
-        b"snk"
-    }
+    fn on_restart(&mut self, state: &mut GameState) {
+        self.score = 1;
+        state.display = DisplayState::Score(self.score);
 
-    fn num_trains(&self) -> usize {
-        1
+        while state.trains.len() > 1 {
+            state.trains.pop();
+        }
+
+        while state.trains[0].cars() > 1 {
+            state.trains[0].remove_car();
+        }
     }
 
     fn on_game_tick(&mut self, state: &mut GameState) {
@@ -32,7 +37,7 @@ impl GameModeHandler for SnakeMode
         }
     }
 
-    fn on_train_event(&mut self, train_index: usize, state: &mut GameState) {
+    fn on_train_advance(&mut self, train_index: usize, state: &mut GameState) {
         let train = &mut state.trains[train_index];
         let caboose_loc = train.caboose();
         let last_loc = train.last_loc();

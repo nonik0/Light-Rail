@@ -130,7 +130,8 @@ fn main() -> ! {
         &mut modes::SnakeMode::default(),
     ];
     let mut game = game::Game::new(board_buzzer, board_digits, board_input, board_leds, &mut modes);
-
+    game.restart();
+    
     loop {
         game.tick();
         delay.delay_ms(BASE_DELAY);

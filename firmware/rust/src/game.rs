@@ -22,7 +22,7 @@ use crate::{
     Rand,
 };
 
-const MAX_TRAINS: usize = 5;
+const MAX_TRAINS: usize = 1;
 
 pub enum DisplayState {
     None,
@@ -81,7 +81,7 @@ where
             switches: Switch::take(),
         };
 
-        let mut game = Self {
+        Self {
             board_buzzer,
             board_digits,
             board_input,
@@ -89,58 +89,19 @@ where
             active_mode_index: 0,
             modes,
             state,
-        };
-
-        game.restart();
-        game
+        }
     }
 
     fn mode(&self) -> &dyn GameModeHandler {
         self.modes[self.active_mode_index]
     }
 
-    fn restart(&mut self) {
+    pub fn restart(&mut self) {
         self.board_digits.clear().ok();
         self.board_leds.clear_blocking().unwrap();
 
-        let actual_num_trains = self.state.trains.len();
-        let target_num_trains = self.mode().num_trains();
-        if actual_num_trains > target_num_trains {
-            for _ in 0..actual_num_trains - target_num_trains {
-                self.state.trains.pop().unwrap();
-            }
-        } else if actual_num_trains < target_num_trains {
-            for _ in 0..target_num_trains - actual_num_trains {
-                let rand_platform_index = Rand::default().get_usize() % self.state.platforms.len();
-                let rand_platform = &self.state.platforms[rand_platform_index];
-                let rand_speed = 5 + Rand::default().get_u8() % 10;
-                let mut train = Train::new(
-                    rand_platform.track_location(),
-                    Cargo::Full,
-                    Some(rand_speed),
-                );
-                let num_cars = 1 + Rand::default().get_usize() % 3;
-                for _ in 0..num_cars {
-                    train.add_car(Cargo::Full);
-                }
-                self.state.trains.push(train).unwrap();
-            }
-        }
-
-        for train in self.state.trains.iter_mut() {
-            let actual_num_cars = train.cars();
-            let target_num_cars = 3;
-
-            if actual_num_cars > target_num_cars {
-                for _ in 0..actual_num_cars - target_num_cars {
-                    train.remove_car().unwrap();
-                }
-            } else if actual_num_cars < target_num_cars {
-                for _ in 0..target_num_cars - actual_num_cars {
-                    train.add_car(Cargo::Full);
-                }
-            }
-        }
+        let mode = &mut self.modes[self.active_mode_index];
+        mode.on_restart(&mut self.state);
     }
 
     pub fn tick(&mut self) {
@@ -190,7 +151,7 @@ where
             }
         }
         for &train_index in event_indices.iter() {
-            mode.on_train_event(train_index, &mut self.state);
+            mode.on_train_advance(train_index, &mut self.state);
         }
 
         for platform in self.state.platforms.iter_mut() {

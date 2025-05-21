@@ -2,6 +2,7 @@ use embedded_hal::i2c::I2c;
 use random_trait::Random;
 
 use crate::{
+    common::*,
     game::{DisplayState, GameState},
     input::{InputDirection, InputEvent},
     location::Direction,
@@ -34,12 +35,45 @@ impl MenuMode {
 }
 
 impl GameModeHandler for MenuMode {
-    fn short_name(&self) -> &[u8] {
-        b"mnu"
-    }
+    fn on_restart(&mut self, state: &mut GameState) {
+        let actual_num_trains = state.trains.len();
+        let target_num_trains = 1;//self.mode().num_trains();
+        if actual_num_trains > target_num_trains {
+            for _ in 0..actual_num_trains - target_num_trains {
+                state.trains.pop().unwrap();
+            }
+        } else if actual_num_trains < target_num_trains {
+            for _ in 0..target_num_trains - actual_num_trains {
+                let rand_platform_index = Rand::default().get_usize() % state.platforms.len();
+                let rand_platform = &state.platforms[rand_platform_index];
+                let rand_speed = 5 + Rand::default().get_u8() % 10;
+                let mut train = Train::new(
+                    rand_platform.track_location(),
+                    Cargo::Full,
+                    Some(rand_speed),
+                );
+                let num_cars = 1 + Rand::default().get_usize() % 3;
+                for _ in 0..num_cars {
+                    train.add_car(Cargo::Full);
+                }
+                state.trains.push(train).unwrap();
+            }
+        }
 
-    fn num_trains(&self) -> usize {
-        2
+        for train in state.trains.iter_mut() {
+            let actual_num_cars = train.cars();
+            let target_num_cars = 3;
+
+            if actual_num_cars > target_num_cars {
+                for _ in 0..actual_num_cars - target_num_cars {
+                    train.remove_car().unwrap();
+                }
+            } else if actual_num_cars < target_num_cars {
+                for _ in 0..target_num_cars - actual_num_cars {
+                    train.add_car(Cargo::Full);
+                }
+            }
+        }
     }
 
     fn on_game_tick(&mut self, state: &mut GameState) {
@@ -69,7 +103,7 @@ impl GameModeHandler for MenuMode {
         }
     }
 
-    fn on_train_event(&mut self, train_index: usize, state: &mut GameState) {
+    fn on_train_advance(&mut self, train_index: usize, state: &mut GameState) {
         let train = &state.trains[train_index];
         let caboose_loc = train.caboose();
         let last_loc = train.last_loc();

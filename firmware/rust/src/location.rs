@@ -82,43 +82,16 @@ impl Location {
     }
 
     pub fn platform_locs() -> [Location; NUM_PLATFORMS] {
-        PLATFORM_INDICES
-            .iter()
-            .map(|node_index| Location { node_index })
-            .collect::<Vec<_, NUM_PLATFORMS>>()
-            .into_array()
-            .unwrap()
+        PLATFORM_LOCS.load()
     }
 
     pub fn switch_locs() -> [Location; NUM_SWITCHES] {
-        let mut ordered_indices = [0u8; NUM_SWITCHES];
-        for (i, index) in SWITCH_INDICES.iter().enumerate() {
-            ordered_indices[i] = index;
-        }
-
-        // reorders switches according to board physical layout
-        const SWITCH_ORDER: [usize; NUM_SWITCHES] = [6, 5, 3, 1, 4, 7, 0, 2];
-        SWITCH_ORDER
-            .iter()
-            .map(|&i| Location {
-                node_index: ordered_indices[i],
-            })
-            .collect::<Vec<_, NUM_SWITCHES>>()
-            .into_array()
-            .unwrap()
+        SWITCH_LOCS.load()
     }
 
     fn location_data(&self) -> LocationNode {
         NODE_DATA.load_at(self.node_index as usize)
     }
-
-    // pub fn is_platform(&self) -> bool {
-    //     self.location_data().is_platform()
-    // }
-
-    // pub fn is_track(&self) -> bool {
-    //     self.location_data().is_track()
-    // }
 }
 
 /// Track/platform graph data is stored in a packed array of LocationNode structs.
@@ -181,32 +154,42 @@ pub const NUM_SWITCHES: usize = 8;
 
 // location data built from raw data in const fn below and stored in progmem, const fn data discarded
 progmem! {
-    static progmem PLATFORM_INDICES: [u8; NUM_PLATFORMS] = {
-        let mut platforms = [0u8; NUM_PLATFORMS];
+    static progmem PLATFORM_LOCS: [Location; NUM_PLATFORMS] = {
+        let mut locs = [Location { node_index: 0 }; NUM_PLATFORMS];
         let mut count = 0;
         let mut index = 0;
         while index < NUM_LOCATION_NODES {
             if is_node_platform(get_node_data(index)) {
-                platforms[count] = index as u8;
+                locs[count] = Location { node_index: index as u8};
                 count += 1;
             }
             index += 1;
         }
-        platforms
+        locs
     };
 
-    static progmem SWITCH_INDICES: [u8; NUM_SWITCHES] = {
-        let mut switches = [0u8; NUM_SWITCHES];
+    static progmem SWITCH_LOCS: [Location; NUM_SWITCHES] = {
+        let mut ordered_indices = [0u8; NUM_SWITCHES];
         let mut count = 0;
         let mut index = 0;
         while index < NUM_LOCATION_NODES {
             if is_node_switch(get_node_data(index)) {
-                switches[count] = index as u8;
+                ordered_indices[count] = index as u8;
                 count += 1;
             }
             index += 1;
         }
-        switches
+
+        // reorders switches according to board physical layout
+        const SWITCH_ORDER: [usize; NUM_SWITCHES] = [6, 5, 3, 1, 4, 7, 0, 2];
+        let mut locs = [Location { node_index: 0 }; NUM_SWITCHES];
+        index = 0;
+        while index < NUM_SWITCHES {
+            locs[index] = Location { node_index: ordered_indices[SWITCH_ORDER[index]] };
+            index += 1;
+        }
+
+        locs
     };
 
     static progmem NODE_DATA: [LocationNode; NUM_LOCATION_NODES] = {

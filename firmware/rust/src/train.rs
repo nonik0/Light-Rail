@@ -94,8 +94,6 @@ impl Train {
 
         self.speed_counter -= MAX_SPEED;
 
-        let mut loc_updates = Vec::<EntityUpdate, MAX_UPDATES>::new();
-
         // move train from the rear, keeping track of location updates
         self.last_caboose_loc = self.cars.last().unwrap().loc;
         let last_loc_update = EntityUpdate::new(self.last_caboose_loc, Contents::Empty);

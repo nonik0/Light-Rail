@@ -5,7 +5,6 @@ use random_trait::Random;
 use crate::{
     common::*,
     location::{Direction, Location, NUM_SWITCHES},
-    panic::trace,
     panic_with_error,
     random::Rand,
     train::Train,
@@ -114,10 +113,11 @@ impl Switch {
         Location::switch_locs().map(|location| Switch::new(location))
     }
 
-    pub fn get_updates(&mut self, trains: &[Train]) -> Option<Vec<EntityUpdate, MAX_UPDATES>> {
-        trace(b"switch tick");
-
-        let mut loc_updates = Vec::new();
+    pub fn update<F>(&mut self, trains: &[Train], mut update_callback: F) -> bool
+    where
+        F: FnMut(EntityUpdate),
+    {
+        let mut update = false;
 
         let mut handle_direction = |is_switched: Option<bool>,
                                     last_switched: Option<bool>,
@@ -142,7 +142,8 @@ impl Switch {
                 let inactive_occupied = trains.iter().any(|train| train.at_location(inactive_loc));
                 if !inactive_occupied {
                     let inactive_loc_update = EntityUpdate::new(inactive_loc, Contents::Empty);
-                    loc_updates.push(inactive_loc_update).ok();
+                    update_callback(inactive_loc_update);
+                    update = true;
                 }
 
                 // Only update active_loc if no train is present
@@ -150,7 +151,8 @@ impl Switch {
                 if !active_occupied {
                     let active_loc_update =
                         EntityUpdate::new(active_loc, Contents::SwitchIndicator(brightness));
-                    loc_updates.push(active_loc_update).ok();
+                    update_callback(active_loc_update);
+                    update = true;
                 }
             }
         };
@@ -170,11 +172,7 @@ impl Switch {
             self.brightness,
         );
 
-        if loc_updates.is_empty() {
-            None
-        } else {
-            Some(loc_updates)
-        }
+        update
     }
 
     pub fn is_switched(&self, direction: Direction) -> bool {

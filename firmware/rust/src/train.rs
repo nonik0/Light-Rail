@@ -8,12 +8,11 @@ use random_trait::Random;
 use crate::{
     common::*,
     location::{Direction, Location},
-    panic::trace,
     random::Rand,
     switch::Switch,
 };
 
-pub const MAX_CARS: usize = 5;
+pub const MAX_CARS: usize = 10;
 pub const MAX_UPDATES: usize = MAX_CARS + 2; // train length + 1 movement + 1 new car
 const MIN_SPEED: u8 = 0;
 const MAX_SPEED: u8 = 100;
@@ -56,7 +55,8 @@ impl Train {
         let caboose_loc = self.cars[self.cars.len() - 1].loc;
         let inv_caboose_dir = if self.cars.len() > 1 {
             let next_car_loc = self.cars[self.cars.len() - 2].loc;
-            if caboose_loc.next(Direction::Anode, false).0 == next_car_loc { // TODO: check for switch
+            if caboose_loc.next(Direction::Anode, false).0 == next_car_loc {
+                // TODO: check for switch
                 Direction::Cathode
             } else {
                 Direction::Anode
@@ -82,29 +82,31 @@ impl Train {
     }
 
     /// Game tick for train, returns location updates as cars move along track
-    pub fn advance(&mut self, switches: &[Switch]) -> Option<Vec<EntityUpdate, MAX_UPDATES>> {
-        trace(b"advance");
+    pub fn advance<F>(&mut self, switches: &[Switch], mut update_callback: F) -> bool
+    where
+        F: FnMut(EntityUpdate),
+    {
         self.speed_counter += self.speed;
 
         if self.speed_counter < MAX_SPEED {
-            return None;
+            return false;
         }
 
         self.speed_counter -= MAX_SPEED;
 
-        let mut loc_updates = Vec::new();
+        let mut loc_updates = Vec::<EntityUpdate, MAX_UPDATES>::new();
 
         // move train from the rear, keeping track of location updates
         self.last_caboose_loc = self.cars.last().unwrap().loc;
         let last_loc_update = EntityUpdate::new(self.last_caboose_loc, Contents::Empty);
-        loc_updates.push(last_loc_update).unwrap();
+        update_callback(last_loc_update);
         if !self.cars.is_empty() {
             for i in (1..self.cars.len()).rev() {
                 self.cars[i].loc = self.cars[i - 1].loc;
 
                 let loc_update =
                     EntityUpdate::new(self.cars[i].loc, Contents::Train(self.cars[i].cargo));
-                loc_updates.push(loc_update).unwrap();
+                update_callback(loc_update);
             }
         }
 
@@ -119,15 +121,19 @@ impl Train {
         }
 
         // advance front car to next location, adding final location update
-        (self.cars.first_mut().unwrap().loc, self.direction) =
-            self.cars.first().unwrap().loc.next(self.direction, is_switched);
+        (self.cars.first_mut().unwrap().loc, self.direction) = self
+            .cars
+            .first()
+            .unwrap()
+            .loc
+            .next(self.direction, is_switched);
         let loc_update = EntityUpdate::new(
             self.cars.first().unwrap().loc,
             Contents::Train(self.cars.first().unwrap().cargo),
         );
-        loc_updates.push(loc_update).unwrap();
+        update_callback(loc_update);
 
-        Some(loc_updates)
+        true
     }
 
     /// Returns the location of the front car

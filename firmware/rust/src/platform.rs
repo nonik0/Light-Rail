@@ -1,10 +1,8 @@
-
 use random_trait::Random;
 
 use crate::{
     common::*,
     location::{Direction, Location, NUM_PLATFORMS},
-    panic::trace,
     panic_with_error,
     random::Rand,
     train::Train,
@@ -45,16 +43,20 @@ impl Platform {
         platforms
     }
 
-    pub fn get_update(&mut self) -> Option<EntityUpdate> {
+    pub fn update<F>(&mut self, mut update_callback: F) -> bool
+    where
+        F: FnMut(EntityUpdate),
+    {
         if self.cargo != self.last_cargo {
             self.last_cargo = self.cargo;
-            return Some(EntityUpdate::new(
+            update_callback(EntityUpdate::new(
                 self.location,
                 Contents::Platform(self.cargo),
             ));
+            return true;
         }
 
-        None
+        false
     }
 
     pub fn location(&self) -> Location {

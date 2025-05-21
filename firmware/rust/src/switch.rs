@@ -1,5 +1,4 @@
 use core::panic;
-use heapless::Vec;
 use random_trait::Random;
 
 use crate::{

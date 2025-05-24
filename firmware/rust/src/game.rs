@@ -43,6 +43,14 @@ pub struct GameState {
     pub switches: [Switch; NUM_SWITCHES],
 }
 
+impl GameState {
+    fn clear_platforms(&mut self) {
+        for platform in self.platforms.iter_mut() {
+            platform.clear_cargo();
+        }
+    }
+}
+
 pub struct Game<'a, I2C>
 where
     I2C: I2c,
@@ -97,27 +105,27 @@ where
     }
 
     pub fn restart(&mut self) {
-        self.board_digits.clear().ok();
-        self.board_leds.clear_blocking().unwrap();
-
         let mode = &mut self.modes[self.active_mode_index];
         mode.on_restart(&mut self.state);
     }
 
     pub fn tick(&mut self) {
         if let Some(event) = self.board_input.update() {
+            self.board_buzzer.tone(2000, 20);
             match event {
+                // all modes share switch toggle
                 InputEvent::SwitchButtonPressed(index) => {
-                    self.board_buzzer.tone(4000, 100);
                     let index = index as usize;
                     if index < self.state.switches.len() {
                         self.state.switches[index].switch();
                     }
                 }
+                // shared exit to menu
                 InputEvent::DirectionButtonHeld(InputDirection::Left) => {
                     self.state.target_mode_index = 0;
                     self.active_mode_index = 0;
                     self.state.is_over = false;
+                    self.restart();
                 }
                 _ => {}
             }
@@ -129,6 +137,12 @@ where
         if self.state.target_mode_index != self.active_mode_index {
             self.active_mode_index = self.state.target_mode_index;
             self.restart();
+        }
+
+        match self.state.display {
+            DisplayState::None => { self.board_digits.clear().ok(); }
+            DisplayState::Score(score) => { self.board_digits.display_number(score).ok(); }
+            DisplayState::Text(ref text) => { self.board_digits.display_ascii(text).ok(); }
         }
 
         if self.state.is_over {
@@ -155,16 +169,10 @@ where
         }
 
         for platform in self.state.platforms.iter_mut() {
-            platform.update( &mut do_entity_update);
+            platform.update(&mut do_entity_update);
         }
         for switch in self.state.switches.iter_mut() {
             switch.update(&self.state.trains, &mut do_entity_update);
-        }
-
-        match self.state.display {
-            DisplayState::None => { self.board_digits.clear().ok(); }
-            DisplayState::Score(score) => { self.board_digits.display_number(score).ok(); }
-            DisplayState::Text(ref text) => { self.board_digits.display_ascii(text).ok(); }
         }
     }
 }

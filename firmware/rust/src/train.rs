@@ -14,10 +14,9 @@ use crate::{
 
 pub const MAX_CARS: usize = 100;
 pub const MAX_UPDATES: usize = MAX_CARS + 2; // train length + 1 movement + 1 new car
+pub const DEFAULT_SPEED: u8 = 10;
 const MIN_SPEED: u8 = 0;
 const MAX_SPEED: u8 = 100;
-const DEFAULT_LOCATION: u8 = 0xFF;
-const DEFAULT_SPEED: u8 = 10;
 
 #[derive(Debug)]
 pub struct Car {
@@ -79,6 +78,28 @@ impl Train {
         let loc = self.cars.pop().unwrap().loc;
 
         Some(EntityUpdate::new(loc, Contents::Empty))
+    }
+
+    pub fn set_state(&mut self, num_cars: u8, speed: u8) {
+        if num_cars > MAX_CARS as u8 {
+            return;
+        }
+
+        self.speed = speed.clamp(MIN_SPEED, MAX_SPEED);
+        self.speed_counter = 0;
+
+        while self.cars.len() < num_cars as usize {
+            let cargo = Cargo::Full;
+            if self.add_car(cargo).is_none() {
+                break;
+            }
+        }
+
+        while self.cars.len() > num_cars as usize {
+            if self.remove_car().is_none() {
+                break;
+            }
+        }
     }
 
     /// Game tick for train, returns location updates as cars move along track

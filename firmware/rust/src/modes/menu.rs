@@ -10,7 +10,7 @@ use crate::{
     platform,
     random::Rand,
     switch,
-    train::Train,
+    train::{Train, DEFAULT_SPEED},
     NUM_DIGITS,
 };
 
@@ -26,6 +26,7 @@ impl MenuMode {
         let delta = if inc { 1 } else { NUM_GAME_MODES - 1 };
         self.index = (self.index + delta) % NUM_GAME_MODES;
 
+        // TODO: use a lookup table for this
         match self.index {
             0 => *b"ply",
             1 => *b"snk",
@@ -36,6 +37,8 @@ impl MenuMode {
 
 impl GameModeHandler for MenuMode {
     fn on_restart(&mut self, state: &mut GameState) {
+        state.display = DisplayState::None;
+
         let actual_num_trains = state.trains.len();
         let target_num_trains = 1;//self.mode().num_trains();
         if actual_num_trains > target_num_trains {
@@ -53,26 +56,12 @@ impl GameModeHandler for MenuMode {
                     Some(rand_speed),
                 );
                 let num_cars = 1 + Rand::default().get_usize() % 3;
-                for _ in 0..num_cars {
-                    train.add_car(Cargo::Full);
-                }
                 state.trains.push(train).unwrap();
             }
         }
 
         for train in state.trains.iter_mut() {
-            let actual_num_cars = train.cars();
-            let target_num_cars = 3;
-
-            if actual_num_cars > target_num_cars {
-                for _ in 0..actual_num_cars - target_num_cars {
-                    train.remove_car().unwrap();
-                }
-            } else if actual_num_cars < target_num_cars {
-                for _ in 0..target_num_cars - actual_num_cars {
-                    train.add_car(Cargo::Full);
-                }
-            }
+            train.set_state(3, DEFAULT_SPEED);
         }
     }
 

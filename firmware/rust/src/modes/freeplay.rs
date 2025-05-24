@@ -1,7 +1,14 @@
 use embedded_hal::i2c::I2c;
 use random_trait::Random;
 
-use crate::{common::*, game::{DisplayState, GameState}, input::InputEvent, modes::GameModeHandler, random::Rand};
+use crate::{
+    common::*,
+    game::{DisplayState, GameState},
+    input::InputEvent,
+    modes::GameModeHandler,
+    random::Rand,
+    train::DEFAULT_SPEED
+};
 
 pub struct FreeplayMode {
     score: u16,
@@ -13,8 +20,7 @@ impl Default for FreeplayMode {
     }
 }
 
-impl GameModeHandler for FreeplayMode
-{
+impl GameModeHandler for FreeplayMode {
     fn on_restart(&mut self, state: &mut GameState) {
         self.score = 1;
         state.display = DisplayState::Score(self.score);
@@ -23,12 +29,8 @@ impl GameModeHandler for FreeplayMode
             state.trains.pop();
         }
 
-        while state.trains[0].cars() > 3 {
-            state.trains[0].remove_car();
-        }
-
-        while state.trains[0].cars() < 3 {
-            state.trains[0].add_car(Cargo::Full);
+        for train in state.trains.iter_mut() {
+            train.set_state(3, DEFAULT_SPEED);
         }
     }
 

@@ -17,6 +17,7 @@ impl GameModeHandler for SnakeMode
 {
     fn on_restart(&mut self, state: &mut GameState) {
         self.score = 1;
+        self.state.is_over = false;
         state.display = DisplayState::Score(self.score);
 
         while state.trains.len() > 1 {
@@ -34,6 +35,13 @@ impl GameModeHandler for SnakeMode
                 // TODO: check train too
                 platform.set_cargo();
             }
+        }
+    }
+
+    fn on_input_event(&mut self, event: InputEvent, state: &mut GameState) {
+        if state.is_over {
+            state.display = DisplayState::None;
+            self.on_restart(state);
         }
     }
 

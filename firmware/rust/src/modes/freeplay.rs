@@ -22,6 +22,7 @@ impl Default for FreeplayMode {
 
 impl GameModeHandler for FreeplayMode {
     fn on_restart(&mut self, state: &mut GameState) {
+        state.is_over = false;
         self.score = 1;
         state.display = DisplayState::Score(self.score);
 

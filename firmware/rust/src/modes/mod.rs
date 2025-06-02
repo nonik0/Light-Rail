@@ -12,10 +12,7 @@ pub use menu::*;
 pub use freeplay::*;
 pub use snake::*;
 
-pub const NUM_GAME_MODES: usize = 2;
-
-
-
+pub const NUM_MODES: usize = 3;
 
 pub trait GameModeHandler
 {

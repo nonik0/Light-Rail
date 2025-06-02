@@ -155,9 +155,18 @@ impl Train {
         true
     }
 
+    /// Returns the vector of cars in the train
+    pub fn cars(&self) -> &[Car] {
+        &self.cars
+    }
+
     /// Returns the location of the front car
     pub fn front(&self) -> Location {
         self.cars.first().unwrap().loc
+    }
+
+    pub fn len(&self) -> usize {
+        self.cars.len()
     }
 
     /// Returns the location of the engine (first car of the train)
@@ -168,10 +177,6 @@ impl Train {
     /// Returns the location of the caboose (last car of the train)
     pub fn caboose(&self) -> Location {
         self.cars.last().unwrap().loc
-    }
-
-    pub fn cars(&self) -> usize {
-        self.cars.len()
     }
 
     /// Returns the previous location of the caboose before the last move

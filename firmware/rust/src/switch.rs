@@ -10,8 +10,8 @@ use crate::{
 };
 
 pub const MAX_UPDATES: usize = 5; // TODO
-pub const MIN_BRIGHTNESS: u8 = 25;
-pub const MAX_BRIGHTNESS: u8 = 50;
+pub const MIN_BRIGHTNESS: u8 = 50;
+pub const MAX_BRIGHTNESS: u8 = 80;
 
 pub struct Switch {
     location: Location,

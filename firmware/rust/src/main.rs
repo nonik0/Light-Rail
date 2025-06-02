@@ -37,7 +37,7 @@ mod switch;
 mod tone;
 mod train;
 
-const BASE_DELAY: u32 = 10;
+const BASE_DELAY: u32 = 1;
 const NUM_BUTTONS: usize = 12;
 const NUM_DIGITS: u8 = 3;
 const DIGITS_I2C_ADDR: u8 = as1115::constants::DEFAULT_ADDRESS;
@@ -123,6 +123,7 @@ fn main() -> ! {
     board_digits
         .display_number(Rand::default().get_u8() as u16)
         .unwrap();
+    board_digits.clear().unwrap();
 
     let mut modes: [&mut dyn modes::GameModeHandler; 3] = [
         &mut modes::MenuMode::default(),

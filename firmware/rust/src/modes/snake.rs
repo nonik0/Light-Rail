@@ -17,14 +17,14 @@ impl GameModeHandler for SnakeMode
 {
     fn on_restart(&mut self, state: &mut GameState) {
         self.score = 1;
-        self.state.is_over = false;
+        state.is_over = false;
         state.display = DisplayState::Score(self.score);
 
         while state.trains.len() > 1 {
             state.trains.pop();
         }
 
-        while state.trains[0].cars() > 1 {
+        while state.trains[0].len() > 1 {
             state.trains[0].remove_car();
         }
     }
@@ -40,8 +40,7 @@ impl GameModeHandler for SnakeMode
 
     fn on_input_event(&mut self, event: InputEvent, state: &mut GameState) {
         if state.is_over {
-            state.display = DisplayState::None;
-            self.on_restart(state);
+            state.is_over = false;
         }
     }
 
@@ -51,7 +50,7 @@ impl GameModeHandler for SnakeMode
         let last_loc = train.last_loc();
 
         // Check if train collided with itself
-        for i in 1..train.cars() {
+        for i in 1..train.len() {
             if train[i].loc == train.engine() {
                 state.display = DisplayState::Text(*b"ded");
                 state.is_over = true;

@@ -59,6 +59,10 @@ impl Platform {
         false
     }
 
+    pub fn cargo(&self) -> Cargo {
+        self.cargo
+    }
+
     pub fn location(&self) -> Location {
         self.location
     }

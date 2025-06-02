@@ -14,7 +14,7 @@ use crate::{
     NUM_DIGITS,
 };
 
-use super::NUM_GAME_MODES;
+use super::NUM_MODES;
 
 #[derive(Default)]
 pub struct MenuMode {
@@ -22,22 +22,32 @@ pub struct MenuMode {
 }
 
 impl MenuMode {
-    fn next_game_mode(&mut self, inc: bool) -> [u8; NUM_DIGITS as usize] {
-        let delta = if inc { 1 } else { NUM_GAME_MODES - 1 };
-        self.index = (self.index + delta) % NUM_GAME_MODES;
-
-        // TODO: use a lookup table for this
+    fn game_mode(&self) -> [u8; NUM_DIGITS as usize] {
         match self.index {
-            0 => *b"ply",
-            1 => *b"snk",
+            1 => *b"ply", // Play
+            2 => *b"snk", // Snake
             _ => *b"wat",
         }
+    }
+
+    fn next_game_mode(&mut self, inc: bool) -> [u8; NUM_DIGITS as usize] {
+        let delta = if inc { 1 } else { NUM_MODES - 1 };
+        self.index = (self.index + delta) % NUM_MODES;
+        if self.index == 0 {
+            self.index = if inc { 1 } else { NUM_MODES - 1 };
+        }
+        self.game_mode()
     }
 }
 
 impl GameModeHandler for MenuMode {
     fn on_restart(&mut self, state: &mut GameState) {
-        state.display = DisplayState::None;
+        state.is_over = false;
+        state.display = if self.index != 0 {
+            DisplayState::Text(self.game_mode())
+        } else {
+            DisplayState::None
+        };
 
         let actual_num_trains = state.trains.len();
         let target_num_trains = 1;//self.mode().num_trains();
@@ -84,7 +94,7 @@ impl GameModeHandler for MenuMode {
                     state.display = DisplayState::Text(self.next_game_mode(false));
                 }
                 InputDirection::Right => {
-                    state.target_mode_index = self.index + 1; // offset by 1 for menu mode
+                    state.target_mode_index = self.index; // no-op if index is 0, so user needs to press up/down to select a game mode
                 }
                 _ => {}
             },

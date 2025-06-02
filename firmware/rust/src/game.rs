@@ -24,6 +24,7 @@ use crate::{
 
 const MAX_TRAINS: usize = 1;
 
+#[derive(Clone, Copy, PartialEq)]
 pub enum DisplayState {
     None,
     Score(u16),
@@ -43,14 +44,6 @@ pub struct GameState {
     pub switches: [Switch; NUM_SWITCHES],
 }
 
-impl GameState {
-    fn clear_platforms(&mut self) {
-        for platform in self.platforms.iter_mut() {
-            platform.clear_cargo();
-        }
-    }
-}
-
 pub struct Game<'a, I2C>
 where
     I2C: I2c,
@@ -63,6 +56,8 @@ where
 
     // game mode state
     active_mode_index: usize,
+    last_display: DisplayState,
+    last_over: bool,
     modes: &'a mut [&'a mut (dyn GameModeHandler + 'a)],
 
     // state passed to game modes, changes to state entities are rendered into updates for digits and LEDs
@@ -95,6 +90,8 @@ where
             board_input,
             board_leds,
             active_mode_index: 0,
+            last_display: DisplayState::None,
+            last_over: true,
             modes,
             state,
         }
@@ -105,27 +102,83 @@ where
     }
 
     pub fn restart(&mut self) {
+        // reset game state, on_restart should update state.display and entities will be updates by self.refresh_board_leds()
         let mode = &mut self.modes[self.active_mode_index];
         mode.on_restart(&mut self.state);
+        self.refresh_board_leds();
+    }
+
+    pub fn refresh_board_leds(&mut self) {
+        self.board_leds.clear_blocking().unwrap();
+
+        for train in self.state.trains.iter() {
+            for car in train.cars().iter() {
+                self.board_leds
+                    .pixel_blocking(
+                        car.loc.index(),
+                        Contents::Train(car.cargo).to_pwm_value(),
+                    )
+                    .unwrap();
+            }
+        }
+        for platform in self.state.platforms.iter() {
+            self.board_leds
+                .pixel_blocking(
+                    platform.location().index(),
+                    Contents::Platform(platform.cargo()).to_pwm_value(),
+                )
+                .unwrap();
+        }
+        for switch in self.state.switches.iter() {
+            if let Some(active_anode_location) = switch.active_location(Direction::Anode) {
+                self.board_leds
+                    .pixel_blocking(
+                        active_anode_location.index(),
+                        Contents::SwitchIndicator(100).to_pwm_value(),
+                    )
+                    .unwrap();
+            }
+            if let Some(active_cathode_location) =
+                switch.active_location(Direction::Cathode)
+            {
+                self.board_leds
+                    .pixel_blocking(
+                        active_cathode_location.index(),
+                        Contents::SwitchIndicator(100).to_pwm_value(),
+                    )
+                    .unwrap();
+            }
+        }
     }
 
     pub fn tick(&mut self) {
+        // handle input events, some events are shared betweens all modes
         if let Some(event) = self.board_input.update() {
-            self.board_buzzer.tone(2000, 20);
             match event {
-                // all modes share switch toggle
+                // toggle switches
                 InputEvent::SwitchButtonPressed(index) => {
+                    self.board_buzzer.tone(3000, 100);
                     let index = index as usize;
                     if index < self.state.switches.len() {
                         self.state.switches[index].switch();
                     }
                 }
-                // shared exit to menu
+                // tones on button presses
+                InputEvent::DirectionButtonPressed(InputDirection::Up)
+                | InputEvent::DirectionButtonPressed(InputDirection::Right) => {
+                    self.board_buzzer.tone(3500, 100);
+                }
+                InputEvent::DirectionButtonPressed(InputDirection::Down)
+                | InputEvent::DirectionButtonPressed(InputDirection::Left) => {
+                    self.board_buzzer.tone(3000, 100);
+                }
+                // exit to menu mode
                 InputEvent::DirectionButtonHeld(InputDirection::Left) => {
                     self.state.target_mode_index = 0;
                     self.active_mode_index = 0;
                     self.state.is_over = false;
                     self.restart();
+                    //return;
                 }
                 _ => {}
             }
@@ -134,28 +187,51 @@ where
             mode.on_input_event(event, &mut self.state);
         }
 
+        // track when mode signals restart
+        if self.last_over != self.state.is_over {
+            self.last_over = self.state.is_over;
+
+            if (!self.state.is_over) {
+                self.restart();
+            }
+        }
+
+        // change mode when current mode requests it (mostly from menu mode)
         if self.state.target_mode_index != self.active_mode_index {
             self.active_mode_index = self.state.target_mode_index;
             self.restart();
         }
-
-        match self.state.display {
-            DisplayState::None => { self.board_digits.clear().ok(); }
-            DisplayState::Score(score) => { self.board_digits.display_number(score).ok(); }
-            DisplayState::Text(ref text) => { self.board_digits.display_ascii(text).ok(); }
+        
+        // update board digits/score display
+        if self.last_display != self.state.display {
+            self.last_display = self.state.display;
+            match self.state.display {
+                DisplayState::None => {
+                    self.board_digits.clear().ok();
+                }
+                DisplayState::Score(score) => {
+                    self.board_digits.display_number(score).ok();
+                }
+                DisplayState::Text(ref text) => {
+                    self.board_digits.display_ascii(text).ok();
+                }
+            }
         }
 
+        // skip updating game entities if game is over
         if self.state.is_over {
             return;
         }
 
+        // helper closure to update entity LEDs
         let mut do_entity_update = |update: EntityUpdate| {
             self.board_leds
                 .pixel_blocking(update.location.index(), update.contents.to_pwm_value())
                 .ok();
         };
+
+        // update train, platform, and switch entities
         let mode = &mut self.modes[self.active_mode_index];
-        
         mode.on_game_tick(&mut self.state);
 
         let mut event_indices = heapless::Vec::<usize, MAX_TRAINS>::new();

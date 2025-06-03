@@ -3,6 +3,7 @@
 #![allow(unused_variables)]
 
 use heapless::Vec;
+use is31fl3731::gamma;
 use random_trait::Random;
 
 use crate::{
@@ -46,7 +47,7 @@ impl Train {
         }
     }
 
-    pub fn add_car(&mut self, cargo: Cargo) -> Option<EntityUpdate> {
+    pub fn add_car(&mut self, cargo: Cargo) -> Option<LedUpdate> {
         if self.cars.len() >= MAX_CARS {
             return None;
         }
@@ -67,17 +68,17 @@ impl Train {
 
         self.cars.push(Car { loc, cargo }).unwrap();
 
-        Some(EntityUpdate::new(loc, Contents::Train(cargo)))
+        Some(LedUpdate::new(loc, cargo.get_track_pwm(0)))
     }
 
-    pub fn remove_car(&mut self) -> Option<EntityUpdate> {
+    pub fn remove_car(&mut self) -> Option<LedUpdate> {
         if self.cars.len() <= 1 {
             return None;
         }
 
         let loc = self.cars.pop().unwrap().loc;
 
-        Some(EntityUpdate::new(loc, Contents::Empty))
+        Some(LedUpdate::new(loc, 0))
     }
 
     pub fn set_state(&mut self, num_cars: u8, cargo: Cargo, speed: u8) {
@@ -111,7 +112,7 @@ impl Train {
     /// Game tick for train, returns location updates as cars move along track
     pub fn advance<F>(&mut self, switches: &[Switch], mut update_callback: F) -> bool
     where
-        F: FnMut(EntityUpdate),
+        F: FnMut(LedUpdate),
     {
         self.speed_counter += self.speed;
 
@@ -123,14 +124,14 @@ impl Train {
 
         // move train from the rear, keeping track of location updates
         self.last_caboose_loc = self.cars.last().unwrap().loc;
-        let last_loc_update = EntityUpdate::new(self.last_caboose_loc, Contents::Empty);
+        let last_loc_update = LedUpdate::new(self.last_caboose_loc, 0);
         update_callback(last_loc_update);
         if !self.cars.is_empty() {
             for i in (1..self.cars.len()).rev() {
                 self.cars[i].loc = self.cars[i - 1].loc;
 
                 let loc_update =
-                    EntityUpdate::new(self.cars[i].loc, Contents::Train(self.cars[i].cargo));
+                    LedUpdate::new(self.cars[i].loc, self.cars[i].cargo.get_track_pwm(0));
                 update_callback(loc_update);
             }
         }
@@ -152,10 +153,9 @@ impl Train {
             .unwrap()
             .loc
             .next(self.direction, is_switched);
-        let loc_update = EntityUpdate::new(
+        let loc_update = LedUpdate::new(
             self.cars.first().unwrap().loc,
-            Contents::Train(self.cars.first().unwrap().cargo),
-        );
+            self.cars.first().unwrap().cargo.get_track_pwm(0));
         update_callback(loc_update);
 
         true

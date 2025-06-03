@@ -63,7 +63,7 @@ impl GameModeHandler for MenuMode {
                 let rand_speed = 5 + Rand::default().get_u8() % 10;
                 let mut train = Train::new(
                     rand_platform.track_location(),
-                    Cargo::Full,
+                    Cargo::Full(LedPattern::SolidBright),
                     Some(rand_speed),
                 );
                 let num_cars = 1 + Rand::default().get_usize() % 3;
@@ -72,14 +72,19 @@ impl GameModeHandler for MenuMode {
         }
 
         for train in state.trains.iter_mut() {
-            train.set_state(3, Cargo::Full, DEFAULT_SPEED);
+            train.set_state(3, Cargo::Full(LedPattern::SolidBright), DEFAULT_SPEED);
         }
     }
 
     fn on_game_tick(&mut self, state: &mut GameState) {
         for platform in state.platforms.iter_mut() {
             if platform.is_empty() && Rand::default().get_u16() <= 50 {
-                platform.set_cargo();
+                let pattern = if Rand::default().get_bool() {
+                    LedPattern::SolidBright
+                } else {
+                    LedPattern::SolidDim
+                };
+                platform.set_cargo(Cargo::Full(pattern));
                 // TODO: score?
             }
         }

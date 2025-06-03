@@ -14,7 +14,8 @@ pub struct Platform {
     location: Location,
     track_location: Location,
     cargo: Cargo,
-    last_cargo: Cargo,
+    last_pwm: u8,
+    phase: u8, // phase of the platform, used for PWM
 }
 
 impl Platform {
@@ -23,7 +24,8 @@ impl Platform {
             location,
             track_location,
             cargo: Cargo::Empty,
-            last_cargo: Cargo::Full,
+            last_pwm: 0xFF,
+            phase: 0, // initial phase
         }
     }
 
@@ -45,18 +47,18 @@ impl Platform {
 
     pub fn update<F>(&mut self, mut update_callback: F) -> bool
     where
-        F: FnMut(EntityUpdate),
+        F: FnMut(LedUpdate),
     {
-        if self.cargo != self.last_cargo {
-            self.last_cargo = self.cargo;
-            update_callback(EntityUpdate::new(
-                self.location,
-                Contents::Platform(self.cargo),
-            ));
-            return true;
-        }
+        self.phase = self.phase.wrapping_add(1);
 
-        false
+        let pwm = self.cargo.get_platform_pwm(self.phase);
+        if pwm != self.last_pwm {
+            self.last_pwm = pwm;
+            update_callback(LedUpdate::new(self.location, pwm));
+            true
+        } else {
+            false
+        }
     }
 
     pub fn cargo(&self) -> Cargo {
@@ -75,8 +77,8 @@ impl Platform {
         self.cargo == Cargo::Empty
     }
 
-    pub fn set_cargo(&mut self) {
-        self.cargo = Cargo::Full;
+    pub fn set_cargo(&mut self, cargo: Cargo) {
+        self.cargo = cargo;
     }
 
     pub fn clear_cargo(&mut self) {

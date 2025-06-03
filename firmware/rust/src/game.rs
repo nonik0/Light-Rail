@@ -36,7 +36,7 @@ pub enum DisplayState {
 pub struct GameState {
     pub target_mode_index: usize, // in state so menu mode can manipulate it
     pub is_over: bool,            // stops entity updates
-    pub redraw: bool, // flag to redraw board LEDs
+    pub redraw: bool,             // flag to redraw board LEDs
     pub display: DisplayState,
 
     // game entities
@@ -114,13 +114,12 @@ where
     pub fn redraw_board_leds(&mut self) {
         self.board_leds.clear_blocking().unwrap();
 
+        // TODO: handle or reset phases for entities?
+
         for train in self.state.trains.iter() {
             for car in train.cars().iter() {
                 self.board_leds
-                    .pixel_blocking(
-                        car.loc.index(),
-                        Contents::Train(car.cargo).to_pwm_value(),
-                    )
+                    .pixel_blocking(car.loc.index(), car.cargo.get_track_pwm(0))
                     .unwrap();
             }
         }
@@ -128,27 +127,19 @@ where
             self.board_leds
                 .pixel_blocking(
                     platform.location().index(),
-                    Contents::Platform(platform.cargo()).to_pwm_value(),
+                    platform.cargo().get_platform_pwm(0),
                 )
                 .unwrap();
         }
         for switch in self.state.switches.iter() {
             if let Some(active_anode_location) = switch.active_location(Direction::Anode) {
                 self.board_leds
-                    .pixel_blocking(
-                        active_anode_location.index(),
-                        Contents::SwitchIndicator(100).to_pwm_value(),
-                    )
+                    .pixel_blocking(active_anode_location.index(), 100)
                     .unwrap();
             }
-            if let Some(active_cathode_location) =
-                switch.active_location(Direction::Cathode)
-            {
+            if let Some(active_cathode_location) = switch.active_location(Direction::Cathode) {
                 self.board_leds
-                    .pixel_blocking(
-                        active_cathode_location.index(),
-                        Contents::SwitchIndicator(100).to_pwm_value(),
-                    )
+                    .pixel_blocking(active_cathode_location.index(), 100)
                     .unwrap();
             }
         }
@@ -191,7 +182,7 @@ where
         }
 
         // redraw board LEDs when current mode requests it
-        if self.state.redraw{
+        if self.state.redraw {
             self.state.redraw = false;
             self.redraw_board_leds();
         }
@@ -201,7 +192,7 @@ where
             self.active_mode_index = self.state.target_mode_index;
             self.restart();
         }
-        
+
         // update board digits/score display
         if self.last_display != self.state.display {
             self.last_display = self.state.display;
@@ -224,9 +215,9 @@ where
         }
 
         // helper closure to update entity LEDs
-        let mut do_entity_update = |update: EntityUpdate| {
+        let mut do_entity_update = |update: LedUpdate| {
             self.board_leds
-                .pixel_blocking(update.location.index(), update.contents.to_pwm_value())
+                .pixel_blocking(update.location.index(), update.pwm)
                 .ok();
         };
 

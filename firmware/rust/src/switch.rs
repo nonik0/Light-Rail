@@ -1,4 +1,5 @@
 use core::panic;
+use is31fl3731::gamma;
 use random_trait::Random;
 
 use crate::{
@@ -9,14 +10,8 @@ use crate::{
     train::Train,
 };
 
-pub const MAX_UPDATES: usize = 5; // TODO
-pub const MIN_BRIGHTNESS: u8 = 50;
-pub const MAX_BRIGHTNESS: u8 = 80;
-
 pub struct Switch {
     location: Location,
-    brightness: u8,
-    brightness_delta: i8,
 
     // switches only have one active direction (one direction has None values)
     // crosses have two active directions
@@ -37,7 +32,7 @@ pub struct Switch {
 impl Switch {
     fn new(location: Location) -> Self {
         // set up switch in a direction
-        fn setup(
+        fn setup_direction(
             location: Location,
             direction: Direction,
         ) -> (Option<bool>, Location, Option<Location>) {
@@ -51,9 +46,9 @@ impl Switch {
         }
 
         let (anode_switched, anode_next_location, anode_fork_location) =
-            setup(location, Direction::Anode);
+            setup_direction(location, Direction::Anode);
         let (cathode_switched, cathode_next_location, cathode_fork_location) =
-            setup(location, Direction::Cathode);
+            setup_direction(location, Direction::Cathode);
 
         Self {
             location,
@@ -65,8 +60,6 @@ impl Switch {
             cathode_last_switched: None,
             cathode_next_location,
             cathode_fork_location,
-            brightness: MAX_BRIGHTNESS,
-            brightness_delta: 1,
         }
     }
 
@@ -114,15 +107,14 @@ impl Switch {
 
     pub fn update<F>(&mut self, trains: &[Train], mut update_callback: F) -> bool
     where
-        F: FnMut(EntityUpdate),
+        F: FnMut(LedUpdate),
     {
         let mut update = false;
 
         let mut handle_direction = |is_switched: Option<bool>,
                                     last_switched: Option<bool>,
                                     next_location: Location,
-                                    fork_location: Option<Location>,
-                                    brightness: u8| {
+                                    fork_location: Option<Location>| {
             if let Some(switched) = is_switched {
                 // no update if no change
                 if let Some(last_switched) = last_switched {
@@ -140,7 +132,7 @@ impl Switch {
                 // Only update inactive_loc if no train is present
                 let inactive_occupied = trains.iter().any(|train| train.at_location(inactive_loc));
                 if !inactive_occupied {
-                    let inactive_loc_update = EntityUpdate::new(inactive_loc, Contents::Empty);
+                    let inactive_loc_update = LedUpdate::new(inactive_loc, 0);
                     update_callback(inactive_loc_update);
                     update = true;
                 }
@@ -149,7 +141,7 @@ impl Switch {
                 let active_occupied = trains.iter().any(|train| train.at_location(active_loc));
                 if !active_occupied {
                     let active_loc_update =
-                        EntityUpdate::new(active_loc, Contents::SwitchIndicator(brightness));
+                        LedUpdate::new(active_loc, Cargo::Full(LedPattern::SolidDim).get_track_pwm(0)); //hacky for now
                     update_callback(active_loc_update);
                     update = true;
                 }
@@ -161,14 +153,12 @@ impl Switch {
             self.anode_last_switched,
             self.anode_next_location,
             self.anode_fork_location,
-            self.brightness,
         );
         handle_direction(
             self.cathode_switched,
             self.cathode_last_switched,
             self.cathode_next_location,
             self.cathode_fork_location,
-            self.brightness,
         );
 
         update

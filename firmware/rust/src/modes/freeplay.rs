@@ -25,7 +25,7 @@ impl FreeplayMode {
             let rand_speed = 5 + Rand::default().get_u8() % 10;
             let mut train = Train::new(
                 rand_platform.track_location(),
-                Cargo::Full,
+                Cargo::Full(LedPattern::SolidBright),
                 Some(rand_speed),
             );
             let num_cars = 1 + Rand::default().get_usize() % 3;
@@ -61,7 +61,7 @@ impl GameModeHandler for FreeplayMode {
         }
 
         for train in state.trains.iter_mut() {
-            train.set_state(3, Cargo::Full, DEFAULT_SPEED);
+            train.set_state(3, Cargo::Full(LedPattern::SolidBright), DEFAULT_SPEED);
         }
 
         state.redraw = true;
@@ -70,7 +70,7 @@ impl GameModeHandler for FreeplayMode {
     fn on_game_tick(&mut self, state: &mut GameState) {
         for platform in state.platforms.iter_mut() {
             if platform.is_empty() && Rand::default().get_u16() <= 50 {
-                platform.set_cargo();
+                platform.set_cargo(Cargo::Full(LedPattern::SolidBright));
             }
         }
     }

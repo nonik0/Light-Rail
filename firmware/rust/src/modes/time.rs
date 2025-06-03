@@ -42,7 +42,7 @@ impl GameModeHandler for TimeMode {
         for platform in state.platforms.iter_mut() {
             if platform.is_empty() && Rand::default().get_u16() <= 20 {
                 // TODO: check train too
-                platform.set_cargo();
+                platform.set_cargo(Cargo::Full(LedPattern::SolidBright));
             }
         }
 

@@ -35,7 +35,7 @@ impl GameModeHandler for SnakeMode
         for platform in state.platforms.iter_mut() {
             if platform.is_empty() && Rand::default().get_u16() <= 50 {
                 // TODO: check train too
-                platform.set_cargo();
+                platform.set_cargo(Cargo::Full(LedPattern::SolidBright));
             }
         }
     }
@@ -65,7 +65,7 @@ impl GameModeHandler for SnakeMode
             if !platform.is_empty() && train.engine() == platform.track_location() {
                 platform.clear_cargo();
 
-                train.add_car(Cargo::Full);
+                train.add_car(Cargo::Full(LedPattern::SolidBright));
 
                 self.score += 1;
                 state.display = DisplayState::Score(self.score);

@@ -10,8 +10,6 @@ use crate::{
     train::{Train, DEFAULT_SPEED}
 };
 
-
-
 pub struct FreeplayMode {
     score: u16,
     cur_setting: u8,
@@ -25,7 +23,7 @@ impl FreeplayMode {
             let rand_speed = 5 + Rand::default().get_u8() % 10;
             let mut train = Train::new(
                 rand_platform.track_location(),
-                Cargo::Full(LedPattern::SolidBright),
+                Cargo::Have(LedPattern::SolidBright),
                 Some(rand_speed),
             );
             let num_cars = 1 + Rand::default().get_usize() % 3;
@@ -61,12 +59,12 @@ impl GameModeHandler for FreeplayMode {
         while state.trains.len() > 1 {
             state.trains.pop();
         }
-        state.trains[0].set_state(3, Cargo::Full(LedPattern::SolidBright), DEFAULT_SPEED);
+        state.trains[0].set_state(3, Cargo::Have(LedPattern::SolidBright), DEFAULT_SPEED);
 
         // set all platforms to same cargo
         for platform in state.platforms.iter_mut() {
             if !platform.is_empty() {
-                platform.set_cargo(Cargo::Full(LedPattern::SolidBright));
+                platform.set_cargo(Cargo::Have(LedPattern::SolidBright));
             }
         }
     }
@@ -74,7 +72,7 @@ impl GameModeHandler for FreeplayMode {
     fn on_game_tick(&mut self, state: &mut GameState) {
         for platform in state.platforms.iter_mut() {
             if platform.is_empty() && Rand::default().get_u16() <= 50 {
-                platform.set_cargo(Cargo::Full(LedPattern::SolidBright));
+                platform.set_cargo(Cargo::Have(LedPattern::SolidBright));
             }
         }
     }

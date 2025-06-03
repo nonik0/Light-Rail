@@ -141,7 +141,7 @@ impl Switch {
                 let active_occupied = trains.iter().any(|train| train.at_location(active_loc));
                 if !active_occupied {
                     let active_loc_update =
-                        LedUpdate::new(active_loc, Cargo::Full(LedPattern::SolidDim).get_track_pwm(0)); //hacky for now
+                        LedUpdate::new(active_loc, Cargo::Have(LedPattern::SolidDim).get_track_pwm(0)); //hacky for now
                     update_callback(active_loc_update);
                     update = true;
                 }

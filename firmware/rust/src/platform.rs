@@ -25,7 +25,7 @@ impl Platform {
             track_location,
             cargo: Cargo::Empty,
             last_pwm: 0xFF,
-            phase: 0, // initial phase
+            phase: Rand::default().get_u8(), // initial phase
         }
     }
 

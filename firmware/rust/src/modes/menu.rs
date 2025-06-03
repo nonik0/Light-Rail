@@ -56,7 +56,7 @@ impl GameModeHandler for MenuMode {
             let rand_platform = &state.platforms[rand_platform_index];
             let mut train = Train::new(
                 rand_platform.track_location(),
-                Cargo::Full(LedPattern::SolidBright),
+                Cargo::Have(LedPattern::SolidBright),
                 None,
             );
             state.trains.push(train).unwrap();
@@ -69,14 +69,14 @@ impl GameModeHandler for MenuMode {
         let rand_num_cars = 3 + Rand::default().get_u8() % 3;
         state.trains[0].set_state(
             rand_num_cars,
-            Cargo::Full(LedPattern::SolidBright),
+            Cargo::Have(LedPattern::SolidBright),
             DEFAULT_SPEED,
         );
 
         // set all platforms to same cargo
         for platform in state.platforms.iter_mut() {
             if !platform.is_empty() {
-                platform.set_cargo(Cargo::Full(LedPattern::SolidBright));
+                platform.set_cargo(Cargo::Have(LedPattern::SolidBright));
             }
         }
     }
@@ -89,7 +89,7 @@ impl GameModeHandler for MenuMode {
                 } else {
                     LedPattern::SolidDim
                 };
-                platform.set_cargo(Cargo::Full(pattern));
+                platform.set_cargo(Cargo::Have(pattern));
                 // TODO: score?
             }
         }

@@ -31,12 +31,12 @@ impl GameModeHandler for SnakeMode {
         while state.trains.len() > 1 {
             state.trains.pop();
         }
-        state.trains[0].set_state(1, Cargo::Full(LedPattern::SolidBright), DEFAULT_SPEED);
+        state.trains[0].set_state(1, Cargo::Have(LedPattern::SolidBright), DEFAULT_SPEED);
 
         // set all platforms to same cargo
         for platform in state.platforms.iter_mut() {
             if !platform.is_empty() {
-                platform.set_cargo(Cargo::Full(LedPattern::SolidBright));
+                platform.set_cargo(Cargo::Have(LedPattern::SolidBright));
             }
         }
     }
@@ -45,7 +45,7 @@ impl GameModeHandler for SnakeMode {
         for platform in state.platforms.iter_mut() {
             if platform.is_empty() && Rand::default().get_u16() <= 50 {
                 // TODO: check train too
-                platform.set_cargo(Cargo::Full(LedPattern::SolidBright));
+                platform.set_cargo(Cargo::Have(LedPattern::SolidBright));
             }
         }
     }
@@ -75,7 +75,7 @@ impl GameModeHandler for SnakeMode {
             if !platform.is_empty() && train.engine() == platform.track_location() {
                 platform.clear_cargo();
 
-                train.add_car(Cargo::Full(LedPattern::SolidBright));
+                train.add_car(Cargo::Have(LedPattern::SolidBright));
 
                 self.score += 1;
                 state.display = DisplayState::Score(self.score);

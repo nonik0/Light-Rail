@@ -169,6 +169,32 @@ impl Train {
         self.speed
     }
 
+    pub fn has_empty_cars(&self) -> bool {
+        self.cars.iter().any(|car| car.cargo == Cargo::Empty)
+    }
+
+    /// Adds cargo to train, returns true if successful, false is train is full
+    /// TODO: add location so cargo can be added to nearest empty car?
+    pub fn load_cargo(&mut self, cargo: Cargo) -> bool {
+        for car in self.cars.iter_mut() {
+            if car.cargo == Cargo::Empty {
+                car.cargo = cargo;
+                return true;
+            }
+        }
+        false
+    }
+
+    pub fn unload_cargo(&mut self, cargo: Cargo) -> bool {
+        for car in self.cars.iter_mut() {
+            if car.cargo == cargo {
+                car.cargo = Cargo::Empty;
+                return true;
+            }
+        }
+        false
+    }
+
     /// Returns the vector of cars in the train
     pub fn cars(&self) -> &[Car] {
         &self.cars

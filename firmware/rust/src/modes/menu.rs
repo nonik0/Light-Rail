@@ -49,30 +49,35 @@ impl GameModeHandler for MenuMode {
         } else {
             DisplayState::None
         };
-
-        let actual_num_trains = state.trains.len();
-        let target_num_trains = 1;//self.mode().num_trains();
-        if actual_num_trains > target_num_trains {
-            for _ in 0..actual_num_trains - target_num_trains {
-                state.trains.pop().unwrap();
-            }
-        } else if actual_num_trains < target_num_trains {
-            for _ in 0..target_num_trains - actual_num_trains {
-                let rand_platform_index = Rand::default().get_usize() % state.platforms.len();
-                let rand_platform = &state.platforms[rand_platform_index];
-                let rand_speed = 5 + Rand::default().get_u8() % 10;
-                let mut train = Train::new(
-                    rand_platform.track_location(),
-                    Cargo::Full(LedPattern::SolidBright),
-                    Some(rand_speed),
-                );
-                let num_cars = 1 + Rand::default().get_usize() % 3;
-                state.trains.push(train).unwrap();
-            }
+        
+        // special case for menu to instantiate first train
+        if state.trains.is_empty() {
+            let rand_platform_index = Rand::default().get_usize() % state.platforms.len();
+            let rand_platform = &state.platforms[rand_platform_index];
+            let mut train = Train::new(
+                rand_platform.track_location(),
+                Cargo::Full(LedPattern::SolidBright),
+                None,
+            );
+            state.trains.push(train).unwrap();
+        }
+        
+        while state.trains.len() > 1 {
+            state.trains.pop();
         }
 
-        for train in state.trains.iter_mut() {
-            train.set_state(3, Cargo::Full(LedPattern::SolidBright), DEFAULT_SPEED);
+        let rand_num_cars = 3 + Rand::default().get_u8() % 3;
+        state.trains[0].set_state(
+            rand_num_cars,
+            Cargo::Full(LedPattern::SolidBright),
+            DEFAULT_SPEED,
+        );
+
+        // set all platforms to same cargo
+        for platform in state.platforms.iter_mut() {
+            if !platform.is_empty() {
+                platform.set_cargo(Cargo::Full(LedPattern::SolidBright));
+            }
         }
     }
 

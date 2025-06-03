@@ -1,7 +1,14 @@
 use embedded_hal::i2c::I2c;
 use random_trait::Random;
 
-use crate::{common::*, game::{DisplayState, GameState}, input::InputEvent, modes::GameModeHandler, random::Rand};
+use crate::{
+    common::*,
+    game::{DisplayState, GameState},
+    input::InputEvent,
+    modes::GameModeHandler,
+    random::Rand,
+    train::DEFAULT_SPEED,
+};
 
 pub struct SnakeMode {
     score: u16,
@@ -13,22 +20,25 @@ impl Default for SnakeMode {
     }
 }
 
-impl GameModeHandler for SnakeMode
-{
+impl GameModeHandler for SnakeMode {
     fn on_restart(&mut self, state: &mut GameState) {
         self.score = 1;
         state.is_over = false;
         state.display = DisplayState::Score(self.score);
+        state.redraw = true;
 
+        // set up starter train, length 1
         while state.trains.len() > 1 {
             state.trains.pop();
         }
+        state.trains[0].set_state(1, Cargo::Full(LedPattern::SolidBright), DEFAULT_SPEED);
 
-        while state.trains[0].len() > 1 {
-            state.trains[0].remove_car();
+        // set all platforms to same cargo
+        for platform in state.platforms.iter_mut() {
+            if !platform.is_empty() {
+                platform.set_cargo(Cargo::Full(LedPattern::SolidBright));
+            }
         }
-
-        state.redraw = true;
     }
 
     fn on_game_tick(&mut self, state: &mut GameState) {

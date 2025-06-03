@@ -55,16 +55,20 @@ impl GameModeHandler for FreeplayMode {
         state.is_over = false;
         self.score = 1;
         state.display = DisplayState::Score(self.score);
+        state.redraw = true;
 
+        // set up starter train, length 3
         while state.trains.len() > 1 {
             state.trains.pop();
         }
+        state.trains[0].set_state(3, Cargo::Full(LedPattern::SolidBright), DEFAULT_SPEED);
 
-        for train in state.trains.iter_mut() {
-            train.set_state(3, Cargo::Full(LedPattern::SolidBright), DEFAULT_SPEED);
+        // set all platforms to same cargo
+        for platform in state.platforms.iter_mut() {
+            if !platform.is_empty() {
+                platform.set_cargo(Cargo::Full(LedPattern::SolidBright));
+            }
         }
-
-        state.redraw = true;
     }
 
     fn on_game_tick(&mut self, state: &mut GameState) {

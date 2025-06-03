@@ -7,12 +7,14 @@ use crate::{
 pub mod menu;
 pub mod freeplay;
 pub mod snake;
+pub mod time;
 
 pub use menu::*;
 pub use freeplay::*;
 pub use snake::*;
+pub use time::*;
 
-pub const NUM_MODES: usize = 3;
+pub const NUM_MODES: usize = 4;
 
 pub trait GameModeHandler
 {

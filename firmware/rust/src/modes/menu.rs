@@ -26,6 +26,7 @@ impl MenuMode {
         match self.index {
             1 => *b"ply", // Play
             2 => *b"snk", // Snake
+            3 => *b"tme", // Time
             _ => *b"wat",
         }
     }
@@ -71,7 +72,7 @@ impl GameModeHandler for MenuMode {
         }
 
         for train in state.trains.iter_mut() {
-            train.set_state(3, DEFAULT_SPEED);
+            train.set_state(3, Cargo::Full, DEFAULT_SPEED);
         }
     }
 

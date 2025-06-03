@@ -22,7 +22,7 @@ use crate::{
     Rand,
 };
 
-const MAX_TRAINS: usize = 1;
+pub const MAX_TRAINS: usize = 3;
 
 #[derive(Clone, Copy, PartialEq)]
 pub enum DisplayState {
@@ -36,6 +36,7 @@ pub enum DisplayState {
 pub struct GameState {
     pub target_mode_index: usize, // in state so menu mode can manipulate it
     pub is_over: bool,            // stops entity updates
+    pub redraw: bool, // flag to redraw board LEDs
     pub display: DisplayState,
 
     // game entities
@@ -78,6 +79,7 @@ where
         let state = GameState {
             target_mode_index: 0,
             is_over: false,
+            redraw: false,
             display: DisplayState::None,
             trains: Vec::<Train, MAX_TRAINS>::new(),
             platforms: Platform::take(),
@@ -105,10 +107,11 @@ where
         // reset game state, on_restart should update state.display and entities will be updates by self.refresh_board_leds()
         let mode = &mut self.modes[self.active_mode_index];
         mode.on_restart(&mut self.state);
-        self.refresh_board_leds();
+        self.redraw_board_leds();
+        self.state.redraw = false;
     }
 
-    pub fn refresh_board_leds(&mut self) {
+    pub fn redraw_board_leds(&mut self) {
         self.board_leds.clear_blocking().unwrap();
 
         for train in self.state.trains.iter() {
@@ -187,13 +190,10 @@ where
             mode.on_input_event(event, &mut self.state);
         }
 
-        // track when mode signals restart
-        if self.last_over != self.state.is_over {
-            self.last_over = self.state.is_over;
-
-            if (!self.state.is_over) {
-                self.restart();
-            }
+        // redraw board LEDs when current mode requests it
+        if self.state.redraw{
+            self.state.redraw = false;
+            self.redraw_board_leds();
         }
 
         // change mode when current mode requests it (mostly from menu mode)

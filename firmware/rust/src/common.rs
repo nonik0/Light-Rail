@@ -22,8 +22,8 @@ impl Contents {
             Contents::Empty => 0,
             Contents::SwitchIndicator(brightness) => gamma(*brightness),
             Contents::Train(cargo) => match cargo {
-                Cargo::Empty => 50,
-                Cargo::Full => 200,
+                Cargo::Empty => 30,
+                Cargo::Full => 255,
             },
             Contents::Platform(cargo) => match cargo {
                 Cargo::Empty => 0,

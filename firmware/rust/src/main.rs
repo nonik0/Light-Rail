@@ -37,7 +37,7 @@ mod switch;
 mod tone;
 mod train;
 
-const BASE_DELAY: u32 = 1;
+const BASE_DELAY: u32 = 5;
 const NUM_BUTTONS: usize = 12;
 const NUM_DIGITS: u8 = 3;
 const DIGITS_I2C_ADDR: u8 = as1115::constants::DEFAULT_ADDRESS;
@@ -125,10 +125,11 @@ fn main() -> ! {
         .unwrap();
     board_digits.clear().unwrap();
 
-    let mut modes: [&mut dyn modes::GameModeHandler; 3] = [
+    let mut modes: [&mut dyn modes::GameModeHandler; modes::NUM_MODES] = [
         &mut modes::MenuMode::default(),
         &mut modes::FreeplayMode::default(),
         &mut modes::SnakeMode::default(),
+        &mut modes::TimeMode::default(),
     ];
     let mut game = game::Game::new(board_buzzer, board_digits, board_input, board_leds, &mut modes);
     game.restart();

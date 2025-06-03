@@ -27,6 +27,8 @@ impl GameModeHandler for SnakeMode
         while state.trains[0].len() > 1 {
             state.trains[0].remove_car();
         }
+
+        state.redraw = true;
     }
 
     fn on_game_tick(&mut self, state: &mut GameState) {

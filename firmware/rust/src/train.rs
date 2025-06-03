@@ -80,7 +80,7 @@ impl Train {
         Some(EntityUpdate::new(loc, Contents::Empty))
     }
 
-    pub fn set_state(&mut self, num_cars: u8, speed: u8) {
+    pub fn set_state(&mut self, num_cars: u8, cargo: Cargo, speed: u8) {
         if num_cars > MAX_CARS as u8 {
             return;
         }
@@ -88,17 +88,23 @@ impl Train {
         self.speed = speed.clamp(MIN_SPEED, MAX_SPEED);
         self.speed_counter = 0;
 
+        // Add cars if needed
         while self.cars.len() < num_cars as usize {
-            let cargo = Cargo::Full;
             if self.add_car(cargo).is_none() {
                 break;
             }
         }
 
+        // Remove cars if needed
         while self.cars.len() > num_cars as usize {
             if self.remove_car().is_none() {
                 break;
             }
+        }
+
+        // Set cargo for all cars
+        for car in self.cars.iter_mut() {
+            car.cargo = cargo;
         }
     }
 
@@ -155,6 +161,14 @@ impl Train {
         true
     }
 
+    pub fn len(&self) -> usize {
+        self.cars.len()
+    }
+
+    pub fn speed(&self) -> u8 {
+        self.speed
+    }
+
     /// Returns the vector of cars in the train
     pub fn cars(&self) -> &[Car] {
         &self.cars
@@ -163,10 +177,6 @@ impl Train {
     /// Returns the location of the front car
     pub fn front(&self) -> Location {
         self.cars.first().unwrap().loc
-    }
-
-    pub fn len(&self) -> usize {
-        self.cars.len()
     }
 
     /// Returns the location of the engine (first car of the train)
@@ -187,6 +197,30 @@ impl Train {
     /// Returns bool if any car is at the given location
     pub fn at_location(&self, loc: Location) -> bool {
         self.cars.iter().any(|car| car.loc == loc)
+    }
+
+    /// Return train cargo at the given location, if any
+    pub fn cargo_at_location(&self, loc: Location) -> Option<Cargo> {
+        self.cars
+            .iter()
+            .find(|car| car.loc == loc)
+            .map(|car| car.cargo)
+    }
+
+    /// Set the cargo of the car at the given location, returns true if successful
+    pub fn set_cargo_at_location(&mut self, loc: Location, cargo: Cargo) -> bool {
+        for car in self.cars.iter_mut() {
+            if car.loc == loc {
+                car.cargo = cargo;
+                return true;
+            }
+        }
+        false
+    }
+
+    pub fn set_speed(&mut self, speed: u8) {
+        self.speed = speed.clamp(MIN_SPEED, MAX_SPEED);
+        self.speed_counter = 0;
     }
 }
 

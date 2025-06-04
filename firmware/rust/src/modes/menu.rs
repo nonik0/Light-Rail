@@ -49,19 +49,7 @@ impl GameModeHandler for MenuMode {
         } else {
             DisplayState::None
         };
-        
-        // special case for menu to instantiate first train
-        if state.trains.is_empty() {
-            let rand_platform_index = Rand::default().get_usize() % state.platforms.len();
-            let rand_platform = &state.platforms[rand_platform_index];
-            let mut train = Train::new(
-                rand_platform.track_location(),
-                Cargo::Have(LedPattern::SolidBright),
-                None,
-            );
-            state.trains.push(train).unwrap();
-        }
-        
+                
         while state.trains.len() > 1 {
             state.trains.pop();
         }
@@ -84,13 +72,7 @@ impl GameModeHandler for MenuMode {
     fn on_game_tick(&mut self, state: &mut GameState) {
         for platform in state.platforms.iter_mut() {
             if platform.is_empty() && Rand::default().get_u16() <= 50 {
-                let pattern = if Rand::default().get_bool() {
-                    LedPattern::SolidBright
-                } else {
-                    LedPattern::SolidDim
-                };
-                platform.set_cargo(Cargo::Have(pattern));
-                // TODO: score?
+                platform.set_cargo(Cargo::Have(LedPattern::SolidBright));
             }
         }
     }

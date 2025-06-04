@@ -14,7 +14,7 @@ pub struct Platform {
     location: Location,
     track_location: Location,
     cargo: Cargo,
-    last_pwm: u8,
+    last_brightness: u8,
     phase: u8, // phase of the platform, used for PWM
 }
 
@@ -24,7 +24,7 @@ impl Platform {
             location,
             track_location,
             cargo: Cargo::Empty,
-            last_pwm: 0xFF,
+            last_brightness: 0xFF,
             phase: Rand::default().get_u8(), // initial phase
         }
     }
@@ -47,14 +47,14 @@ impl Platform {
 
     pub fn update<F>(&mut self, mut update_callback: F) -> bool
     where
-        F: FnMut(LedUpdate),
+        F: FnMut(Location, u8),
     {
         self.phase = self.phase.wrapping_add(1);
 
-        let pwm = self.cargo.get_platform_pwm(self.phase);
-        if pwm != self.last_pwm {
-            self.last_pwm = pwm;
-            update_callback(LedUpdate::new(self.location, pwm));
+        let brightness = self.cargo.platform_brightness(self.phase);
+        if brightness != self.last_brightness {
+            self.last_brightness = brightness;
+            update_callback(self.location, brightness);
             true
         } else {
             false

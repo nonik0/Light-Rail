@@ -5,7 +5,7 @@
 use as1115::AS1115;
 use embedded_hal::i2c::I2c;
 use heapless::Vec;
-use is31fl3731::IS31FL3731;
+use is31fl3731::{gamma, IS31FL3731};
 
 // use embedded_hal::delay::DelayNs;
 use random_trait::Random;
@@ -15,8 +15,8 @@ use crate::{
     input::{BoardInput, InputDirection, InputEvent},
     location::{Direction, Location, NUM_PLATFORMS, NUM_SWITCHES},
     modes::*,
-    platform::Platform,
-    switch::Switch,
+    platform::{self, Platform},
+    switch::{self, Switch},
     tone::TimerTone,
     train::Train,
     Rand,
@@ -76,14 +76,27 @@ where
         board_leds: IS31FL3731<I2C>,
         modes: &'a mut [&'a mut dyn GameModeHandler],
     ) -> Self {
+        let platforms = Platform::take();
+        let switches = Switch::take();
+        let mut trains = Vec::<Train, MAX_TRAINS>::new();
+        
+        let rand_platform_index = Rand::default().get_usize() % platforms.len();
+        let rand_platform = &platforms[rand_platform_index];
+        let mut train = Train::new(
+            rand_platform.track_location(),
+            Cargo::Have(LedPattern::SolidBright),
+            None,
+        );
+        trains.push(train).unwrap();
+
         let state = GameState {
-            target_mode_index: 0,
+            target_mode_index: 3,
             is_over: false,
             redraw: false,
             display: DisplayState::None,
-            trains: Vec::<Train, MAX_TRAINS>::new(),
-            platforms: Platform::take(),
-            switches: Switch::take(),
+            trains,
+            platforms,
+            switches,
         };
 
         Self {
@@ -91,7 +104,7 @@ where
             board_digits,
             board_input,
             board_leds,
-            active_mode_index: 0,
+            active_mode_index: 3,
             last_display: DisplayState::None,
             last_over: true,
             modes,
@@ -119,7 +132,7 @@ where
         for train in self.state.trains.iter() {
             for car in train.cars().iter() {
                 self.board_leds
-                    .pixel_blocking(car.loc.index(), car.cargo.get_track_pwm(0))
+                    .pixel_blocking(car.loc.index(), gamma(car.cargo.car_brightness(0)))
                     .unwrap();
             }
         }
@@ -127,19 +140,19 @@ where
             self.board_leds
                 .pixel_blocking(
                     platform.location().index(),
-                    platform.cargo().get_platform_pwm(0),
+                    platform.cargo().platform_brightness(0),
                 )
                 .unwrap();
         }
         for switch in self.state.switches.iter() {
             if let Some(active_anode_location) = switch.active_location(Direction::Anode) {
                 self.board_leds
-                    .pixel_blocking(active_anode_location.index(), 100)
+                    .pixel_blocking(active_anode_location.index(), gamma(100))
                     .unwrap();
             }
             if let Some(active_cathode_location) = switch.active_location(Direction::Cathode) {
                 self.board_leds
-                    .pixel_blocking(active_cathode_location.index(), 100)
+                    .pixel_blocking(active_cathode_location.index(), gamma(100))
                     .unwrap();
             }
         }
@@ -160,11 +173,11 @@ where
                 // tones on button presses
                 InputEvent::DirectionButtonPressed(InputDirection::Up)
                 | InputEvent::DirectionButtonPressed(InputDirection::Right) => {
-                    self.board_buzzer.tone(3500, 100);
+                    self.board_buzzer.tone(3500, 50);
                 }
                 InputEvent::DirectionButtonPressed(InputDirection::Down)
                 | InputEvent::DirectionButtonPressed(InputDirection::Left) => {
-                    self.board_buzzer.tone(3000, 100);
+                    self.board_buzzer.tone(3000, 50);
                 }
                 // exit to menu mode
                 InputEvent::DirectionButtonHeld(InputDirection::Left) => {
@@ -215,10 +228,10 @@ where
         }
 
         // helper closure to update entity LEDs
-        let mut do_entity_update = |update: LedUpdate| {
+        let mut do_led_update = |location: Location, brightness: u8| {
             self.board_leds
-                .pixel_blocking(update.location.index(), update.pwm)
-                .ok();
+            .pixel_blocking(location.index(), gamma(brightness))
+            .ok();
         };
 
         // update train, platform, and switch entities
@@ -227,7 +240,7 @@ where
 
         let mut event_indices = heapless::Vec::<usize, MAX_TRAINS>::new();
         for (train_index, train) in self.state.trains.iter_mut().enumerate() {
-            if train.advance(&self.state.switches, &mut do_entity_update) {
+            if train.advance(&self.state.switches, &mut do_led_update) {
                 event_indices.push(train_index).ok();
             }
         }
@@ -236,10 +249,10 @@ where
         }
 
         for platform in self.state.platforms.iter_mut() {
-            platform.update(&mut do_entity_update);
+            platform.update(&mut do_led_update);
         }
         for switch in self.state.switches.iter_mut() {
-            switch.update(&self.state.trains, &mut do_entity_update);
+            switch.update(&self.state.trains, &mut do_led_update);
         }
     }
 }

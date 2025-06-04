@@ -13,7 +13,10 @@ use crate::{
     switch::Switch,
 };
 
-pub const MAX_CARS: usize = 100;
+// TODO: refactor train for more efficient SRAM storage.
+// train can take a slice of cars, and the game can manage a single array of cars
+// and then pass a slice to the train as needed when initialized or reinitialized
+pub const MAX_CARS: usize = 30;
 pub const MAX_UPDATES: usize = MAX_CARS + 2; // train length + 1 movement + 1 new car
 pub const DEFAULT_SPEED: u8 = 10;
 const MIN_SPEED: u8 = 0;
@@ -23,6 +26,7 @@ const MAX_SPEED: u8 = 100;
 pub struct Car {
     pub loc: Location,
     pub cargo: Cargo,
+    pub state: u8,
 }
 
 #[derive(Debug)]
@@ -32,18 +36,29 @@ pub struct Train {
     speed_counter: u8,
     cars: Vec<Car, MAX_CARS>,
     last_caboose_loc: Location,
+    phase: u8, // phase of the train, used for PWM
 }
 
 impl Train {
     pub fn new(loc: Location, cargo: Cargo, speed: Option<u8>) -> Self {
         let mut cars = Vec::new();
-        cars.push(Car { loc, cargo }).unwrap();
+        cars.push(Car {
+            loc,
+            cargo,
+            state: 0,
+        })
+        .unwrap();
         Self {
-            direction: Direction::Anode, // TODO: random?
+            direction: if Rand::default().get_bool() {
+                Direction::Anode
+            } else {
+                Direction::Cathode
+            },
             speed: speed.unwrap_or(DEFAULT_SPEED),
             speed_counter: 0,
             cars,
             last_caboose_loc: loc,
+            phase: Rand::default().get_u8(), // initial phase
         }
     }
 
@@ -66,9 +81,15 @@ impl Train {
         };
         let loc = caboose_loc.next(inv_caboose_dir, false).0;
 
-        self.cars.push(Car { loc, cargo }).unwrap();
+        self.cars
+            .push(Car {
+                loc,
+                cargo,
+                state: 0,
+            })
+            .unwrap();
 
-        Some(LedUpdate::new(loc, cargo.get_track_pwm(0)))
+        Some(LedUpdate::new(loc, cargo.car_brightness(0)))
     }
 
     pub fn remove_car(&mut self) -> Option<LedUpdate> {
@@ -112,11 +133,20 @@ impl Train {
     /// Game tick for train, returns location updates as cars move along track
     pub fn advance<F>(&mut self, switches: &[Switch], mut update_callback: F) -> bool
     where
-        F: FnMut(LedUpdate),
+        F: FnMut(Location, u8),
     {
+        self.phase = self.phase.wrapping_add(1);
         self.speed_counter += self.speed;
 
+        // if speed not past threshold, update car brightnesses and return
         if self.speed_counter < MAX_SPEED {
+            for car in self.cars.iter_mut() {
+                let car_brightness = car.cargo.car_brightness(self.phase);
+                if car.state != car_brightness {
+                    car.state = car_brightness;
+                    update_callback(car.loc, car_brightness);
+                }
+            }
             return false;
         }
 
@@ -124,15 +154,11 @@ impl Train {
 
         // move train from the rear, keeping track of location updates
         self.last_caboose_loc = self.cars.last().unwrap().loc;
-        let last_loc_update = LedUpdate::new(self.last_caboose_loc, 0);
-        update_callback(last_loc_update);
+        update_callback(self.last_caboose_loc, 0);
         if !self.cars.is_empty() {
             for i in (1..self.cars.len()).rev() {
                 self.cars[i].loc = self.cars[i - 1].loc;
-
-                let loc_update =
-                    LedUpdate::new(self.cars[i].loc, self.cars[i].cargo.get_track_pwm(0));
-                update_callback(loc_update);
+                update_callback(self.cars[i].loc, self.cars[i].cargo.car_brightness(self.phase));
             }
         }
 
@@ -153,10 +179,10 @@ impl Train {
             .unwrap()
             .loc
             .next(self.direction, is_switched);
-        let loc_update = LedUpdate::new(
+        update_callback(
             self.cars.first().unwrap().loc,
-            self.cars.first().unwrap().cargo.get_track_pwm(0));
-        update_callback(loc_update);
+            self.cars.first().unwrap().cargo.car_brightness(self.phase),
+        );
 
         true
     }

@@ -12,24 +12,30 @@ use crate::{
 
 pub struct Switch {
     location: Location,
+    phase: u8, // phase of the switch, used for PWM
 
     // switches only have one active direction (one direction has None values)
     // crosses have two active directions
 
     // false directs to next_location, true directs to fork_location, none means no switch in that direction
-    anode_switched: Option<bool>, 
-    anode_last_switched: Option<bool>, // entity update tracking
+    anode_switched: Option<bool>,
+    //anode_last_switched: Option<bool>, // entity update tracking
     anode_next_location: Location,
     anode_fork_location: Option<Location>, // None means no switch in that direction
+    anode_last_brightness: u8, // last brightness for active location
 
     // false directs to next_location, true directs to fork_location, none means no switch in that direction
-    cathode_switched: Option<bool>, 
-    cathode_last_switched: Option<bool>, // entity update tracking
+    cathode_switched: Option<bool>,
+    //cathode_last_switched: Option<bool>, // entity update tracking
     cathode_next_location: Location,
     cathode_fork_location: Option<Location>, // None means no switch in that direction
+    cathode_last_brightness: u8, // last brightness for active location
 }
 
 impl Switch {
+    const MIN_BRIGHTNESS: u8 = YELLOW_LED_MIN_B >> 1;
+    const MAX_BRIGHTNESS: u8 = YELLOW_LED_MIN_B;
+
     fn new(location: Location) -> Self {
         // set up switch in a direction
         fn setup_direction(
@@ -52,14 +58,18 @@ impl Switch {
 
         Self {
             location,
+            //phase: Rand::default().get_u8(), // initial phase
+            phase: 0,
             anode_switched,
-            anode_last_switched: None,
+            //anode_last_switched: None,
             anode_next_location,
             anode_fork_location,
+            anode_last_brightness: 0,
             cathode_switched,
-            cathode_last_switched: None,
+            //cathode_last_switched: None,
             cathode_next_location,
             cathode_fork_location,
+            cathode_last_brightness: 0,
         }
     }
 
@@ -107,56 +117,65 @@ impl Switch {
 
     pub fn update<F>(&mut self, trains: &[Train], mut update_callback: F) -> bool
     where
-        F: FnMut(LedUpdate),
+        F: FnMut(Location, u8),
     {
         let mut update = false;
+        self.phase = self.phase.wrapping_add(1);
 
-        let mut handle_direction = |is_switched: Option<bool>,
-                                    last_switched: Option<bool>,
-                                    next_location: Location,
-                                    fork_location: Option<Location>| {
-            if let Some(switched) = is_switched {
-                // no update if no change
-                if let Some(last_switched) = last_switched {
-                    if switched == last_switched {
-                        return;
+        let mut handle_direction =
+            |is_switched: Option<bool>,
+             //last_switched: Option<bool>,
+             last_brightness: &mut u8,
+             next_location: Location,
+             fork_location: Option<Location>| {
+                if let Some(switched) = is_switched {
+                    // // no update if no change
+                    // if let Some(last_switched) = last_switched {
+                    //     if switched == last_switched {
+                    //         return;
+                    //     }
+                    // }
+
+                    let (active_loc, inactive_loc) = if switched {
+                        (fork_location.unwrap(), next_location)
+                    } else {
+                        (next_location, fork_location.unwrap())
+                    };
+
+                    // Only update inactive_loc if no train is present
+                    let inactive_occupied =
+                        trains.iter().any(|train| train.at_location(inactive_loc));
+                    if !inactive_occupied {
+                        update_callback(inactive_loc, 0);
+                        update = true;
+                    }
+
+                    // Only update active_loc if no train is present
+                    let active_occupied = trains.iter().any(|train| train.at_location(active_loc));
+                    if !active_occupied {
+                        let brightness =
+                            LedPattern::Fade1.get_pwm(self.phase, Self::MIN_BRIGHTNESS, Self::MAX_BRIGHTNESS);
+
+                        if brightness != *last_brightness {
+                            *last_brightness = brightness;
+                            update_callback(active_loc, brightness);
+                            update = true;
+                        }
                     }
                 }
-
-                let (active_loc, inactive_loc) = if switched {
-                    (fork_location.unwrap(), next_location)
-                } else {
-                    (next_location, fork_location.unwrap())
-                };
-
-                // Only update inactive_loc if no train is present
-                let inactive_occupied = trains.iter().any(|train| train.at_location(inactive_loc));
-                if !inactive_occupied {
-                    let inactive_loc_update = LedUpdate::new(inactive_loc, 0);
-                    update_callback(inactive_loc_update);
-                    update = true;
-                }
-
-                // Only update active_loc if no train is present
-                let active_occupied = trains.iter().any(|train| train.at_location(active_loc));
-                if !active_occupied {
-                    let active_loc_update =
-                        LedUpdate::new(active_loc, Cargo::Have(LedPattern::SolidDim).get_track_pwm(0)); //hacky for now
-                    update_callback(active_loc_update);
-                    update = true;
-                }
-            }
-        };
+            };
 
         handle_direction(
             self.anode_switched,
-            self.anode_last_switched,
+            //self.anode_last_switched,
+            &mut self.anode_last_brightness,
             self.anode_next_location,
             self.anode_fork_location,
         );
         handle_direction(
             self.cathode_switched,
-            self.cathode_last_switched,
+            //self.cathode_last_switched,
+            &mut self.cathode_last_brightness,
             self.cathode_next_location,
             self.cathode_fork_location,
         );
@@ -178,30 +197,26 @@ impl Switch {
     /// Returns the location a train at this switch will go in the given direction, or None if there is no switch in that direction.
     pub fn active_location(&self, direction: Direction) -> Option<Location> {
         match direction {
-            Direction::Anode => {
-                match self.anode_switched {
-                    Some(switched) => {
-                        if switched {
-                            self.anode_fork_location
-                        } else {
-                            Some(self.anode_next_location)
-                        }
+            Direction::Anode => match self.anode_switched {
+                Some(switched) => {
+                    if switched {
+                        self.anode_fork_location
+                    } else {
+                        Some(self.anode_next_location)
                     }
-                    None => None,
                 }
-            }
-            Direction::Cathode => {
-                match self.cathode_switched {
-                    Some(switched) => {
-                        if switched {
-                            self.cathode_fork_location
-                        } else {
-                            Some(self.cathode_next_location)
-                        }
+                None => None,
+            },
+            Direction::Cathode => match self.cathode_switched {
+                Some(switched) => {
+                    if switched {
+                        self.cathode_fork_location
+                    } else {
+                        Some(self.cathode_next_location)
                     }
-                    None => None,
                 }
-            }
+                None => None,
+            },
         }
     }
 

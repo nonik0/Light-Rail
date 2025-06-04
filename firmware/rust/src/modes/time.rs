@@ -18,6 +18,11 @@ pub struct TimeMode {
     num_active_cargo: u8,
 }
 
+impl TimeMode {
+    const MAX_SPEED: u8 = 15;
+    const SPEED_INC: u8 = 5;
+}
+
 impl Default for TimeMode {
     fn default() -> Self {
         TimeMode {
@@ -29,7 +34,8 @@ impl Default for TimeMode {
 
 impl GameModeHandler for TimeMode {
     fn on_restart(&mut self, state: &mut GameState) {
-        self.score = 1;
+        self.num_active_cargo = 0;
+        self.score = 0;
         state.is_over = false;
         state.display = DisplayState::Score(self.score);
         state.redraw = true;
@@ -65,31 +71,30 @@ impl GameModeHandler for TimeMode {
         // if train is stopped
         let train = &mut state.trains[0];
         if train.speed() == 0 {
-            let mut cargo_spawn: Vec<Cargo, NUM_PLATFORMS> = Vec::new();
+            let mut cargo_to_place: Vec<Cargo, NUM_PLATFORMS> = Vec::new();
 
             for platform in state.platforms.iter_mut() {
                 // if train is at platform and platform has cargo
-                if train.at_location(platform.track_location()) && !platform.is_empty() {
+                if !platform.is_empty() && train.at_location(platform.track_location()) {
                     let platform_cargo = platform.cargo();
                     match platform_cargo {
-                        // pick up cargo if train has space, then add cargo drop off to random other empty platform
+                        // pick up cargo if train has space, add a platform with cargo to dropoff later
                         Cargo::Have(pattern) => {
-                            if train.load_cargo(platform.cargo()) {
+                            if train.load_cargo(platform_cargo) {
                                 platform.clear_cargo();
-                                //cargo_spawn.push(Cargo::Want(pattern));
-                                cargo_spawn.push(Cargo::Have(pattern));
+                                cargo_to_place.push(Cargo::Want(pattern));
                             }
                         }
-                        // // drop off cargo if train has it
-                        // Cargo::Want(pattern) => {
-                        //     if train.unload_cargo(platform_cargo) {
-                        //         platform.clear_cargo();
-                        //         self.num_active_cargo -= 1;
+                        // drop off cargo if train has what platform wants
+                        Cargo::Want(pattern) => {
+                            if train.unload_cargo(Cargo::Have(pattern)) {
+                                platform.clear_cargo();
+                                self.num_active_cargo -= 1;
 
-                        //         self.score += 1;
-                        //         state.display = DisplayState::Score(self.score);
-                        //     }
-                        // }
+                                self.score += 1;
+                                state.display = DisplayState::Score(self.score);
+                            }
+                        }
                         _ => {}
                     }
                 }
@@ -103,7 +108,7 @@ impl GameModeHandler for TimeMode {
                 }
             }
 
-            for cargo in cargo_spawn {
+            for cargo in cargo_to_place {
                 if !available_platform_indices.is_empty() {
                     let rand_index = Rand::default().get_usize() % available_platform_indices.len();
                     let rand_platform_index = available_platform_indices[rand_index];
@@ -119,19 +124,12 @@ impl GameModeHandler for TimeMode {
             InputEvent::DirectionButtonPressed(direction) => match direction {
                 InputDirection::Left => {
                     let speed = state.trains[0].speed();
-                    if speed > 5 {
-                        state.trains[0].set_speed(speed - 5);
-                    } else {
-                        state.trains[0].set_speed(0);
-                    }
+                    state.trains[0].set_speed(speed.saturating_sub(Self::SPEED_INC));
                 }
                 InputDirection::Right => {
                     let speed = state.trains[0].speed();
-                    if speed > 20 {
-                        state.trains[0].set_speed(25);
-                    } else {
-                        state.trains[0].set_speed(speed + 5);
-                    }
+                    let new_speed = speed.saturating_add(Self::SPEED_INC).min(Self::MAX_SPEED);
+                    state.trains[0].set_speed(new_speed);
                 }
                 _ => {}
             },

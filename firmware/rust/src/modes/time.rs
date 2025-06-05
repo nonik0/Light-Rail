@@ -38,7 +38,6 @@ impl GameModeHandler for TimeMode {
         self.score = 0;
         state.is_over = false;
         state.display = DisplayState::Score(self.score);
-        state.redraw = true;
 
         state.init_trains(Cargo::Empty, 3, 5);
         state.clear_platforms();

@@ -93,6 +93,7 @@ impl GameState {
             let train = &mut self.trains[0];
             train.init_cars(cargo, num_cars, max_cars);
             train.set_speed(DEFAULT_SPEED);
+            self.redraw = true;
         } else {
             self.add_train(cargo, num_cars, max_cars);
         }

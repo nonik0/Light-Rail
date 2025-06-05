@@ -35,7 +35,6 @@ impl MenuMode {
 impl GameModeHandler for MenuMode {
     fn on_restart(&mut self, state: &mut GameState) {
         state.is_over = false;
-        state.redraw = true;
         state.display = if self.index != 0 {
             DisplayState::Text(self.game_mode())
         } else {

@@ -24,7 +24,7 @@ impl Platform {
             location,
             track_location,
             cargo: Cargo::Empty,
-            last_brightness: 0xFF,
+            last_brightness: 0,
             phase: Rand::default().get_u8(), // initial phase
         }
     }

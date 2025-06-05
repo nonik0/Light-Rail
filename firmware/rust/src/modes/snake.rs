@@ -25,7 +25,6 @@ impl GameModeHandler for SnakeMode {
         self.score = 1;
         state.is_over = false;
         state.display = DisplayState::Score(self.score);
-        state.redraw = true;
 
         state.init_trains(Cargo::Have(LedPattern::SolidBright), 1, MAX_CARS as u8);
         state.init_platforms(Cargo::Have(LedPattern::SolidBright));

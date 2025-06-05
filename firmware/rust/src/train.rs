@@ -102,8 +102,8 @@ impl Train {
             return None;
         }
 
+        let loc = self.caboose().loc;
         self.num_cars -= 1;
-        let loc = self.cars()[self.num_cars as usize].loc;
         Some(loc)
     }
 

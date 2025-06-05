@@ -41,7 +41,7 @@ impl GameModeHandler for SnakeMode {
 
     fn on_input_event(&mut self, event: InputEvent, state: &mut GameState) {
         if state.is_over {
-            state.is_over = false;
+            self.on_restart(state);
         }
     }
 
@@ -66,7 +66,7 @@ impl GameModeHandler for SnakeMode {
 
                 train.add_car(Cargo::Have(LedPattern::SolidBright));
 
-                self.score += 1;
+                self.score = train.len() as u16;
                 state.display = DisplayState::Score(self.score);
             }
         }

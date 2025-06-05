@@ -115,7 +115,7 @@ impl Switch {
         Location::switch_locs().map(|location| Switch::new(location))
     }
 
-    pub fn update<F>(&mut self, trains: &[Train], mut update_callback: F) -> bool
+    pub fn update<F>(&mut self, trains: &[Train], mut update_callback: F, force_update: bool) -> bool
     where
         F: FnMut(Location, u8),
     {
@@ -156,7 +156,7 @@ impl Switch {
                         let brightness =
                             LedPattern::Fade1.get_pwm(self.phase, Self::MIN_BRIGHTNESS, Self::MAX_BRIGHTNESS);
 
-                        if brightness != *last_brightness {
+                        if force_update || brightness != *last_brightness {
                             *last_brightness = brightness;
                             update_callback(active_loc, brightness);
                             update = true;

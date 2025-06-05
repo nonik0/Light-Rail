@@ -45,14 +45,14 @@ impl Platform {
         platforms
     }
 
-    pub fn update<F>(&mut self, mut update_callback: F) -> bool
+    pub fn update<F>(&mut self, mut update_callback: F, force_update: bool) -> bool
     where
         F: FnMut(Location, u8),
     {
         self.phase = self.phase.wrapping_add(1);
 
         let brightness = self.cargo.platform_brightness(self.phase);
-        if brightness != self.last_brightness {
+        if force_update || brightness != self.last_brightness {
             self.last_brightness = brightness;
             update_callback(self.location, brightness);
             true

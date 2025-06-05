@@ -16,7 +16,7 @@ enum Setting {
     Score,
     Trains,
     TrainCars,
-    //TrainSpeed,
+    TrainSpeed,
 }
 
 pub struct FreeplayMode {
@@ -26,6 +26,9 @@ pub struct FreeplayMode {
 }
 
 impl FreeplayMode {
+    const MAX_SPEED: u8 = 15;
+    const SPEED_INC: u8 = 5;
+
     fn setting_display(&self, state: &GameState) -> DisplayState {
         match self.cur_setting {
             Setting::Score => DisplayState::Score(self.score),
@@ -37,7 +40,6 @@ impl FreeplayMode {
                 DisplayState::Text(text)
             }
             Setting::TrainCars => {
-                let idx = self.cur_train_index as usize;
                 let train_len = state.trains[self.cur_train_index as usize].len();
                 let mut text = [b' '; NUM_DIGITS as usize];
                 text[0] = b'1' + self.cur_train_index;
@@ -45,33 +47,61 @@ impl FreeplayMode {
                 text[2] = b'0' + (train_len as u8 % 10);
                 DisplayState::Text(text)
             }
+            Setting::TrainSpeed => {
+                let train_speed = state.trains[self.cur_train_index as usize].speed();
+                let mut text = [b' '; NUM_DIGITS as usize];
+                text[0] = b'S';
+                text[1] = b'1' + self.cur_train_index;
+                text[2] = b'0' + (train_speed / Self::SPEED_INC);
+                DisplayState::Text(text)
+            }
         }
     }
 
     fn next_setting(&mut self, state: &mut GameState, inc: bool) {
-        match self.cur_setting {
-            Setting::Score => {
-                self.cur_setting = if inc {
-                    Setting::Trains
-                } else {
+        if inc {
+            match self.cur_setting {
+                Setting::Score => {
+                    self.cur_setting = Setting::Trains;
+                }
+                Setting::Trains => {
                     self.cur_train_index = 0;
-                    Setting::TrainCars
-                };
-            }
-            Setting::Trains => {
-                self.cur_train_index = 0;
-                self.cur_setting = Setting::TrainCars;
-            }
-            Setting::TrainCars => {
-                let num_trains = state.trains.len() as u8;
-                if inc {
+                    self.cur_setting = Setting::TrainCars;
+                }
+                Setting::TrainCars => {
                     self.cur_train_index += 1;
-                    if self.cur_train_index >= num_trains {
+                    if self.cur_train_index >= state.trains.len() as u8 {
+                        self.cur_train_index = 0;
+                        self.cur_setting = Setting::TrainSpeed;
+                    }
+                }
+                Setting::TrainSpeed => {
+                    self.cur_train_index += 1;
+                    if self.cur_train_index >= state.trains.len() as u8 {
                         self.cur_setting = Setting::Score;
                     }
-                } else {
+                }
+            }
+        } else {
+            match self.cur_setting {
+                Setting::Score => {
+                    self.cur_train_index = (state.trains.len() - 1) as u8;
+                    self.cur_setting = Setting::TrainSpeed;
+                }
+                Setting::Trains => {
+                    self.cur_setting = Setting::Score;
+                }
+                Setting::TrainCars => {
                     if self.cur_train_index == 0 {
                         self.cur_setting = Setting::Trains;
+                    } else {
+                        self.cur_train_index -= 1;
+                    }
+                }
+                Setting::TrainSpeed => {
+                    if self.cur_train_index == 0 {
+                        self.cur_train_index = (state.trains.len() - 1) as u8;
+                        self.cur_setting = Setting::TrainCars;
                     } else {
                         self.cur_train_index -= 1;
                     }
@@ -96,12 +126,28 @@ impl FreeplayMode {
                 }
             }
             Setting::TrainCars => {
-                let idx = self.cur_train_index as usize;
-                if let Some(train) = state.trains.get_mut(idx) {
+                if let Some(train) = state.trains.get_mut(self.cur_train_index as usize) {
                     if inc {
                         train.add_car(Cargo::Have(LedPattern::SolidBright));
                     } else {
                         train.remove_car();
+                    }
+                    state.redraw = true;
+                }
+            }
+            Setting::TrainSpeed => {
+                if let Some(train) = state.trains.get_mut(self.cur_train_index as usize) {
+                    let speed = train.speed();
+                    if inc {
+                        if speed < Self::MAX_SPEED {
+                            train.set_speed(speed + Self::SPEED_INC);
+                        }
+                    } else {
+                        if speed > Self::SPEED_INC {
+                            train.set_speed(speed - Self::SPEED_INC);
+                        } else {
+                            train.set_speed(0);
+                        }
                     }
                 }
             }
@@ -147,10 +193,10 @@ impl GameModeHandler for FreeplayMode {
     fn on_input_event(&mut self, event: InputEvent, state: &mut GameState) {
         match event {
             InputEvent::DirectionButtonPressed(InputDirection::Up) => {
-                self.next_setting(state, true)
+                self.next_setting(state, false)
             }
             InputEvent::DirectionButtonPressed(InputDirection::Down) => {
-                self.next_setting(state, false)
+                self.next_setting(state, true)
             }
             InputEvent::DirectionButtonPressed(InputDirection::Left) => {
                 self.update_setting(state, false)

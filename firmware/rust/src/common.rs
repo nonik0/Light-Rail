@@ -2,6 +2,7 @@ use core::u8;
 
 use crate::{location::Location, NUM_DIGITS};
 use is31fl3731::gamma;
+use random_trait::Random;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum LedPattern {
@@ -82,6 +83,7 @@ impl Cargo {
 
     pub fn car_brightness(&self, phase: u8) -> u8 {
         match self {
+            Cargo::Empty => YELLOW_LED_MAX_B - 92, // slightly dimmer
             Cargo::Have(pattern) => pattern.get_pwm(phase, YELLOW_LED_MIN_B, YELLOW_LED_MAX_B),
             _ => YELLOW_LED_MIN_B,
         }

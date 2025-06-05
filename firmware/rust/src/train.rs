@@ -119,7 +119,7 @@ impl Train {
     }
 
     /// Game tick for train, returns location updates as cars move along track
-    pub fn advance<F>(&mut self, switches: &[Switch], mut update_callback: F) -> bool
+    pub fn advance<F>(&mut self, switches: &[Switch], mut update_callback: F, force_update: bool) -> bool
     where
         F: FnMut(Location, u8),
     {
@@ -130,7 +130,7 @@ impl Train {
         if self.speed_counter < MAX_SPEED {
             for car in self.cars_mut().iter_mut() {
                 let brightness = car.cargo.car_brightness(self.phase);
-                if car.last_brightness != brightness {
+                if force_update || car.last_brightness != brightness {
                     car.last_brightness = brightness;
                     update_callback(car.loc, brightness);
                 }

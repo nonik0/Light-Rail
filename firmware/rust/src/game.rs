@@ -25,7 +25,7 @@ use crate::{
     Rand,
 };
 
-pub const MAX_CARS: usize = 50;
+pub const MAX_CARS: usize = 70;
 pub const MAX_TRAINS: usize = 3;
 pub const NOMINAL_TRAIN_SIZE: usize = MAX_CARS / MAX_TRAINS;
 
@@ -75,10 +75,10 @@ impl GameState {
     }
 
     pub fn remove_train(&mut self) {
-        if !self.trains.is_empty() {
+        if self.trains.len() > 1 {
             self.trains.pop();
+            self.redraw = true;
         }
-        self.redraw = true;
     }
 
     /// Initializes the game state with a single train with given parameters.
@@ -187,42 +187,7 @@ where
         // reset game state, on_restart should update state.display and entities will be updates by self.refresh_board_leds()
         let mode = &mut self.modes[self.active_mode_index];
         mode.on_restart(&mut self.state);
-        self.redraw_board_leds();
-        self.state.redraw = false;
-    }
-
-    pub fn redraw_board_leds(&mut self) {
-        self.board_leds.clear_blocking().unwrap();
-
-        // TODO: handle or reset phases for entities?
-
-        for train in self.state.trains.iter() {
-            for car in train.cars().iter() {
-                self.board_leds
-                    .pixel_blocking(car.loc.index(), gamma(car.cargo.car_brightness(0)))
-                    .unwrap();
-            }
-        }
-        for platform in self.state.platforms.iter() {
-            self.board_leds
-                .pixel_blocking(
-                    platform.location().index(),
-                    platform.cargo().platform_brightness(0),
-                )
-                .unwrap();
-        }
-        for switch in self.state.switches.iter() {
-            if let Some(active_anode_location) = switch.active_location(Direction::Anode) {
-                self.board_leds
-                    .pixel_blocking(active_anode_location.index(), gamma(100))
-                    .unwrap();
-            }
-            if let Some(active_cathode_location) = switch.active_location(Direction::Cathode) {
-                self.board_leds
-                    .pixel_blocking(active_cathode_location.index(), gamma(100))
-                    .unwrap();
-            }
-        }
+        self.state.redraw = true;
     }
 
     pub fn tick(&mut self) {
@@ -261,12 +226,6 @@ where
             mode.on_input_event(event, &mut self.state);
         }
 
-        // redraw board LEDs when current mode requests it
-        if self.state.redraw {
-            self.state.redraw = false;
-            self.redraw_board_leds();
-        }
-
         // change mode when current mode requests it (mostly from menu mode)
         if self.state.target_mode_index != self.active_mode_index {
             self.active_mode_index = self.state.target_mode_index;
@@ -294,6 +253,11 @@ where
             return;
         }
 
+        // clear board LEDs and force update all entities when requested
+        if self.state.redraw {
+            self.board_leds.clear_blocking().ok();
+        }
+
         // helper closure to update entity LEDs
         let mut do_led_update = |location: Location, brightness: u8| {
             self.board_leds
@@ -307,7 +271,7 @@ where
 
         let mut event_indices = heapless::Vec::<usize, MAX_TRAINS>::new();
         for (train_index, train) in self.state.trains.iter_mut().enumerate() {
-            if train.advance(&self.state.switches, &mut do_led_update) {
+            if train.advance(&self.state.switches, &mut do_led_update, self.state.redraw) {
                 event_indices.push(train_index).ok();
             }
         }
@@ -316,10 +280,12 @@ where
         }
 
         for platform in self.state.platforms.iter_mut() {
-            platform.update(&mut do_led_update);
+            platform.update(&mut do_led_update, self.state.redraw);
         }
         for switch in self.state.switches.iter_mut() {
-            switch.update(&self.state.trains, &mut do_led_update);
+            switch.update(&self.state.trains, &mut do_led_update, self.state.redraw);
         }
+
+        self.state.redraw = false;
     }
 }

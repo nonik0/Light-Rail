@@ -2,16 +2,7 @@ use embedded_hal::i2c::I2c;
 use random_trait::Random;
 
 use crate::{
-    common::*,
-    game::{DisplayState, GameState},
-    input::{InputDirection, InputEvent},
-    location::Direction,
-    modes::{GameModeHandler, SnakeMode},
-    platform,
-    random::Rand,
-    switch,
-    train::{Train, DEFAULT_SPEED},
-    NUM_DIGITS,
+    common::*, game::{DisplayState, GameState}, input::{InputDirection, InputEvent}, location::Direction, modes::{GameModeHandler, SnakeMode}, panic, platform, random::Rand, switch, train::{Car, Train, DEFAULT_SPEED}, NUM_DIGITS
 };
 
 use super::NUM_MODES;
@@ -44,29 +35,15 @@ impl MenuMode {
 impl GameModeHandler for MenuMode {
     fn on_restart(&mut self, state: &mut GameState) {
         state.is_over = false;
+        state.redraw = true;
         state.display = if self.index != 0 {
             DisplayState::Text(self.game_mode())
         } else {
             DisplayState::None
         };
-                
-        while state.trains.len() > 1 {
-            state.trains.pop();
-        }
 
-        let rand_num_cars = 3 + Rand::default().get_u8() % 3;
-        state.trains[0].set_state(
-            rand_num_cars,
-            Cargo::Have(LedPattern::SolidBright),
-            DEFAULT_SPEED,
-        );
-
-        // set all platforms to same cargo
-        for platform in state.platforms.iter_mut() {
-            if !platform.is_empty() {
-                platform.set_cargo(Cargo::Have(LedPattern::SolidBright));
-            }
-        }
+        state.init_trains(Cargo::Have(LedPattern::SolidBright), 3, 5);
+        state.init_platforms(Cargo::Have(LedPattern::SolidBright));
     }
 
     fn on_game_tick(&mut self, state: &mut GameState) {
@@ -97,7 +74,7 @@ impl GameModeHandler for MenuMode {
 
     fn on_train_advance(&mut self, train_index: usize, state: &mut GameState) {
         let train = &state.trains[train_index];
-        let caboose_loc = train.caboose();
+        let caboose_loc = train.caboose().loc;
         let last_loc = train.last_loc();
 
         // If train just left a switch, randomly switch it
@@ -115,7 +92,7 @@ impl GameModeHandler for MenuMode {
 
         // Clear cargo if train front is at a platform with cargo
         for platform in state.platforms.iter_mut() {
-            if !platform.is_empty() && train.engine() == platform.track_location() {
+            if !platform.is_empty() && train.front() == platform.track_location() {
                 platform.clear_cargo();
             }
         }

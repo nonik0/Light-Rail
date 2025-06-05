@@ -11,7 +11,7 @@ use atmega_hal::port::{mode::Input, *};
 use core::cell::RefCell;
 use embedded_hal::delay::DelayNs;
 use embedded_hal_bus::i2c::{self, RefCellDevice};
-use panic_halt as _;
+//use panic_halt as _;
 use random::Rand;
 use random_trait::Random;
 
@@ -125,15 +125,23 @@ fn main() -> ! {
         .unwrap();
     board_digits.clear().unwrap();
 
+    let cars = [train::Car::default(); game::MAX_CARS];
     let mut modes: [&mut dyn modes::GameModeHandler; modes::NUM_MODES] = [
         &mut modes::MenuMode::default(),
         &mut modes::FreeplayMode::default(),
         &mut modes::SnakeMode::default(),
         &mut modes::TimeMode::default(),
     ];
-    let mut game = game::Game::new(board_buzzer, board_digits, board_input, board_leds, &mut modes);
+    let mut game = game::Game::new(
+        board_buzzer,
+        board_digits,
+        board_input,
+        board_leds,
+        cars,
+        &mut modes,
+    );
     game.restart();
-    
+
     loop {
         game.tick();
         delay.delay_ms(BASE_DELAY);

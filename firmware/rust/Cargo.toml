@@ -53,6 +53,9 @@ debug-assertions = false
 [profile.release]
 panic = "abort"
 codegen-units = 1
-debug = true
+#debug = true
 lto = true
 opt-level = "s"
+# for panic
+overflow-checks = false 
+debug-assertions = false

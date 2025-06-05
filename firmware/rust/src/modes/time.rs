@@ -40,16 +40,8 @@ impl GameModeHandler for TimeMode {
         state.display = DisplayState::Score(self.score);
         state.redraw = true;
 
-        // set up starter train, length 3
-        while state.trains.len() > 1 {
-            state.trains.pop();
-        }
-        state.trains[0].set_state(3, Cargo::Empty, DEFAULT_SPEED);
-
-        // clear cargo on all platforms
-        for platform in state.platforms.iter_mut() {
-            platform.clear_cargo();
-        }
+        state.init_trains(Cargo::Empty, 3, 5);
+        state.clear_platforms();
     }
 
     fn on_game_tick(&mut self, state: &mut GameState) {

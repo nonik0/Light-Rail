@@ -22,6 +22,12 @@ pub struct Location {
     node_index: u8,
 }
 
+impl Default for Location {
+    fn default() -> Self {
+        Self { node_index: NO_DATA }
+    }
+}
+
 impl Location {
     pub fn new(node_index: u8) -> Self {
         if node_index >= NUM_LOCATION_NODES as u8 {

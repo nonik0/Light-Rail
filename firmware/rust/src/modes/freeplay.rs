@@ -16,22 +16,24 @@ pub struct FreeplayMode {
 }
 
 impl FreeplayMode {
-    fn add_train(&mut self, state: &mut GameState) {
-        if state.trains.len() < MAX_TRAINS {
-            let rand_platform_index = Rand::default().get_usize() % state.platforms.len();
-            let rand_platform = &state.platforms[rand_platform_index];
-            let rand_speed = 5 + Rand::default().get_u8() % 10;
-            let mut train = Train::new(
-                rand_platform.track_location(),
-                Cargo::Have(LedPattern::SolidBright),
-                Some(rand_speed),
-            );
-            let num_cars = 1 + Rand::default().get_usize() % 3;
-            state.trains.push(train).unwrap();
-        }
+    // fn add_train(&mut self, state: &mut GameState) {
+    //     if state.trains.len() < MAX_TRAINS {
+    //         let rand_platform_index = Rand::default().get_usize() % state.platforms.len();
+    //         let rand_platform = &state.platforms[rand_platform_index];
+    //         let rand_speed = 5 + Rand::default().get_u8() % 10;
+    //         let cars_slice_offset = state.trains.len() * 5;
+    //         let mut train = Train::new(
+    //             &mut state.cars[cars_slice_offset..cars_slice_offset + 5],
+    //             rand_platform.track_location(),
+    //             Cargo::Have(LedPattern::SolidBright),
+    //             Some(rand_speed),
+    //         );
+    //         let num_cars = 1 + Rand::default().get_usize() % 3;
+    //         state.trains.push(train).unwrap();
+    //     }
 
-        state.redraw = true;
-    }
+    //     state.redraw = true;
+    // }
 
     fn remove_train(&mut self, state: &mut GameState) {
         if state.trains.len() > 1 {
@@ -50,23 +52,13 @@ impl Default for FreeplayMode {
 
 impl GameModeHandler for FreeplayMode {
     fn on_restart(&mut self, state: &mut GameState) {
-        state.is_over = false;
-        self.score = 1;
+        self.score = 0;
         state.display = DisplayState::Score(self.score);
+        state.is_over = false;
         state.redraw = true;
 
-        // set up starter train, length 3
-        while state.trains.len() > 1 {
-            state.trains.pop();
-        }
-        state.trains[0].set_state(3, Cargo::Have(LedPattern::SolidBright), DEFAULT_SPEED);
-
-        // set all platforms to same cargo
-        for platform in state.platforms.iter_mut() {
-            if !platform.is_empty() {
-                platform.set_cargo(Cargo::Have(LedPattern::SolidBright));
-            }
-        }
+        state.init_trains(Cargo::Have(LedPattern::SolidBright), 3, 5);
+        state.init_platforms(Cargo::Have(LedPattern::SolidBright));
     }
 
     fn on_game_tick(&mut self, state: &mut GameState) {
@@ -84,7 +76,7 @@ impl GameModeHandler for FreeplayMode {
                 self.remove_train(state);
             },
             InputEvent::DirectionButtonPressed(InputDirection::Right) => {
-                self.add_train(state);
+                //self.add_train(state);
             }
             _ => {}
         }
@@ -97,7 +89,7 @@ impl GameModeHandler for FreeplayMode {
 
         // Clear cargo if train front is at a platform with cargo
         for platform in state.platforms.iter_mut() {
-            if !platform.is_empty() && train.engine() == platform.track_location() {
+            if !platform.is_empty() && train.front() == platform.track_location() {
                 platform.clear_cargo();
 
                 self.score += 1;

@@ -3,7 +3,7 @@ use random_trait::Random;
 
 use crate::{
     common::*,
-    game::{DisplayState, GameState},
+    game::{DisplayState, GameState, MAX_CARS},
     input::InputEvent,
     modes::GameModeHandler,
     random::Rand,
@@ -27,18 +27,8 @@ impl GameModeHandler for SnakeMode {
         state.display = DisplayState::Score(self.score);
         state.redraw = true;
 
-        // set up starter train, length 1
-        while state.trains.len() > 1 {
-            state.trains.pop();
-        }
-        state.trains[0].set_state(1, Cargo::Have(LedPattern::SolidBright), DEFAULT_SPEED);
-
-        // set all platforms to same cargo
-        for platform in state.platforms.iter_mut() {
-            if !platform.is_empty() {
-                platform.set_cargo(Cargo::Have(LedPattern::SolidBright));
-            }
-        }
+        state.init_trains(Cargo::Have(LedPattern::SolidBright), 1, MAX_CARS as u8);
+        state.init_platforms(Cargo::Have(LedPattern::SolidBright));
     }
 
     fn on_game_tick(&mut self, state: &mut GameState) {
@@ -63,7 +53,7 @@ impl GameModeHandler for SnakeMode {
 
         // Check if train collided with itself
         for i in 1..train.len() {
-            if train[i].loc == train.engine() {
+            if train[i].loc == train.front() {
                 state.display = DisplayState::Text(*b"ded");
                 state.is_over = true;
                 return;
@@ -72,7 +62,7 @@ impl GameModeHandler for SnakeMode {
 
         // Clear cargo if train front is at a platform with cargo
         for platform in state.platforms.iter_mut() {
-            if !platform.is_empty() && train.engine() == platform.track_location() {
+            if !platform.is_empty() && train.front() == platform.track_location() {
                 platform.clear_cargo();
 
                 train.add_car(Cargo::Have(LedPattern::SolidBright));

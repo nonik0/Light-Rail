@@ -15,13 +15,15 @@ use crate::{
     input::{BoardInput, InputDirection, InputEvent},
     location::{Direction, Location, NUM_PLATFORMS, NUM_SWITCHES},
     modes::*,
+    panic,
     platform::{self, Platform},
     switch::{self, Switch},
     tone::TimerTone,
-    train::Train,
+    train::{Car, Train, DEFAULT_SPEED},
     Rand,
 };
 
+pub const MAX_CARS: usize = 50;
 pub const MAX_TRAINS: usize = 3;
 
 #[derive(Clone, Copy, PartialEq)]
@@ -40,9 +42,45 @@ pub struct GameState {
     pub display: DisplayState,
 
     // game entities
+    pub cars: [Car; MAX_CARS],
     pub trains: Vec<Train, MAX_TRAINS>,
     pub platforms: [Platform; NUM_PLATFORMS],
     pub switches: [Switch; NUM_SWITCHES],
+}
+
+impl GameState {
+    pub fn rand_platform(&self) -> &Platform {
+        let rand_platform_index = Rand::default().get_usize() % self.platforms.len();
+        &self.platforms[rand_platform_index]
+    }
+
+    pub fn init_trains(&mut self, cargo: Cargo, num_cars: u8, max_cars: u8) {
+        self.trains.clear();
+        
+        // init first train
+        let cars_ptr = unsafe { self.cars.as_mut_ptr() };
+        let loc = self.rand_platform().track_location();
+        let speed = Some(DEFAULT_SPEED);
+        let mut train = Train::new(cars_ptr, max_cars, loc, cargo, speed);
+        for _ in 1..num_cars {
+            train.add_car(cargo);
+        }
+        self.trains.push(train).unwrap();
+    }
+
+    pub fn init_platforms(&mut self, cargo: Cargo) {
+        for platform in self.platforms.iter_mut() {
+            if !platform.is_empty() {
+                platform.set_cargo(cargo);
+            }
+        }
+    }
+
+    pub fn clear_platforms(&mut self) {
+        for platform in self.platforms.iter_mut() {
+            platform.clear_cargo();
+        }
+    }
 }
 
 pub struct Game<'a, I2C>
@@ -74,26 +112,19 @@ where
         board_digits: AS1115<I2C>,
         board_input: BoardInput,
         board_leds: IS31FL3731<I2C>,
+        cars: [Car; MAX_CARS],
         modes: &'a mut [&'a mut dyn GameModeHandler],
     ) -> Self {
         let platforms = Platform::take();
         let switches = Switch::take();
-        let mut trains = Vec::<Train, MAX_TRAINS>::new();
+        let trains = Vec::<Train, MAX_TRAINS>::new();
         
-        let rand_platform_index = Rand::default().get_usize() % platforms.len();
-        let rand_platform = &platforms[rand_platform_index];
-        let mut train = Train::new(
-            rand_platform.track_location(),
-            Cargo::Have(LedPattern::SolidBright),
-            None,
-        );
-        trains.push(train).unwrap();
-
         let state = GameState {
-            target_mode_index: 3,
+            target_mode_index: 0,
             is_over: false,
             redraw: false,
             display: DisplayState::None,
+            cars,
             trains,
             platforms,
             switches,
@@ -104,7 +135,7 @@ where
             board_digits,
             board_input,
             board_leds,
-            active_mode_index: 3,
+            active_mode_index: 0,
             last_display: DisplayState::None,
             last_over: true,
             modes,
@@ -230,8 +261,8 @@ where
         // helper closure to update entity LEDs
         let mut do_led_update = |location: Location, brightness: u8| {
             self.board_leds
-            .pixel_blocking(location.index(), gamma(brightness))
-            .ok();
+                .pixel_blocking(location.index(), gamma(brightness))
+                .ok();
         };
 
         // update train, platform, and switch entities

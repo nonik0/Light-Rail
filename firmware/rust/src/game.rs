@@ -2,6 +2,8 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
+use core::num;
+
 use as1115::AS1115;
 use embedded_hal::i2c::I2c;
 use heapless::Vec;
@@ -25,6 +27,7 @@ use crate::{
 
 pub const MAX_CARS: usize = 50;
 pub const MAX_TRAINS: usize = 3;
+pub const NOMINAL_TRAIN_SIZE: usize = MAX_CARS / MAX_TRAINS;
 
 #[derive(Clone, Copy, PartialEq)]
 pub enum DisplayState {
@@ -49,16 +52,18 @@ pub struct GameState {
 }
 
 impl GameState {
-    pub fn rand_platform(&self) -> &Platform {
-        let rand_platform_index = Rand::default().get_usize() % self.platforms.len();
-        &self.platforms[rand_platform_index]
-    }
+    pub fn add_train(&mut self, cargo: Cargo, num_cars: u8, max_cars: u8) {
+        if self.trains.is_full() {
+            return;
+        }
 
-    pub fn init_trains(&mut self, cargo: Cargo, num_cars: u8, max_cars: u8) {
-        self.trains.clear();
-        
-        // init first train
-        let cars_ptr = unsafe { self.cars.as_mut_ptr() };
+        // TODO: for now, simple allocation method that divides evenly on MAX_TRAINS, only snake allocated single train with max cars
+        let cars_ptr = unsafe {
+            self.cars
+                .as_mut_ptr()
+                .add(self.trains.len() * NOMINAL_TRAIN_SIZE)
+        };
+        //let cars_ptr = unsafe { self.cars.as_mut_ptr() };
         let loc = self.rand_platform().track_location();
         let speed = Some(DEFAULT_SPEED);
         let mut train = Train::new(cars_ptr, max_cars, loc, cargo, speed);
@@ -66,6 +71,31 @@ impl GameState {
             train.add_car(cargo);
         }
         self.trains.push(train).unwrap();
+        self.redraw = true;
+    }
+
+    pub fn remove_train(&mut self) {
+        if !self.trains.is_empty() {
+            self.trains.pop();
+        }
+        self.redraw = true;
+    }
+
+    /// Initializes the game state with a single train with given parameters.
+    pub fn init_trains(&mut self, cargo: Cargo, num_cars: u8, max_cars: u8) {
+        // init first train
+        if self.trains.len() > 0 {
+            while self.trains.len() > 1 {
+                self.trains.pop();
+            }
+
+            // reuse existing train for smooth transition between modes
+            let train = &mut self.trains[0];
+            train.init_cars(cargo, num_cars, max_cars);
+            train.set_speed(DEFAULT_SPEED);
+        } else {
+            self.add_train(cargo, num_cars, max_cars);
+        }
     }
 
     pub fn init_platforms(&mut self, cargo: Cargo) {
@@ -80,6 +110,11 @@ impl GameState {
         for platform in self.platforms.iter_mut() {
             platform.clear_cargo();
         }
+    }
+
+    pub fn rand_platform(&self) -> &Platform {
+        let rand_platform_index = Rand::default().get_usize() % self.platforms.len();
+        &self.platforms[rand_platform_index]
     }
 }
 
@@ -118,7 +153,7 @@ where
         let platforms = Platform::take();
         let switches = Switch::take();
         let trains = Vec::<Train, MAX_TRAINS>::new();
-        
+
         let state = GameState {
             target_mode_index: 0,
             is_over: false,

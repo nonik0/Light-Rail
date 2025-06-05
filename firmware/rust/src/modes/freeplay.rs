@@ -3,7 +3,7 @@ use random_trait::Random;
 
 use crate::{
     common::*,
-    game::{DisplayState, GameState, MAX_TRAINS},
+    game::{DisplayState, GameState, MAX_TRAINS, NOMINAL_TRAIN_SIZE},
     input::{InputDirection, InputEvent},
     modes::GameModeHandler,
     random::Rand,
@@ -13,35 +13,6 @@ use crate::{
 pub struct FreeplayMode {
     score: u16,
     cur_setting: u8,
-}
-
-impl FreeplayMode {
-    // fn add_train(&mut self, state: &mut GameState) {
-    //     if state.trains.len() < MAX_TRAINS {
-    //         let rand_platform_index = Rand::default().get_usize() % state.platforms.len();
-    //         let rand_platform = &state.platforms[rand_platform_index];
-    //         let rand_speed = 5 + Rand::default().get_u8() % 10;
-    //         let cars_slice_offset = state.trains.len() * 5;
-    //         let mut train = Train::new(
-    //             &mut state.cars[cars_slice_offset..cars_slice_offset + 5],
-    //             rand_platform.track_location(),
-    //             Cargo::Have(LedPattern::SolidBright),
-    //             Some(rand_speed),
-    //         );
-    //         let num_cars = 1 + Rand::default().get_usize() % 3;
-    //         state.trains.push(train).unwrap();
-    //     }
-
-    //     state.redraw = true;
-    // }
-
-    fn remove_train(&mut self, state: &mut GameState) {
-        if state.trains.len() > 1 {
-            state.trains.pop();
-        }
-
-        state.redraw = true;
-    }
 }
 
 impl Default for FreeplayMode {
@@ -57,7 +28,7 @@ impl GameModeHandler for FreeplayMode {
         state.is_over = false;
         state.redraw = true;
 
-        state.init_trains(Cargo::Have(LedPattern::SolidBright), 3, 5);
+        state.init_trains(Cargo::Have(LedPattern::SolidBright), 3, NOMINAL_TRAIN_SIZE as u8);
         state.init_platforms(Cargo::Have(LedPattern::SolidBright));
     }
 
@@ -73,10 +44,10 @@ impl GameModeHandler for FreeplayMode {
         // TODO: add/remove trains, etc.
         match event {
             InputEvent::DirectionButtonPressed(InputDirection::Left) => {
-                self.remove_train(state);
+                state.remove_train();
             },
             InputEvent::DirectionButtonPressed(InputDirection::Right) => {
-                //self.add_train(state);
+                state.add_train(Cargo::Have(LedPattern::SolidBright), 3, NOMINAL_TRAIN_SIZE as u8);
             }
             _ => {}
         }

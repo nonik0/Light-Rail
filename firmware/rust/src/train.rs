@@ -107,31 +107,14 @@ impl Train {
         Some(loc)
     }
 
-    pub fn set_state(&mut self, num_cars: u8, cargo: Cargo, speed: u8) {
-        if num_cars > self.cars().len() as u8 {
-            return;
-        }
+    /// Unsafe function if not called properly, should only be called when first train is initialized
+    pub fn init_cars(&mut self, cargo: Cargo, num_cars: u8, max_cars: u8) {
+        self.num_cars = num_cars;
+        self.max_cars = max_cars;
 
-        self.speed = speed.clamp(MIN_SPEED, MAX_SPEED);
-        self.speed_counter = 0;
-
-        // Add cars if needed
-        while self.cars().len() < num_cars as usize {
-            if self.add_car(cargo).is_none() {
-                break;
-            }
-        }
-
-        // Remove cars if needed
-        while self.cars().len() > num_cars as usize {
-            if self.remove_car().is_none() {
-                break;
-            }
-        }
-
-        // Set cargo for all cars
         for car in self.cars_mut().iter_mut() {
             car.cargo = cargo;
+            car.last_brightness = 0;
         }
     }
 
@@ -184,19 +167,28 @@ impl Train {
         true
     }
 
+    /// Returns the vector of cars in the train
+    pub fn cars(&self) -> &[Car] {
+        unsafe { core::slice::from_raw_parts(self.cars_ptr, self.num_cars as usize) }
+    }
+
+    /// Returns the number of cars in the train
     pub fn len(&self) -> usize {
         self.num_cars as usize
     }
 
+    /// Returns speed of the train
     pub fn speed(&self) -> u8 {
         self.speed
     }
 
-    pub fn has_empty_cars(&self) -> bool {
-        self.cars().iter().any(|car| car.cargo == Cargo::Empty)
+    /// Sets the speed of the train, clamping it between MIN_SPEED and MAX_SPEED
+    pub fn set_speed(&mut self, speed: u8) {
+        self.speed = speed.clamp(MIN_SPEED, MAX_SPEED);
+        self.speed_counter = 0;
     }
 
-    /// Adds cargo to train, returns true if successful, false is train is full
+    /// Adds cargo to train, returns true if train loads cargo into an available empty car
     /// TODO: add location so cargo can be added to nearest empty car?
     pub fn load_cargo(&mut self, cargo: Cargo) -> bool {
         for car in self.cars_mut().iter_mut() {
@@ -208,6 +200,7 @@ impl Train {
         false
     }
 
+    /// Unloads cargo from the train, returns true if train removes cargo from a car that has it
     pub fn unload_cargo(&mut self, cargo: Cargo) -> bool {
         for car in self.cars_mut().iter_mut() {
             if car.cargo == cargo {
@@ -218,26 +211,12 @@ impl Train {
         false
     }
 
-    /// Returns the vector of cars in the train
-    pub fn cars(&self) -> &[Car] {
-        unsafe { core::slice::from_raw_parts(self.cars_ptr, self.num_cars as usize) }
-    }
-
-    /// Returns the vector of cars in the train
-    pub fn cars_mut(&self) -> &mut [Car] {
-        unsafe { core::slice::from_raw_parts_mut(self.cars_ptr, self.num_cars as usize) }
-    }
-
     /// Returns reference to the first car of the train (engine)
     pub fn engine(&self) -> &Car {
         self.cars().first().unwrap()
     }
 
-    /// Returns mutable reference to the engine (first car of the train)
-    pub fn engine_mut(&mut self) -> &mut Car {
-        self.cars_mut().first_mut().unwrap()
-    }
-
+    /// Returns the current location of the train engine
     pub fn front(&self) -> Location {
         self.engine().loc
     }
@@ -245,11 +224,6 @@ impl Train {
     /// Returns reference to the last car of the train (caboose)
     pub fn caboose(&self) -> &Car {
         self.cars().last().unwrap()
-    }
-
-    /// Returns mutable reference to the last car of the train (caboose)
-    pub fn caboose_mut(&mut self) -> &mut Car {
-        self.cars_mut().last_mut().unwrap()
     }
 
     /// Returns the previous location of the caboose before the last move
@@ -262,29 +236,23 @@ impl Train {
         self.cars().iter().any(|car| car.loc == loc)
     }
 
-    /// Return train cargo at the given location, if any
-    pub fn cargo_at_location(&self, loc: Location) -> Option<Cargo> {
-        self.cars()
-            .iter()
-            .find(|car| car.loc == loc)
-            .map(|car| car.cargo)
+    // private mutable functions
+
+    /// Returns mutable reference to the engine (first car of the train)
+    fn engine_mut(&mut self) -> &mut Car {
+        self.cars_mut().first_mut().unwrap()
     }
 
-    /// Set the cargo of the car at the given location, returns true if successful
-    pub fn set_cargo_at_location(&mut self, loc: Location, cargo: Cargo) -> bool {
-        for car in self.cars_mut().iter_mut() {
-            if car.loc == loc {
-                car.cargo = cargo;
-                return true;
-            }
-        }
-        false
+    /// Returns mutable reference to the last car of the train (caboose)
+    fn caboose_mut(&mut self) -> &mut Car {
+        self.cars_mut().last_mut().unwrap()
     }
 
-    pub fn set_speed(&mut self, speed: u8) {
-        self.speed = speed.clamp(MIN_SPEED, MAX_SPEED);
-        self.speed_counter = 0;
+    /// Returns the vector of cars in the train
+    fn cars_mut(&self) -> &mut [Car] {
+        unsafe { core::slice::from_raw_parts_mut(self.cars_ptr, self.num_cars as usize) }
     }
+
 }
 
 impl core::ops::Index<usize> for Train {

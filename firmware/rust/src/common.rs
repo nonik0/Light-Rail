@@ -51,7 +51,7 @@ impl LedPattern {
 
 pub const RED_LED_MIN_B: u8 = 30;
 pub const RED_LED_MAX_B: u8 = 80;
-pub const YELLOW_LED_MIN_B: u8 = 64;
+pub const YELLOW_LED_MIN_B: u8 = 80;
 pub const YELLOW_LED_MAX_B: u8 = 255;
 
 #[derive(Clone, Copy, Debug, PartialEq)]

@@ -16,6 +16,7 @@ pub struct Platform {
     cargo: Cargo,
     last_brightness: u8,
     phase: u8, // phase of the platform, used for PWM
+    phase_inc: u8, // phase increment for speed control
 }
 
 impl Platform {
@@ -26,6 +27,7 @@ impl Platform {
             cargo: Cargo::Empty,
             last_brightness: 0,
             phase: Rand::default().get_u8(), // initial phase
+            phase_inc: 1, // default increment
         }
     }
 
@@ -49,7 +51,7 @@ impl Platform {
     where
         F: FnMut(Location, u8),
     {
-        self.phase = self.phase.wrapping_add(1);
+        self.phase = self.phase.wrapping_add(self.phase_inc);
 
         let brightness = self.cargo.platform_brightness(self.phase);
         if force_update || brightness != self.last_brightness {
@@ -59,6 +61,10 @@ impl Platform {
         } else {
             false
         }
+    }
+
+    pub fn set_phase_speed(&mut self, speed: u8) {
+        self.phase_inc = speed;
     }
 
     pub fn cargo(&self) -> Cargo {

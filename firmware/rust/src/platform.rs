@@ -12,7 +12,7 @@ use crate::{
 
 pub struct Platform {
     location: Location,
-    track_location: Location,
+    track_location: Location, // remove and use location.next_loc() to save SRAM?
     cargo: Cargo,
     last_brightness: u8,
     phase: u8, // phase of the platform, used for PWM

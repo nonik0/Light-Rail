@@ -2,7 +2,16 @@ use embedded_hal::i2c::I2c;
 use random_trait::Random;
 
 use crate::{
-    common::*, game::{DisplayState, GameState}, input::{InputDirection, InputEvent}, location::Direction, modes::{GameModeHandler, SnakeMode}, panic, platform, random::Rand, switch, train::{Car, Train, DEFAULT_SPEED}, NUM_DIGITS
+    common::*,
+    game::{DisplayState, GameState},
+    input::{InputDirection, InputEvent},
+    location::Direction,
+    modes::{GameModeHandler, SnakeMode},
+    panic, platform,
+    random::Rand,
+    switch,
+    train::{Car, Train, DEFAULT_SPEED},
+    NUM_DIGITS,
 };
 
 use super::NUM_MODES;
@@ -42,6 +51,12 @@ impl GameModeHandler for MenuMode {
         };
 
         state.init_trains(Cargo::Have(LedPattern::SolidBright), 3, 5);
+        state.add_train(
+            Cargo::Have(LedPattern::SolidBright),
+            5,
+            5,
+            Some(DEFAULT_SPEED / 2),
+        );
         state.init_platforms(Cargo::Have(LedPattern::SolidBright));
     }
 

@@ -25,7 +25,7 @@ use crate::{
     Rand,
 };
 
-pub const MAX_CARS: usize = 50; // need to adjust to avoid SRAM issues
+pub const MAX_CARS: usize = 30; // need to adjust to avoid SRAM issues
 pub const MAX_TRAINS: usize = 3;
 pub const NOMINAL_TRAIN_SIZE: usize = MAX_CARS / MAX_TRAINS;
 
@@ -52,7 +52,7 @@ pub struct GameState {
 }
 
 impl GameState {
-    pub fn add_train(&mut self, cargo: Cargo, num_cars: u8, max_cars: u8) {
+    pub fn add_train(&mut self, cargo: Cargo, num_cars: u8, max_cars: u8, speed: Option<u8>) {
         if self.trains.is_full() {
             return;
         }
@@ -65,7 +65,6 @@ impl GameState {
         };
         //let cars_ptr = unsafe { self.cars.as_mut_ptr() };
         let loc = self.rand_platform().track_location();
-        let speed = Some(DEFAULT_SPEED);
         let mut train = Train::new(cars_ptr, max_cars, loc, cargo, speed);
         for _ in 1..num_cars {
             train.add_car(cargo);
@@ -95,7 +94,7 @@ impl GameState {
             train.set_speed(DEFAULT_SPEED);
             self.redraw = true;
         } else {
-            self.add_train(cargo, num_cars, max_cars);
+            self.add_train(cargo, num_cars, max_cars, None);
         }
     }
 
@@ -134,6 +133,7 @@ where
     active_mode_index: usize,
     last_display: DisplayState,
     last_over: bool,
+    buzzer_enabled: bool,
     modes: &'a mut [&'a mut (dyn GameModeHandler + 'a)],
 
     // state passed to game modes, changes to state entities are rendered into updates for digits and LEDs
@@ -176,6 +176,7 @@ where
             last_display: DisplayState::None,
             last_over: true,
             modes,
+            buzzer_enabled: true,
             state,
         }
     }
@@ -197,7 +198,9 @@ where
             match event {
                 // toggle switches
                 InputEvent::SwitchButtonPressed(index) => {
-                    self.board_buzzer.tone(3000, 100);
+                    if self.buzzer_enabled {
+                        self.board_buzzer.tone(3000, 20);
+                    }
                     let index = index as usize;
                     if index < self.state.switches.len() {
                         self.state.switches[index].switch();
@@ -206,11 +209,22 @@ where
                 // tones on button presses
                 InputEvent::DirectionButtonPressed(InputDirection::Up)
                 | InputEvent::DirectionButtonPressed(InputDirection::Right) => {
-                    self.board_buzzer.tone(3500, 50);
+                    if self.buzzer_enabled {
+                        self.board_buzzer.tone(3500, 10);
+                    }
                 }
                 InputEvent::DirectionButtonPressed(InputDirection::Down)
                 | InputEvent::DirectionButtonPressed(InputDirection::Left) => {
-                    self.board_buzzer.tone(3000, 50);
+                    if self.buzzer_enabled {
+                        self.board_buzzer.tone(3000, 10);
+                    }
+                }
+                // exit to menu mode
+                InputEvent::DirectionButtonHeld(InputDirection::Up) => {
+                    self.buzzer_enabled = true;
+                }
+                InputEvent::DirectionButtonHeld(InputDirection::Down) => {
+                    self.buzzer_enabled = false;
                 }
                 // exit to menu mode
                 InputEvent::DirectionButtonHeld(InputDirection::Left) => {

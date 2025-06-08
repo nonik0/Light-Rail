@@ -120,6 +120,7 @@ impl FreeplayMode {
                         Cargo::Have(LedPattern::SolidBright),
                         3,
                         NOMINAL_TRAIN_SIZE as u8,
+                        None
                     );
                 } else {
                     state.remove_train();

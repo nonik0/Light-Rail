@@ -186,4 +186,6 @@ impl GameModeHandler for TimeMode {
             _ => {}
         }
     }
+
+    fn on_train_advance(&mut self, _: usize, _: &mut GameState) {}
 }

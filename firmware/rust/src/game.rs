@@ -138,6 +138,8 @@ where
             self.restart();
         }
 
+        self.mode.on_game_tick(&mut self.state);
+
         // update board digits/score display
         if self.last_display != self.state.display {
             self.last_display = self.state.display;
@@ -154,14 +156,14 @@ where
             }
         }
 
-        // skip updating game entities if game is over
-        if self.state.is_over {
-            return;
-        }
-
         // clear board LEDs and force update all entities when requested
         if self.state.redraw {
             self.board_leds.clear_blocking().ok();
+        }
+
+        // skip updating game entities if game is over
+        if self.state.is_over {
+            return;
         }
 
         // helper closure to update entity LEDs
@@ -172,8 +174,6 @@ where
         };
 
         // update train, platform, and switch entities
-        self.mode.on_game_tick(&mut self.state);
-
         let mut event_indices = heapless::Vec::<usize, MAX_TRAINS>::new();
         for (train_index, train) in self.state.trains.iter_mut().enumerate() {
             if train.advance(&self.state.switches, &mut do_led_update, self.state.redraw) {

@@ -1,25 +1,24 @@
 use random_trait::Random;
 
-use crate::{
-    common::*,
-    game_state::*,
-    input::InputEvent,
-    modes::GameModeHandler,
-    random::Rand,
-};
+use crate::{common::*, game_state::*, input::InputEvent, modes::GameModeHandler, random::Rand};
 
 pub struct SnakeMode {
     score: u16,
+    counter: u8,
 }
 
 impl Default for SnakeMode {
     fn default() -> Self {
-        SnakeMode { score: 0 }
+        SnakeMode {
+            score: 0,
+            counter: 0,
+        }
     }
 }
 
 impl GameModeHandler for SnakeMode {
     fn on_restart(&mut self, state: &mut GameState) {
+        self.counter = 0;
         self.score = 1;
         state.is_over = false;
         state.display = DisplayState::Score(self.score);
@@ -33,6 +32,15 @@ impl GameModeHandler for SnakeMode {
             if platform.is_empty() && Rand::default().get_u16() <= 50 {
                 // TODO: check train too
                 platform.set_cargo(Cargo::Have(LedPattern::SolidBright));
+            }
+        }
+
+        if state.is_over {
+            self.counter += 1;
+            if self.counter == 0 {
+                state.display = DisplayState::Text(*b"ded");
+            } else if self.counter == u8::MAX >> 1 {
+                state.display = DisplayState::Score(self.score);
             }
         }
     }

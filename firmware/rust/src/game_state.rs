@@ -1,17 +1,11 @@
-use as1115::AS1115;
-use embedded_hal::i2c::I2c;
 use heapless::Vec;
-use is31fl3731::{gamma, IS31FL3731};
 use random_trait::Random;
 
 use crate::{
     common::*,
-    input::{BoardInput, InputDirection, InputEvent},
-    location::{Direction, Location, NUM_PLATFORMS, NUM_SWITCHES},
-    modes::*,
-    platform::{self, Platform},
-    switch::{self, Switch},
-    tone::TimerTone,
+    location::{NUM_PLATFORMS, NUM_SWITCHES},
+    platform::{Platform},
+    switch::{Switch},
     train::{Car, Train, DEFAULT_SPEED},
     Rand,
 };

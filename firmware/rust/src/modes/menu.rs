@@ -1,4 +1,3 @@
-use embedded_hal::i2c::I2c;
 use random_trait::Random;
 
 use crate::{
@@ -6,11 +5,9 @@ use crate::{
     game_state::*,
     input::{InputDirection, InputEvent},
     location::Direction,
-    modes::{GameModeHandler, SnakeMode},
-    platform,
+    modes::{GameModeHandler},
     random::Rand,
-    switch,
-    train::{Car, Train, DEFAULT_SPEED},
+    train::{DEFAULT_SPEED},
     NUM_DIGITS,
 };
 

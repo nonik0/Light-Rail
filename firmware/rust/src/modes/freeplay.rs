@@ -1,4 +1,3 @@
-use embedded_hal::i2c::I2c;
 use random_trait::Random;
 
 use crate::{
@@ -7,7 +6,6 @@ use crate::{
     input::{InputDirection, InputEvent},
     modes::GameModeHandler,
     random::Rand,
-    train::{Train, DEFAULT_SPEED},
     NUM_DIGITS,
 };
 
@@ -211,8 +209,6 @@ impl GameModeHandler for FreeplayMode {
 
     fn on_train_advance(&mut self, train_index: usize, state: &mut GameState) {
         let train = &state.trains[train_index];
-        let caboose_loc = train.caboose();
-        let last_loc = train.last_loc();
 
         // Clear cargo if train front is at a platform with cargo
         for platform in state.platforms.iter_mut() {

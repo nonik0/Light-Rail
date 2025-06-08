@@ -4,8 +4,8 @@
 #![feature(const_trait_impl)]
 #![feature(panic_info_message)]
 #![feature(type_alias_impl_trait)]
-#![allow(unused)]
 
+// TODO: can print to digits before panic halting
 #[cfg(not(feature = "panic_to_digits"))]
 #[macro_export]
 macro_rules! panic_with_error {
@@ -15,17 +15,15 @@ macro_rules! panic_with_error {
 }
 
 use atmega_hal::adc;
-use atmega_hal::port::{mode::Input, *};
 use core::cell::RefCell;
 use embedded_hal::delay::DelayNs;
-use embedded_hal_bus::i2c::{self, RefCellDevice};
+use embedded_hal_bus::i2c::{self};
 #[cfg(not(feature = "panic_to_digits"))]
 use panic_halt as _;
 use random::Rand;
 use random_trait::Random;
 
 type Adc = atmega_hal::adc::Adc<CoreClock>;
-type Channel = atmega_hal::adc::Channel;
 #[cfg(feature = "atmega32u4")]
 type CoreClock = atmega_hal::clock::MHz8;
 #[cfg(feature = "atmega328p")]

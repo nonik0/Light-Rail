@@ -1,4 +1,3 @@
-use embedded_hal::i2c::I2c;
 use random_trait::Random;
 
 use crate::{
@@ -7,7 +6,6 @@ use crate::{
     input::InputEvent,
     modes::GameModeHandler,
     random::Rand,
-    train::DEFAULT_SPEED,
 };
 
 pub struct SnakeMode {
@@ -39,7 +37,7 @@ impl GameModeHandler for SnakeMode {
         }
     }
 
-    fn on_input_event(&mut self, event: InputEvent, state: &mut GameState) {
+    fn on_input_event(&mut self, _: InputEvent, state: &mut GameState) {
         if state.is_over {
             self.on_restart(state);
         }
@@ -47,8 +45,6 @@ impl GameModeHandler for SnakeMode {
 
     fn on_train_advance(&mut self, train_index: usize, state: &mut GameState) {
         let train = &mut state.trains[train_index];
-        let caboose_loc = train.caboose();
-        let last_loc = train.last_loc();
 
         // Check if train collided with itself
         for i in 1..train.len() {

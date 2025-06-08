@@ -1,7 +1,6 @@
 use crate::{
     game_state::*,
     input::InputEvent,
-    train::Train,
 };
 
 pub mod menu;
@@ -19,14 +18,14 @@ pub const NUM_MODES: usize = 4;
 pub trait GameModeHandler
 {
     // on restart
-    fn on_restart(&mut self, state: &mut GameState) {}
+    fn on_restart(&mut self, _state: &mut GameState) {}
 
     // on each game tick
-    fn on_game_tick(&mut self, entities: &mut GameState) {}
+    fn on_game_tick(&mut self, _entities: &mut GameState) {}
 
     // when a button is pressed
-    fn on_input_event(&mut self, event: InputEvent, state: &mut GameState) {}
+    fn on_input_event(&mut self, _event: InputEvent, _state: &mut GameState) {}
 
     // when a train advances
-    fn on_train_advance(&mut self, train_index: usize, state: &mut GameState) {}
+    fn on_train_advance(&mut self, _train_index: usize, _tate: &mut GameState) {}
 }

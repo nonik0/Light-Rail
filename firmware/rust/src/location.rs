@@ -2,10 +2,6 @@
 /// All data here is const/static and evaluated as much as possible at compile time.
 /// Game state is all held within the Game struct.
 use avr_progmem::progmem;
-use heapless::Vec;
-use random_trait::Random;
-
-use crate::{panic_with_error, random::Rand};
 
 /// Direction of travel for a train from LED/node location.
 /// Anode is "exiting" a location from the LED's anode,
@@ -126,9 +122,9 @@ impl LocationNode {
         is_node_platform(*self)
     }
 
-    fn is_track(&self) -> bool {
-        !self.is_platform()
-    }
+    // fn is_track(&self) -> bool {
+    //     !self.is_platform()
+    // }
 }
 
 impl Default for LocationNode {

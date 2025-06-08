@@ -1,11 +1,8 @@
-use core::panic;
-use is31fl3731::gamma;
 use random_trait::Random;
 
 use crate::{
     common::*,
     location::{Direction, Location, NUM_SWITCHES},
-    panic_with_error,
     random::Rand,
     train::Train,
 };
@@ -220,19 +217,19 @@ impl Switch {
         }
     }
 
-    /// Returns the location a train at this switch will go in the given direction if the switch is not switched.
-    pub fn next_location(&self, direction: Direction) -> Location {
-        match direction {
-            Direction::Anode => self.anode_next_location,
-            Direction::Cathode => self.cathode_next_location,
-        }
-    }
+    // /// Returns the location a train at this switch will go in the given direction if the switch is not switched.
+    // pub fn next_location(&self, direction: Direction) -> Location {
+    //     match direction {
+    //         Direction::Anode => self.anode_next_location,
+    //         Direction::Cathode => self.cathode_next_location,
+    //     }
+    // }
 
-    /// Returns the location a train at this switch will go in the given direction if the switch is switched.
-    pub fn fork_location(&self, direction: Direction) -> Option<Location> {
-        match direction {
-            Direction::Anode => self.anode_fork_location,
-            Direction::Cathode => self.cathode_fork_location,
-        }
-    }
+    // /// Returns the location a train at this switch will go in the given direction if the switch is switched.
+    // pub fn fork_location(&self, direction: Direction) -> Option<Location> {
+    //     match direction {
+    //         Direction::Anode => self.anode_fork_location,
+    //         Direction::Cathode => self.cathode_fork_location,
+    //     }
+    // }
 }

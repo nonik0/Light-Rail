@@ -3,9 +3,7 @@ use random_trait::Random;
 use crate::{
     common::*,
     location::{Direction, Location, NUM_PLATFORMS},
-    panic_with_error,
     random::Rand,
-    train::Train,
 };
 
 // TODO: update so it only tracks what updates it has sent based on its state that is controlled elsewhere
@@ -71,9 +69,9 @@ impl Platform {
         self.cargo
     }
 
-    pub fn location(&self) -> Location {
-        self.location
-    }
+    // pub fn location(&self) -> Location {
+    //     self.location
+    // }
 
     pub fn track_location(&self) -> Location {
         self.track_location

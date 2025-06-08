@@ -1,25 +1,17 @@
-// TEMP: quiet unused warnings
-#![allow(dead_code)]
-#![allow(unused_variables)]
-
-//use core::num;
 use as1115::AS1115;
 use embedded_hal::i2c::I2c;
 use heapless::Vec;
 use is31fl3731::{gamma, IS31FL3731};
-use random_trait::Random;
 
 use crate::{
-    common::*,
     game_state::*,
     input::{BoardInput, InputDirection, InputEvent},
-    location::{Direction, Location, NUM_PLATFORMS, NUM_SWITCHES},
+    location::{Location},
     modes::*,
-    platform::{self, Platform},
-    switch::{self, Switch},
+    platform::{Platform},
+    switch::{Switch},
     tone::TimerTone,
-    train::{Car, Train, DEFAULT_SPEED},
-    Rand,
+    train::{Car, Train},
 };
 
 pub struct Game<'a, I2C>
@@ -35,7 +27,6 @@ where
     // game mode state
     active_mode_index: usize,
     last_display: DisplayState,
-    last_over: bool,
     buzzer_enabled: bool,
     modes: &'a mut [&'a mut (dyn GameModeHandler + 'a)],
 
@@ -77,15 +68,10 @@ where
             board_leds,
             active_mode_index: 0,
             last_display: DisplayState::None,
-            last_over: true,
             modes,
             buzzer_enabled: true,
             state,
         }
-    }
-
-    fn mode(&self) -> &dyn GameModeHandler {
-        self.modes[self.active_mode_index]
     }
 
     pub fn restart(&mut self) {

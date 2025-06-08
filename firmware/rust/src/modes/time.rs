@@ -1,4 +1,3 @@
-use embedded_hal::i2c::I2c;
 use heapless::Vec;
 use random_trait::Random;
 
@@ -8,9 +7,7 @@ use crate::{
     input::{InputDirection, InputEvent},
     location::NUM_PLATFORMS,
     modes::GameModeHandler,
-    platform::{self, Platform},
     random::Rand,
-    train::DEFAULT_SPEED,
 };
 
 pub struct CargoTimer {
@@ -127,7 +124,7 @@ impl GameModeHandler for TimeMode {
                             if train.load_cargo(platform_cargo) {
                                 platform.clear_cargo();
                                 self.remove_platform_timer(platform_index as u8);
-                                cargo_to_place.push(Cargo::Want(pattern));
+                                cargo_to_place.push(Cargo::Want(pattern)).ok();
                             }
                         }
                         // drop off cargo if train has what platform wants

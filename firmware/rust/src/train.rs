@@ -2,8 +2,6 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
-use heapless::Vec;
-use is31fl3731::gamma;
 use random_trait::Random;
 
 use crate::{
@@ -153,7 +151,7 @@ impl Train {
 
         // Determine if the front of the train is on a switched track
         let front_loc = self.front();
-        let mut is_switched = switches.iter().any(|switch| {
+        let is_switched = switches.iter().any(|switch| {
             front_loc == switch.location() && switch.is_switched(self.direction)
         });
 

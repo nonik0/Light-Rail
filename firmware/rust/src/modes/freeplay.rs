@@ -3,7 +3,7 @@ use random_trait::Random;
 
 use crate::{
     common::*,
-    game::{DisplayState, GameState, MAX_TRAINS, NOMINAL_TRAIN_SIZE},
+    game_state::*,
     input::{InputDirection, InputEvent},
     modes::GameModeHandler,
     random::Rand,

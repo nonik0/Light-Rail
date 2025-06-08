@@ -3,7 +3,7 @@ use random_trait::Random;
 
 use crate::{
     common::*,
-    game::{DisplayState, GameState, MAX_CARS},
+    game_state::*,
     input::InputEvent,
     modes::GameModeHandler,
     random::Rand,

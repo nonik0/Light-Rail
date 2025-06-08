@@ -13,6 +13,7 @@ bench = false
 [features]
 atmega32u4 = ["atmega-hal/atmega32u4"]
 atmega328p = ["atmega-hal/atmega328p"]
+panic_to_digits = []
 
 [dependencies]
 avr-progmem = "0.4.0"

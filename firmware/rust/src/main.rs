@@ -6,12 +6,21 @@
 #![feature(type_alias_impl_trait)]
 #![allow(unused)]
 
+#[cfg(not(feature = "panic_to_digits"))]
+#[macro_export]
+macro_rules! panic_with_error {
+    ($error_code:expr) => {
+        // no-op dummy macro for builds without panic_to_digits
+    };
+}
+
 use atmega_hal::adc;
 use atmega_hal::port::{mode::Input, *};
 use core::cell::RefCell;
 use embedded_hal::delay::DelayNs;
 use embedded_hal_bus::i2c::{self, RefCellDevice};
-//use panic_halt as _;
+#[cfg(not(feature = "panic_to_digits"))]
+use panic_halt as _;
 use random::Rand;
 use random_trait::Random;
 
@@ -26,9 +35,11 @@ type I2c = atmega_hal::i2c::I2c<CoreClock>;
 
 mod common;
 mod game;
+mod game_state;
 mod input;
 mod location;
 mod modes;
+#[cfg(feature = "panic_to_digits")]
 mod panic;
 mod platform;
 mod random;
@@ -125,7 +136,7 @@ fn main() -> ! {
         .unwrap();
     board_digits.clear().unwrap();
 
-    let cars = [train::Car::default(); game::MAX_CARS];
+    let cars = [train::Car::default(); game_state::MAX_CARS];
     let mut modes: [&mut dyn modes::GameModeHandler; modes::NUM_MODES] = [
         &mut modes::MenuMode::default(),
         &mut modes::FreeplayMode::default(),

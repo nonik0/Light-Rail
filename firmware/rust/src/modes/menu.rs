@@ -3,11 +3,11 @@ use random_trait::Random;
 
 use crate::{
     common::*,
-    game::{DisplayState, GameState},
+    game_state::*,
     input::{InputDirection, InputEvent},
     location::Direction,
     modes::{GameModeHandler, SnakeMode},
-    panic, platform,
+    platform,
     random::Rand,
     switch,
     train::{Car, Train, DEFAULT_SPEED},

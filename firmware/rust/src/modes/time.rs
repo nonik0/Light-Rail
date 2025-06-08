@@ -4,7 +4,7 @@ use random_trait::Random;
 
 use crate::{
     common::*,
-    game::{DisplayState, GameState},
+    game_state::*,
     input::{InputDirection, InputEvent},
     location::NUM_PLATFORMS,
     modes::GameModeHandler,

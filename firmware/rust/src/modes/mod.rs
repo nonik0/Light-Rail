@@ -1,5 +1,5 @@
 use crate::{
-    game::{Game, GameState},
+    game_state::*,
     input::InputEvent,
     train::Train,
 };

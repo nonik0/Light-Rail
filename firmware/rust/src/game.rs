@@ -14,7 +14,7 @@ use crate::{
     train::{Car, Train},
 };
 
-pub struct Game<'a, I2C>
+pub struct Game<I2C>
 where
     I2C: I2c,
 {
@@ -25,16 +25,16 @@ where
     board_leds: IS31FL3731<I2C>,
 
     // game mode state
-    active_mode_index: usize,
+    mode_index: usize,
+    mode: GameMode,
     last_display: DisplayState,
     buzzer_enabled: bool,
-    modes: &'a mut [&'a mut (dyn GameModeHandler + 'a)],
 
     // state passed to game modes, changes to state entities are rendered into updates for digits and LEDs
     state: GameState,
 }
 
-impl<'a, I2C> Game<'a, I2C>
+impl<I2C> Game<I2C>
 where
     I2C: I2c,
 {
@@ -44,7 +44,6 @@ where
         board_input: BoardInput,
         board_leds: IS31FL3731<I2C>,
         cars: [Car; MAX_CARS],
-        modes: &'a mut [&'a mut dyn GameModeHandler],
     ) -> Self {
         let platforms = Platform::take();
         let switches = Switch::take();
@@ -66,18 +65,22 @@ where
             board_digits,
             board_input,
             board_leds,
-            active_mode_index: 0,
+            mode_index: 0,
+            mode: GameMode::default(),
             last_display: DisplayState::None,
-            modes,
             buzzer_enabled: true,
             state,
         }
     }
 
     pub fn restart(&mut self) {
-        // reset game state, on_restart should update state.display and entities will be updates by self.refresh_board_leds()
-        let mode = &mut self.modes[self.active_mode_index];
-        mode.on_restart(&mut self.state);
+        self.mode = match self.mode_index {
+            1 => GameMode::Freeplay(FreeplayMode::default()),
+            2 => GameMode::Snake(SnakeMode::default()),
+            3 => GameMode::Time(TimeMode::default()),
+            _ => GameMode::Menu(MenuMode::default()),
+        };
+        self.mode.on_restart(&mut self.state);
         self.state.redraw = true;
     }
 
@@ -118,7 +121,7 @@ where
                 // exit to menu mode
                 InputEvent::DirectionButtonHeld(InputDirection::Left) => {
                     self.state.target_mode_index = 0;
-                    self.active_mode_index = 0;
+                    self.mode_index = 0;
                     self.state.is_over = false;
                     self.restart();
                     //return;
@@ -126,13 +129,12 @@ where
                 _ => {}
             }
 
-            let mode = &mut self.modes[self.active_mode_index];
-            mode.on_input_event(event, &mut self.state);
+            self.mode.on_input_event(event, &mut self.state);
         }
 
         // change mode when current mode requests it (mostly from menu mode)
-        if self.state.target_mode_index != self.active_mode_index {
-            self.active_mode_index = self.state.target_mode_index;
+        if self.state.target_mode_index != self.mode_index {
+            self.mode_index = self.state.target_mode_index;
             self.restart();
         }
 
@@ -170,8 +172,7 @@ where
         };
 
         // update train, platform, and switch entities
-        let mode = &mut self.modes[self.active_mode_index];
-        mode.on_game_tick(&mut self.state);
+        self.mode.on_game_tick(&mut self.state);
 
         let mut event_indices = heapless::Vec::<usize, MAX_TRAINS>::new();
         for (train_index, train) in self.state.trains.iter_mut().enumerate() {
@@ -180,7 +181,7 @@ where
             }
         }
         for &train_index in event_indices.iter() {
-            mode.on_train_advance(train_index, &mut self.state);
+            self.mode.on_train_advance(train_index, &mut self.state);
         }
 
         for platform in self.state.platforms.iter_mut() {

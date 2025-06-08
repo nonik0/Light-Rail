@@ -10,7 +10,7 @@ use crate::{
     Rand,
 };
 
-pub const MAX_CARS: usize = 30; // need to adjust to avoid SRAM issues
+pub const MAX_CARS: usize = 70;
 pub const MAX_TRAINS: usize = 3;
 pub const NOMINAL_TRAIN_SIZE: usize = MAX_CARS / MAX_TRAINS;
 

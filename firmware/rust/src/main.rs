@@ -51,7 +51,7 @@ const NUM_BUTTONS: usize = 12;
 const NUM_DIGITS: u8 = 3;
 const DIGITS_I2C_ADDR: u8 = as1115::constants::DEFAULT_ADDRESS;
 const LEDS_I2C_ADDR: u8 = is31fl3731::DEFAULT_ADDRESS;
-const DIGITS_INTENSITY: u8 = 3;
+const DEFAULT_DIGITS_INTENSITY: u8 = 3;
 
 #[avr_device::entry]
 fn main() -> ! {
@@ -79,7 +79,7 @@ fn main() -> ! {
 
     let mut board_digits =
         as1115::AS1115::new(i2c::RefCellDevice::new(&i2c_ref_cell), DIGITS_I2C_ADDR);
-    board_digits.init(NUM_DIGITS, DIGITS_INTENSITY).unwrap();
+    board_digits.init(NUM_DIGITS, DEFAULT_DIGITS_INTENSITY).unwrap();
     board_digits.clear().unwrap();
 
     #[cfg(feature = "atmega32u4")]
@@ -135,19 +135,12 @@ fn main() -> ! {
     board_digits.clear().unwrap();
 
     let cars = [train::Car::default(); game_state::MAX_CARS];
-    let mut modes: [&mut dyn modes::GameModeHandler; modes::NUM_MODES] = [
-        &mut modes::MenuMode::default(),
-        &mut modes::FreeplayMode::default(),
-        &mut modes::SnakeMode::default(),
-        &mut modes::TimeMode::default(),
-    ];
     let mut game = game::Game::new(
         board_buzzer,
         board_digits,
         board_input,
         board_leds,
         cars,
-        &mut modes,
     );
     game.restart();
 

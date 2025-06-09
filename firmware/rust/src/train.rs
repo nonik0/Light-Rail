@@ -1,19 +1,12 @@
-// TEMP: quiet unused warnings
-#![allow(dead_code)]
-#![allow(unused_variables)]
-
 use random_trait::Random;
 
 use crate::{
-    common::*,
+    cargo::*,
     location::{Direction, Location},
     random::Rand,
     switch::Switch,
 };
 
-// TODO: refactor train for more efficient SRAM storage.
-// train can take a slice of cars, and the game can manage a single array of cars
-// and then pass a slice to the train as needed when initialized or reinitialized
 pub const DEFAULT_SPEED: u8 = 10;
 const MIN_SPEED: u8 = 0;
 const MAX_SPEED: u8 = 100;
@@ -241,10 +234,10 @@ impl Train {
         self.cars_mut().first_mut().unwrap()
     }
 
-    /// Returns mutable reference to the last car of the train (caboose)
-    fn caboose_mut(&mut self) -> &mut Car {
-        self.cars_mut().last_mut().unwrap()
-    }
+    // /// Returns mutable reference to the last car of the train (caboose)
+    // fn caboose_mut(&mut self) -> &mut Car {
+    //     self.cars_mut().last_mut().unwrap()
+    // }
 
     /// Returns the vector of cars in the train
     fn cars_mut(&self) -> &mut [Car] {
@@ -259,9 +252,4 @@ impl core::ops::Index<usize> for Train {
     fn index(&self, index: usize) -> &Self::Output {
         &self.cars()[index]
     }
-}
-
-pub struct TrainUpdate {
-    pub location: Location,
-    pub cargo: Cargo,
 }

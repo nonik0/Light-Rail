@@ -1,7 +1,7 @@
 use random_trait::Random;
 
 use crate::{
-    common::*,
+    cargo::*,
     game_state::*,
     input::{InputDirection, InputEvent},
     location::Direction,
@@ -23,7 +23,7 @@ impl MenuMode {
         match self.index {
             1 => *b"ply", // Play
             2 => *b"snk", // Snake
-            3 => *b"tme", // Time
+            3 => *b"tme", // Time (pick up and deliver)
             _ => *b"wat",
         }
     }

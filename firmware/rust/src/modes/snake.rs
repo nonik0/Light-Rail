@@ -1,6 +1,6 @@
 use random_trait::Random;
 
-use crate::{common::*, game_state::*, input::InputEvent, modes::GameModeHandler, random::Rand};
+use crate::{cargo::*, game_state::*, input::InputEvent, modes::GameModeHandler, random::Rand};
 
 pub struct SnakeMode {
     score: u16,

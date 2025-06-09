@@ -1,7 +1,7 @@
 use random_trait::Random;
 
 use crate::{
-    common::*,
+    cargo::*,
     location::{Direction, Location, NUM_SWITCHES},
     random::Rand,
     train::Train,

@@ -31,7 +31,7 @@ type CoreClock = atmega_hal::clock::MHz16;
 type Delay = atmega_hal::delay::Delay<CoreClock>;
 type I2c = atmega_hal::i2c::I2c<CoreClock>;
 
-mod common;
+mod cargo;
 mod game;
 mod game_state;
 mod input;

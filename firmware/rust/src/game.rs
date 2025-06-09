@@ -111,7 +111,7 @@ where
                         self.board_buzzer.tone(3000, 10);
                     }
                 }
-                // exit to menu mode
+                // enable/disable tones on buttons
                 InputEvent::DirectionButtonHeld(InputDirection::Up) => {
                     self.buzzer_enabled = true;
                 }

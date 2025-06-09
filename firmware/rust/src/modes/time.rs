@@ -2,7 +2,7 @@ use heapless::Vec;
 use random_trait::Random;
 
 use crate::{
-    common::*,
+    cargo::*,
     game_state::*,
     input::{InputDirection, InputEvent},
     location::NUM_PLATFORMS,

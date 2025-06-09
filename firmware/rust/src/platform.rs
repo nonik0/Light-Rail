@@ -1,12 +1,10 @@
 use random_trait::Random;
 
 use crate::{
-    common::*,
+    cargo::*,
     location::{Direction, Location, NUM_PLATFORMS},
     random::Rand,
 };
-
-// TODO: update so it only tracks what updates it has sent based on its state that is controlled elsewhere
 
 pub struct Platform {
     location: Location,

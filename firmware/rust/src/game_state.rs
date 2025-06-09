@@ -2,7 +2,7 @@ use heapless::Vec;
 use random_trait::Random;
 
 use crate::{
-    common::*,
+    cargo::*,
     location::{NUM_PLATFORMS, NUM_SWITCHES},
     platform::{Platform},
     switch::{Switch},
@@ -19,10 +19,8 @@ pub enum DisplayState {
     None,
     Score(u16),
     Text([u8; crate::NUM_DIGITS as usize]),
-    //ScrollingText
 }
 
-// TOOD: rename to GameState?
 pub struct GameState {
     pub target_mode_index: usize, // in state so menu mode can manipulate it
     pub is_over: bool,            // stops entity updates
@@ -48,7 +46,6 @@ impl GameState {
                 .as_mut_ptr()
                 .add(self.trains.len() * NOMINAL_TRAIN_SIZE)
         };
-        //let cars_ptr = unsafe { self.cars.as_mut_ptr() };
         let loc = self.rand_platform().track_location();
         let mut train = Train::new(cars_ptr, max_cars, loc, cargo, speed);
         for _ in 1..num_cars {

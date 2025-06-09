@@ -1,7 +1,7 @@
 use random_trait::Random;
 
 use crate::{
-    common::*,
+    cargo::*,
     game_state::*,
     input::{InputDirection, InputEvent},
     modes::GameModeHandler,
@@ -33,7 +33,7 @@ impl FreeplayMode {
             Setting::Trains => {
                 let num_trains = state.trains.len() as u8;
                 let mut text = [b' '; NUM_DIGITS as usize];
-                text[0] = b'T';
+                text[0] = b't';
                 text[1] = b'0' + num_trains;
                 DisplayState::Text(text)
             }
@@ -48,7 +48,7 @@ impl FreeplayMode {
             Setting::TrainSpeed => {
                 let train_speed = state.trains[self.cur_train_index as usize].speed();
                 let mut text = [b' '; NUM_DIGITS as usize];
-                text[0] = b'S';
+                text[0] = b'U'; // lousy 7-segment V
                 text[1] = b'1' + self.cur_train_index;
                 text[2] = b'0' + (train_speed / Self::SPEED_INC);
                 DisplayState::Text(text)

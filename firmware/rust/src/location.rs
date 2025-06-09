@@ -1,6 +1,6 @@
 /// Represents a location on the board, either a track or platform.
 /// All data here is const/static and evaluated as much as possible at compile time.
-/// Game state is all held within the Game struct.
+/// Game state is all held within the GameState struct.
 use avr_progmem::progmem;
 
 /// Direction of travel for a train from LED/node location.

@@ -14,7 +14,7 @@ pub const MAX_CARS: usize = 60;
 pub const MAX_TRAINS: usize = 3;
 pub const NOMINAL_TRAIN_SIZE: usize = MAX_CARS / MAX_TRAINS;
 const DIGITS_MAX_BRIGHTNESS: u8 = 9; //as1115::constants::MAX_INTENSITY;
-const LED_BRIGHTNESS_LEVELS: u8 = 10; // 10 levels of brightness between 0 and 255
+const LED_BRIGHTNESS_LEVELS: u8 = 6; // 6 levels of brightness between 0 and 255
 
 #[derive(Clone, Copy, PartialEq)]
 pub enum DisplayState {
@@ -23,10 +23,9 @@ pub enum DisplayState {
     Text([u8; NUM_DIGITS as usize]),
 }
 
-const RED_BRIGHTNESS_LEVELS: [u8; LED_BRIGHTNESS_LEVELS as usize] =
-    [0, 14, 28, 42, 56, 71, 85, 99, 113, 127];
-const YEL_BRIGHTNESS_LEVELS: [u8; LED_BRIGHTNESS_LEVELS as usize] =
-    [0, 28, 57, 85, 114, 142, 171, 199, 228, 255];
+
+const RED_BRIGHTNESS_LEVELS: [u8; LED_BRIGHTNESS_LEVELS as usize] = [0, 28, 37, 60, 90, 127];
+const YEL_BRIGHTNESS_LEVELS: [u8; LED_BRIGHTNESS_LEVELS as usize] = [0, 50, 100, 150, 200, 255];
 
 pub struct GameSettings {
     eeprom: Eeprom,
@@ -34,8 +33,8 @@ pub struct GameSettings {
     car_brightness_level: u8,
     platform_brightness_level: u8,
     switch_brightness_level: u8,
-    // game speed?
-    // switch animation style?
+    // game_speed: u8, // TODO: add game speed setting
+    // 
 }
 
 impl GameSettings {
@@ -47,16 +46,16 @@ impl GameSettings {
 
         let mut car_brightness_level = eeprom.read_byte(1);
         if car_brightness_level >= LED_BRIGHTNESS_LEVELS {
-            car_brightness_level = 9;
+            car_brightness_level = LED_BRIGHTNESS_LEVELS - 1; // max brightness
         }
 
         let mut platform_brightness_level = eeprom.read_byte(2);
         if platform_brightness_level >= LED_BRIGHTNESS_LEVELS {
-            platform_brightness_level = 3;
+            platform_brightness_level = LED_BRIGHTNESS_LEVELS >> 1; // half brightness
         }
         let mut switch_brightness_level = eeprom.read_byte(3);
         if switch_brightness_level >= LED_BRIGHTNESS_LEVELS {
-            switch_brightness_level = 3;
+            switch_brightness_level = (LED_BRIGHTNESS_LEVELS >> 1) - 1; // one level below half brightness
         }
 
         Self {

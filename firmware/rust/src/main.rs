@@ -34,6 +34,7 @@ type I2c = atmega_hal::i2c::I2c<CoreClock>;
 
 mod cargo;
 mod game;
+mod game_settings;
 mod game_state;
 mod input;
 mod location;
@@ -79,7 +80,7 @@ fn main() -> ! {
 
     // TODO: load from EEPROM
     let eeprom = Eeprom::new(dp.EEPROM);
-    let settings = game_state::GameSettings::new(eeprom);
+    let settings = game_settings::GameSettings::new(eeprom);
 
     let mut board_digits =
         as1115::AS1115::new(i2c::RefCellDevice::new(&i2c_ref_cell), DIGITS_I2C_ADDR);

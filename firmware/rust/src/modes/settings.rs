@@ -2,6 +2,7 @@ use random_trait::Random;
 
 use crate::{
     cargo::*,
+    game_settings::GameSettings,
     game_state::*,
     input::{InputDirection, InputEvent},
     modes::GameModeHandler,
@@ -15,6 +16,7 @@ enum Setting {
     TrainBrightness,
     PlatformBrightness,
     SwitchBrightness,
+    BuzzerEnabled,
 }
 
 pub struct SettingsMode {
@@ -52,6 +54,13 @@ impl SettingsMode {
                 text[2] = b'0' + settings.switch_brightness_level();
                 DisplayState::Text(text)
             }
+            Setting::BuzzerEnabled => {
+                let mut text = [b' '; NUM_DIGITS as usize];
+                text[0] = b'B';
+                text[1] = b'Z';
+                text[2] = if settings.is_buzzer_enabled() { b'1' } else { b'0' };
+                DisplayState::Text(text)
+            }
         }
     }
 
@@ -60,16 +69,18 @@ impl SettingsMode {
             Setting::DigitBrightness => Setting::TrainBrightness,
             Setting::TrainBrightness => Setting::PlatformBrightness,
             Setting::PlatformBrightness => Setting::SwitchBrightness,
-            Setting::SwitchBrightness => Setting::DigitBrightness,
+            Setting::SwitchBrightness => Setting::BuzzerEnabled,
+            Setting::BuzzerEnabled => Setting::DigitBrightness,
         };
     }
 
     fn prev_setting(&mut self) {
         self.cur_setting = match self.cur_setting {
-            Setting::DigitBrightness => Setting::SwitchBrightness,
+            Setting::DigitBrightness => Setting::BuzzerEnabled,
             Setting::TrainBrightness => Setting::DigitBrightness,
             Setting::PlatformBrightness => Setting::TrainBrightness,
             Setting::SwitchBrightness => Setting::PlatformBrightness,
+            Setting::BuzzerEnabled => Setting::SwitchBrightness,
         };
     }
 
@@ -87,6 +98,9 @@ impl SettingsMode {
             Setting::SwitchBrightness => {
                 settings.inc_switch_brightness_level();
             }
+            Setting::BuzzerEnabled => {
+                settings.toggle_buzzer();
+            }
         }
     }
 
@@ -103,6 +117,9 @@ impl SettingsMode {
             }
             Setting::SwitchBrightness => {
                 settings.dec_switch_brightness_level();
+            }
+            Setting::BuzzerEnabled => {
+                settings.toggle_buzzer();
             }
         }
     }

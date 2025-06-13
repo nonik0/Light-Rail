@@ -2,7 +2,7 @@ use random_trait::Random;
 
 use crate::{
     cargo::*,
-    game_state::GameSettings,
+    game_settings::GameSettings,
     location::{Direction, Location},
     random::Rand,
     switch::Switch,

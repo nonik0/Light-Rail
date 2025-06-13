@@ -4,6 +4,7 @@ use heapless::Vec;
 use is31fl3731::{gamma, IS31FL3731};
 
 use crate::{
+    game_settings::GameSettings,
     game_state::*,
     input::{BoardInput, InputDirection, InputEvent},
     location::Location,
@@ -28,7 +29,6 @@ where
     mode_index: usize,
     mode: GameMode,
     last_display: DisplayState,
-    buzzer_enabled: bool,
 
     // state passed to game modes, changes to state entities are rendered into updates for digits and LEDs
     state: GameState,
@@ -70,7 +70,6 @@ where
             mode_index: 0,
             mode: GameMode::default(),
             last_display: DisplayState::None,
-            buzzer_enabled: true,
             state,
         }
     }
@@ -87,7 +86,7 @@ where
             match event {
                 // toggle switches
                 InputEvent::SwitchButtonPressed(index) => {
-                    if self.buzzer_enabled {
+                    if self.state.settings.is_buzzer_enabled() {
                         self.board_buzzer.tone(3000, 15);
                     }
                     let index = index as usize;
@@ -98,26 +97,20 @@ where
                 // tones on button presses
                 InputEvent::DirectionButtonPressed(InputDirection::Up)
                 | InputEvent::DirectionButtonPressed(InputDirection::Right) => {
-                    if self.buzzer_enabled {
+                    if self.state.settings.is_buzzer_enabled() {
                         self.board_buzzer.tone(3500, 10);
                     }
                 }
                 InputEvent::DirectionButtonPressed(InputDirection::Down)
                 | InputEvent::DirectionButtonPressed(InputDirection::Left) => {
-                    if self.buzzer_enabled {
+                    if self.state.settings.is_buzzer_enabled() {
                         self.board_buzzer.tone(3000, 10);
                     }
                 }
-                // enable/disable tones on buttons
-                InputEvent::DirectionButtonHeld(InputDirection::Up) => {
-                    self.buzzer_enabled = true;
-                }
-                InputEvent::DirectionButtonHeld(InputDirection::Down) => {
-                    self.buzzer_enabled = false;
-                }
                 // exit to menu mode
-                InputEvent::DirectionButtonHeld(InputDirection::Left) => {
-                    if self.buzzer_enabled {
+                InputEvent::DirectionButtonHeld(InputDirection::Up)
+                | InputEvent::DirectionButtonHeld(InputDirection::Down) => {
+                    if self.state.settings.is_buzzer_enabled() {
                         self.board_buzzer.tone(3000, 10);
                     }
                     // save settings when exiting from settings mode

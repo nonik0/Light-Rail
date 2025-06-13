@@ -1,10 +1,3 @@
-// Cargo/LedPattern manage the abstractions for indicating state on LEDs
-
-pub const RED_LED_MIN_B: u8 = 30;
-pub const RED_LED_MAX_B: u8 = 80;
-pub const YELLOW_LED_MIN_B: u8 = 80;
-pub const YELLOW_LED_MAX_B: u8 = 255;
-
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Cargo {
     Empty,
@@ -19,23 +12,18 @@ impl Default for Cargo {
 }
 
 impl Cargo {
-    // pub fn is_empty(&self) -> bool {
-    //     matches!(self, Cargo::Empty)
-    // }
-
-    pub fn platform_brightness(&self, phase: u8) -> u8 {
+    pub fn platform_brightness(&self, phase: u8, max: u8) -> u8 {
         match self {
-            Cargo::Empty => 0,
-            Cargo::Have(pattern) => pattern.get_pwm(phase, RED_LED_MIN_B, RED_LED_MAX_B),
-            Cargo::Want(pattern) => pattern.get_pwm(phase, RED_LED_MAX_B / 2, RED_LED_MIN_B / 2),
+            Cargo::Have(pattern) => pattern.get_pwm(phase, max >> 1, max),
+            Cargo::Want(pattern) => pattern.get_pwm(phase, max >> 1, max >> 2),
+            _ => 0,
         }
     }
 
-    pub fn car_brightness(&self, phase: u8) -> u8 {
+    pub fn car_brightness(&self, phase: u8, max: u8) -> u8 {
         match self {
-            Cargo::Empty => YELLOW_LED_MAX_B - 92, // slightly dimmer
-            Cargo::Have(pattern) => pattern.get_pwm(phase, YELLOW_LED_MIN_B, YELLOW_LED_MAX_B),
-            _ => YELLOW_LED_MIN_B,
+            Cargo::Have(pattern) => pattern.get_pwm(phase, max >> 1, max),
+            _ => max >> 1,
         }
     }
 }

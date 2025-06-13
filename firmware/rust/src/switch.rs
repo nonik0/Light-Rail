@@ -2,6 +2,7 @@ use random_trait::Random;
 
 use crate::{
     cargo::*,
+    game_state::GameSettings,
     location::{Direction, Location, NUM_SWITCHES},
     random::Rand,
     train::Train,
@@ -19,20 +20,17 @@ pub struct Switch {
     //anode_last_switched: Option<bool>, // entity update tracking
     anode_next_location: Location,
     anode_fork_location: Option<Location>, // None means no switch in that direction
-    anode_last_brightness: u8, // last brightness for active location
+    anode_last_brightness: u8,             // last brightness for active location
 
     // false directs to next_location, true directs to fork_location, none means no switch in that direction
     cathode_switched: Option<bool>,
     //cathode_last_switched: Option<bool>, // entity update tracking
     cathode_next_location: Location,
     cathode_fork_location: Option<Location>, // None means no switch in that direction
-    cathode_last_brightness: u8, // last brightness for active location
+    cathode_last_brightness: u8,             // last brightness for active location
 }
 
 impl Switch {
-    const MIN_BRIGHTNESS: u8 = YELLOW_LED_MIN_B >> 1;
-    const MAX_BRIGHTNESS: u8 = YELLOW_LED_MIN_B;
-
     fn new(location: Location) -> Self {
         // set up switch in a direction
         fn setup_direction(
@@ -112,7 +110,13 @@ impl Switch {
         Location::switch_locs().map(|location| Switch::new(location))
     }
 
-    pub fn update<F>(&mut self, trains: &[Train], mut update_callback: F, force_update: bool) -> bool
+    pub fn update<F>(
+        &mut self,
+        settings: &GameSettings,
+        trains: &[Train],
+        mut update_callback: F,
+        force_update: bool,
+    ) -> bool
     where
         F: FnMut(Location, u8),
     {
@@ -150,8 +154,11 @@ impl Switch {
                     // Only update active_loc if no train is present
                     let active_occupied = trains.iter().any(|train| train.at_location(active_loc));
                     if !active_occupied {
-                        let brightness =
-                            LedPattern::Fade1.get_pwm(self.phase, Self::MIN_BRIGHTNESS, Self::MAX_BRIGHTNESS);
+                        let brightness = LedPattern::Fade1.get_pwm(
+                            self.phase,
+                            settings.switch_brightness() >> 1,
+                            settings.switch_brightness(),
+                        );
 
                         if force_update || brightness != *last_brightness {
                             *last_brightness = brightness;

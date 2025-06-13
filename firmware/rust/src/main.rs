@@ -51,7 +51,6 @@ const NUM_BUTTONS: usize = 12;
 const NUM_DIGITS: u8 = 3;
 const DIGITS_I2C_ADDR: u8 = as1115::constants::DEFAULT_ADDRESS;
 const LEDS_I2C_ADDR: u8 = is31fl3731::DEFAULT_ADDRESS;
-const DEFAULT_DIGITS_INTENSITY: u8 = 3;
 
 #[avr_device::entry]
 fn main() -> ! {
@@ -77,9 +76,12 @@ fn main() -> ! {
     #[cfg(feature = "atmega328p")]
     let board_buzzer = tone::TimerTone::new();
 
+    // TODO: load from EEPROM
+    let settings = game_state::GameSettings::new();
+
     let mut board_digits =
         as1115::AS1115::new(i2c::RefCellDevice::new(&i2c_ref_cell), DIGITS_I2C_ADDR);
-    board_digits.init(NUM_DIGITS, DEFAULT_DIGITS_INTENSITY).unwrap();
+    board_digits.init(NUM_DIGITS, settings.digit_brightness_level()).unwrap();
     board_digits.clear().unwrap();
 
     #[cfg(feature = "atmega32u4")]
@@ -141,6 +143,7 @@ fn main() -> ! {
         board_input,
         board_leds,
         cars,
+        settings,
     );
     game.restart();
 

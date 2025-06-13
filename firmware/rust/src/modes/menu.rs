@@ -5,7 +5,7 @@ use crate::{
     game_state::*,
     input::{InputDirection, InputEvent},
     location::Direction,
-    modes::{GameModeHandler},
+    modes::{GameMode, GameModeHandler},
     random::Rand,
     train::{DEFAULT_SPEED},
     NUM_DIGITS,
@@ -19,22 +19,13 @@ pub struct MenuMode {
 }
 
 impl MenuMode {
-    fn game_mode(&self) -> [u8; NUM_DIGITS as usize] {
-        match self.index {
-            1 => *b"ply", // Play
-            2 => *b"snk", // Snake
-            3 => *b"tme", // Time (pick up and deliver)
-            _ => *b"wat",
-        }
-    }
-
     fn next_game_mode(&mut self, inc: bool) -> [u8; NUM_DIGITS as usize] {
         let delta = if inc { 1 } else { NUM_MODES - 1 };
         self.index = (self.index + delta) % NUM_MODES;
         if self.index == 0 {
             self.index = if inc { 1 } else { NUM_MODES - 1 };
         }
-        self.game_mode()
+        GameMode::mode_name(self.index)
     }
 }
 
@@ -42,7 +33,7 @@ impl GameModeHandler for MenuMode {
     fn on_restart(&mut self, state: &mut GameState) {
         state.is_over = false;
         state.display = if self.index != 0 {
-            DisplayState::Text(self.game_mode())
+            DisplayState::Text(GameMode::mode_name(self.index))
         } else {
             DisplayState::None
         };

@@ -2,6 +2,7 @@ use random_trait::Random;
 
 use crate::{
     cargo::*,
+    game_state::GameSettings,
     location::{Direction, Location},
     random::Rand,
     switch::Switch,
@@ -110,7 +111,7 @@ impl Train {
     }
 
     /// Game tick for train, returns location updates as cars move along track
-    pub fn advance<F>(&mut self, switches: &[Switch], mut update_callback: F, force_update: bool) -> bool
+    pub fn advance<F>(&mut self, settings: &GameSettings, switches: &[Switch], mut update_callback: F, force_update: bool) -> bool
     where
         F: FnMut(Location, u8),
     {
@@ -120,7 +121,7 @@ impl Train {
         // If not enough speed accumulated, just update brightness and return
         if self.speed_counter < MAX_SPEED {
             for car in self.cars_mut().iter_mut() {
-                let brightness = car.cargo.car_brightness(self.phase);
+                let brightness = car.cargo.car_brightness(self.phase, settings.car_brightness());
                 if force_update || car.last_brightness != brightness {
                     car.last_brightness = brightness;
                     update_callback(car.loc, brightness);
@@ -138,7 +139,7 @@ impl Train {
         let cars = self.cars_mut();
         for i in (1..cars.len()).rev() {
             cars[i].loc = cars[i - 1].loc;
-            let brightness = cars[i].cargo.car_brightness(self.phase);
+            let brightness = cars[i].cargo.car_brightness(self.phase, settings.car_brightness());
             update_callback(cars[i].loc, brightness);
         }
 
@@ -152,7 +153,7 @@ impl Train {
         let (next_loc, new_dir) = self.front().next(self.direction, is_switched);
         self.direction = new_dir;
         self.engine_mut().loc = next_loc;
-        let brightness = self.engine().cargo.car_brightness(self.phase);
+        let brightness = self.engine().cargo.car_brightness(self.phase, settings.car_brightness());
         update_callback(self.front(), brightness);
         
         true

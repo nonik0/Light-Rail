@@ -52,7 +52,7 @@ impl TimeMode {
             self.timers.remove(index);
         }
         else {
-            crate::panic_with_error!(403);
+            crate::panic_with_error!(400);
         }
     }
 }

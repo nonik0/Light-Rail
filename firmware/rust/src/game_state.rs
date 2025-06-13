@@ -4,21 +4,130 @@ use random_trait::Random;
 use crate::{
     cargo::*,
     location::{NUM_PLATFORMS, NUM_SWITCHES},
-    platform::{Platform},
-    switch::{Switch},
+    platform::Platform,
+    switch::Switch,
     train::{Car, Train, DEFAULT_SPEED},
     Rand,
+    NUM_DIGITS,
 };
 
-pub const MAX_CARS: usize = 70;
+pub const MAX_CARS: usize = 60;
 pub const MAX_TRAINS: usize = 3;
 pub const NOMINAL_TRAIN_SIZE: usize = MAX_CARS / MAX_TRAINS;
+const DIGITS_MAX_BRIGHTNESS: u8 = 9; //as1115::constants::MAX_INTENSITY;
+const LED_BRIGHTNESS_LEVELS: u8 = 10; // 10 levels of brightness between 0 and 255
 
 #[derive(Clone, Copy, PartialEq)]
 pub enum DisplayState {
     None,
     Score(u16),
-    Text([u8; crate::NUM_DIGITS as usize]),
+    Text([u8; NUM_DIGITS as usize]),
+}
+
+const RED_BRIGHTNESS_LEVELS: [u8; LED_BRIGHTNESS_LEVELS as usize] = [0, 14, 28, 42, 56, 71, 85, 99, 113, 127];
+const YEL_BRIGHTNESS_LEVELS: [u8; LED_BRIGHTNESS_LEVELS as usize] = [0, 28, 57, 85, 114, 142, 171, 199, 228, 255];
+
+pub struct GameSettings {
+    digit_brightness_level: u8,
+    car_brightness_level: u8,
+    platform_brightness_level: u8,
+    switch_brightness_level: u8,
+    // game speed?
+    // switch animation style?
+}
+
+impl GameSettings {
+    pub fn new() -> Self {
+        Self {
+            digit_brightness_level: 1,
+            car_brightness_level: 9,
+            platform_brightness_level: 3,
+            switch_brightness_level: 3,
+        }
+    }
+
+    #[inline(always)]
+    pub fn digit_brightness_level(&self) -> u8 {
+        self.digit_brightness_level
+    }
+
+    #[inline(always)]
+    pub fn car_brightness(&self) -> u8 {
+        YEL_BRIGHTNESS_LEVELS[self.car_brightness_level as usize]
+    }
+
+    #[inline(always)]
+    pub fn car_brightness_level(&self) -> u8 {
+        self.car_brightness_level
+    }
+
+    #[inline(always)]
+    pub fn platform_brightness(&self) -> u8 {
+        RED_BRIGHTNESS_LEVELS[self.platform_brightness_level as usize]
+    }
+
+    #[inline(always)]
+    pub fn platform_brightness_level(&self) -> u8 {
+        self.platform_brightness_level
+    }
+
+    #[inline(always)]
+    pub fn switch_brightness(&self) -> u8 {
+        YEL_BRIGHTNESS_LEVELS[self.switch_brightness_level as usize]
+    }
+
+    #[inline(always)]
+    pub fn switch_brightness_level(&self) -> u8 {
+        self.switch_brightness_level
+    }
+
+    pub fn inc_digit_brightness_level(&mut self) {
+        if self.digit_brightness_level < DIGITS_MAX_BRIGHTNESS {
+            self.digit_brightness_level += 1;
+        }
+    }
+
+    pub fn dec_digit_brightness_level(&mut self) {
+        if self.digit_brightness_level > 0 {
+            self.digit_brightness_level -= 1;
+        }
+    }
+
+    pub fn inc_car_brightness_level(&mut self) {
+        if self.car_brightness_level < LED_BRIGHTNESS_LEVELS - 1 {
+            self.car_brightness_level += 1;
+        }
+    }
+
+    pub fn dec_car_brightness_level(&mut self) {
+        if self.car_brightness_level > 0 {
+            self.car_brightness_level -= 1;
+        }
+    }
+
+    pub fn inc_platform_brightness_level(&mut self) {
+        if self.platform_brightness_level < LED_BRIGHTNESS_LEVELS - 1 {
+            self.platform_brightness_level += 1;
+        }
+    }
+
+    pub fn dec_platform_brightness_level(&mut self) {
+        if self.platform_brightness_level > 0 {
+            self.platform_brightness_level -= 1;
+        }
+    }
+
+    pub fn inc_switch_brightness_level(&mut self) {
+        if self.switch_brightness_level < LED_BRIGHTNESS_LEVELS - 1 {
+            self.switch_brightness_level += 1;
+        }
+    }
+
+    pub fn dec_switch_brightness_level(&mut self) {
+        if self.switch_brightness_level > 0 {
+            self.switch_brightness_level -= 1;
+        }
+    }
 }
 
 pub struct GameState {
@@ -26,6 +135,7 @@ pub struct GameState {
     pub is_over: bool,            // stops entity updates
     pub redraw: bool,             // flag to redraw board LEDs
     pub display: DisplayState,
+    pub settings: GameSettings,
 
     // game entities
     pub cars: [Car; MAX_CARS],

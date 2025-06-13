@@ -1,21 +1,22 @@
-use enum_dispatch::enum_dispatch;
 use crate::{game_state::*, input::InputEvent};
+use enum_dispatch::enum_dispatch;
 
 pub mod freeplay;
 pub mod menu;
+pub mod settings;
 pub mod snake;
 pub mod time;
 
 pub use freeplay::*;
 pub use menu::*;
+pub use settings::*;
 pub use snake::*;
 pub use time::*;
 
-pub const NUM_MODES: usize = 4;
+pub const NUM_MODES: usize = 5;
 
 #[enum_dispatch]
-pub trait GameModeHandler
-{
+pub trait GameModeHandler {
     // on restart
     fn on_restart(&mut self, state: &mut GameState);
 
@@ -33,12 +34,35 @@ pub trait GameModeHandler
 pub enum GameMode {
     Menu(MenuMode),
     Freeplay(FreeplayMode),
-    Time(TimeMode),
     Snake(SnakeMode),
+    Time(TimeMode),
+    SettingsMode(SettingsMode),
 }
 
 impl Default for GameMode {
     fn default() -> Self {
         GameMode::Menu(MenuMode::default())
+    }
+}
+
+impl GameMode {
+    pub fn from_index(mode_index: usize) -> Self {
+        match mode_index {
+            1 => GameMode::Freeplay(FreeplayMode::default()),
+            2 => GameMode::Snake(SnakeMode::default()),
+            3 => GameMode::Time(TimeMode::default()),
+            4 => GameMode::SettingsMode(SettingsMode::default()),
+            _ => GameMode::Menu(MenuMode::default()),
+        }
+    }
+
+    pub fn mode_name(mode_index: usize) -> [u8; 3] {
+        match mode_index {
+            1 => *b"ply", // Play
+            2 => *b"snk", // Snake
+            3 => *b"tme", // Time (pick up and deliver)
+            4 => *b"set", // Settings
+            _ => *b"err",
+        }
     }
 }

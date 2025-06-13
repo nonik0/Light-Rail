@@ -6,10 +6,10 @@ use is31fl3731::{gamma, IS31FL3731};
 use crate::{
     game_state::*,
     input::{BoardInput, InputDirection, InputEvent},
-    location::{Location},
+    location::Location,
     modes::*,
-    platform::{Platform},
-    switch::{Switch},
+    platform::Platform,
+    switch::Switch,
     tone::TimerTone,
     train::{Car, Train},
 };
@@ -44,6 +44,7 @@ where
         board_input: BoardInput,
         board_leds: IS31FL3731<I2C>,
         cars: [Car; MAX_CARS],
+        settings: GameSettings,
     ) -> Self {
         let platforms = Platform::take();
         let switches = Switch::take();
@@ -54,6 +55,7 @@ where
             is_over: false,
             redraw: false,
             display: DisplayState::None,
+            settings,
             cars,
             trains,
             platforms,
@@ -74,12 +76,7 @@ where
     }
 
     pub fn restart(&mut self) {
-        self.mode = match self.mode_index {
-            1 => GameMode::Freeplay(FreeplayMode::default()),
-            2 => GameMode::Snake(SnakeMode::default()),
-            3 => GameMode::Time(TimeMode::default()),
-            _ => GameMode::Menu(MenuMode::default()),
-        };
+        self.mode = GameMode::from_index(self.mode_index);
         self.mode.on_restart(&mut self.state);
         self.state.redraw = true;
     }
@@ -120,6 +117,9 @@ where
                 }
                 // exit to menu mode
                 InputEvent::DirectionButtonHeld(InputDirection::Left) => {
+                    if self.buzzer_enabled {
+                        self.board_buzzer.tone(3000, 10);
+                    }
                     self.state.target_mode_index = 0;
                     self.mode_index = 0;
                     self.state.is_over = false;
@@ -143,6 +143,12 @@ where
         // update board digits/score display
         if self.last_display != self.state.display {
             self.last_display = self.state.display;
+
+            // TODO: flag or something to avoid calling unnecessarily
+            self.board_digits
+                .set_intensity(self.state.settings.digit_brightness_level())
+                .ok();
+
             match self.state.display {
                 DisplayState::None => {
                     self.board_digits.clear().ok();
@@ -176,7 +182,7 @@ where
         // update train, platform, and switch entities
         let mut event_indices = heapless::Vec::<usize, MAX_TRAINS>::new();
         for (train_index, train) in self.state.trains.iter_mut().enumerate() {
-            if train.advance(&self.state.switches, &mut do_led_update, self.state.redraw) {
+            if train.advance(&self.state.settings, &self.state.switches, &mut do_led_update, self.state.redraw) {
                 event_indices.push(train_index).ok();
             }
         }
@@ -185,10 +191,10 @@ where
         }
 
         for platform in self.state.platforms.iter_mut() {
-            platform.update(&mut do_led_update, self.state.redraw);
+            platform.update(&self.state.settings, &mut do_led_update, self.state.redraw);
         }
         for switch in self.state.switches.iter_mut() {
-            switch.update(&self.state.trains, &mut do_led_update, self.state.redraw);
+            switch.update(&self.state.settings, &self.state.trains, &mut do_led_update, self.state.redraw);
         }
 
         self.state.redraw = false;

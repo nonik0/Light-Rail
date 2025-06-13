@@ -2,6 +2,7 @@ use random_trait::Random;
 
 use crate::{
     cargo::*,
+    game_state::GameSettings,
     location::{Direction, Location, NUM_PLATFORMS},
     random::Rand,
 };
@@ -43,13 +44,13 @@ impl Platform {
         platforms
     }
 
-    pub fn update<F>(&mut self, mut update_callback: F, force_update: bool) -> bool
+    pub fn update<F>(&mut self, settings: &GameSettings, mut update_callback: F, force_update: bool) -> bool
     where
         F: FnMut(Location, u8),
     {
         self.phase = self.phase.wrapping_add(self.phase_inc);
 
-        let brightness = self.cargo.platform_brightness(self.phase);
+        let brightness = self.cargo.platform_brightness(self.phase, settings.platform_brightness());
         if force_update || brightness != self.last_brightness {
             self.last_brightness = brightness;
             update_callback(self.location, brightness);

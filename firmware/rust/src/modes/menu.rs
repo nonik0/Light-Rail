@@ -7,7 +7,7 @@ use crate::{
     location::Direction,
     modes::{GameMode, GameModeHandler},
     random::Rand,
-    train::{DEFAULT_SPEED},
+    train::DEFAULT_SPEED,
     NUM_DIGITS,
 };
 
@@ -60,10 +60,10 @@ impl GameModeHandler for MenuMode {
         match event {
             InputEvent::DirectionButtonPressed(direction) => match direction {
                 InputDirection::Up => {
-                    state.display = DisplayState::Text(self.next_game_mode(true));
+                    state.display = DisplayState::Text(self.next_game_mode(false));
                 }
                 InputDirection::Down => {
-                    state.display = DisplayState::Text(self.next_game_mode(false));
+                    state.display = DisplayState::Text(self.next_game_mode(true));
                 }
                 InputDirection::Right => {
                     state.target_mode_index = self.index; // no-op if index is 0, so user needs to press up/down to select a game mode

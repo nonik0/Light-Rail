@@ -120,6 +120,10 @@ where
                     if self.buzzer_enabled {
                         self.board_buzzer.tone(3000, 10);
                     }
+                    // save settings when exiting from settings mode
+                    if matches!(self.mode, GameMode::SettingsMode(_)) {
+                        self.state.settings.save();
+                    }
                     self.state.target_mode_index = 0;
                     self.mode_index = 0;
                     self.state.is_over = false;
@@ -182,7 +186,12 @@ where
         // update train, platform, and switch entities
         let mut event_indices = heapless::Vec::<usize, MAX_TRAINS>::new();
         for (train_index, train) in self.state.trains.iter_mut().enumerate() {
-            if train.advance(&self.state.settings, &self.state.switches, &mut do_led_update, self.state.redraw) {
+            if train.advance(
+                &self.state.settings,
+                &self.state.switches,
+                &mut do_led_update,
+                self.state.redraw,
+            ) {
                 event_indices.push(train_index).ok();
             }
         }
@@ -194,7 +203,12 @@ where
             platform.update(&self.state.settings, &mut do_led_update, self.state.redraw);
         }
         for switch in self.state.switches.iter_mut() {
-            switch.update(&self.state.settings, &self.state.trains, &mut do_led_update, self.state.redraw);
+            switch.update(
+                &self.state.settings,
+                &self.state.trains,
+                &mut do_led_update,
+                self.state.redraw,
+            );
         }
 
         self.state.redraw = false;

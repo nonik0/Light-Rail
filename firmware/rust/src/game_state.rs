@@ -7,8 +7,7 @@ use crate::{
     platform::Platform,
     switch::Switch,
     train::{Car, Train, DEFAULT_SPEED},
-    Rand,
-    NUM_DIGITS,
+    Eeprom, Rand, NUM_DIGITS,
 };
 
 pub const MAX_CARS: usize = 60;
@@ -24,10 +23,13 @@ pub enum DisplayState {
     Text([u8; NUM_DIGITS as usize]),
 }
 
-const RED_BRIGHTNESS_LEVELS: [u8; LED_BRIGHTNESS_LEVELS as usize] = [0, 14, 28, 42, 56, 71, 85, 99, 113, 127];
-const YEL_BRIGHTNESS_LEVELS: [u8; LED_BRIGHTNESS_LEVELS as usize] = [0, 28, 57, 85, 114, 142, 171, 199, 228, 255];
+const RED_BRIGHTNESS_LEVELS: [u8; LED_BRIGHTNESS_LEVELS as usize] =
+    [0, 14, 28, 42, 56, 71, 85, 99, 113, 127];
+const YEL_BRIGHTNESS_LEVELS: [u8; LED_BRIGHTNESS_LEVELS as usize] =
+    [0, 28, 57, 85, 114, 142, 171, 199, 228, 255];
 
 pub struct GameSettings {
+    eeprom: Eeprom,
     digit_brightness_level: u8,
     car_brightness_level: u8,
     platform_brightness_level: u8,
@@ -37,13 +39,40 @@ pub struct GameSettings {
 }
 
 impl GameSettings {
-    pub fn new() -> Self {
-        Self {
-            digit_brightness_level: 1,
-            car_brightness_level: 9,
-            platform_brightness_level: 3,
-            switch_brightness_level: 3,
+    pub fn new(eeprom: Eeprom) -> Self {
+        let mut digit_brightness_level = eeprom.read_byte(0);
+        if digit_brightness_level > DIGITS_MAX_BRIGHTNESS {
+            digit_brightness_level = 1;
         }
+
+        let mut car_brightness_level = eeprom.read_byte(1);
+        if car_brightness_level >= LED_BRIGHTNESS_LEVELS {
+            car_brightness_level = 9;
+        }
+
+        let mut platform_brightness_level = eeprom.read_byte(2);
+        if platform_brightness_level >= LED_BRIGHTNESS_LEVELS {
+            platform_brightness_level = 3;
+        }
+        let mut switch_brightness_level = eeprom.read_byte(3);
+        if switch_brightness_level >= LED_BRIGHTNESS_LEVELS {
+            switch_brightness_level = 3;
+        }
+
+        Self {
+            eeprom,
+            digit_brightness_level,
+            car_brightness_level,
+            platform_brightness_level,
+            switch_brightness_level,
+        }
+    }
+
+    pub fn save(&mut self) {
+        self.eeprom.write_byte(0, self.digit_brightness_level);
+        self.eeprom.write_byte(1, self.car_brightness_level);
+        self.eeprom.write_byte(2, self.platform_brightness_level);
+        self.eeprom.write_byte(3, self.switch_brightness_level);
     }
 
     #[inline(always)]

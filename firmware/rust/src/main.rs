@@ -29,6 +29,7 @@ type CoreClock = atmega_hal::clock::MHz8;
 #[cfg(feature = "atmega328p")]
 type CoreClock = atmega_hal::clock::MHz16;
 type Delay = atmega_hal::delay::Delay<CoreClock>;
+type Eeprom = atmega_hal::eeprom::Eeprom;
 type I2c = atmega_hal::i2c::I2c<CoreClock>;
 
 mod cargo;
@@ -77,7 +78,8 @@ fn main() -> ! {
     let board_buzzer = tone::TimerTone::new();
 
     // TODO: load from EEPROM
-    let settings = game_state::GameSettings::new();
+    let eeprom = Eeprom::new(dp.EEPROM);
+    let settings = game_state::GameSettings::new(eeprom);
 
     let mut board_digits =
         as1115::AS1115::new(i2c::RefCellDevice::new(&i2c_ref_cell), DIGITS_I2C_ADDR);

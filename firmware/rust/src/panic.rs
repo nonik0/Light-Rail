@@ -8,7 +8,7 @@ use crate::{Delay, I2c, NUM_DIGITS, DIGITS_I2C_ADDR, DIGITS_INTENSITY};
 macro_rules! panic_with_error {
     ($error_code:expr) => {{
         crate::panic::set_error_code($error_code);
-        panic!();
+        panic!()
     }};
 }
 

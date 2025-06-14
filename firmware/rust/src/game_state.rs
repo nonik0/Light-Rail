@@ -11,7 +11,7 @@ use crate::{
     Rand, NUM_DIGITS,
 };
 
-pub const MAX_CARS: usize = 60;
+pub const MAX_CARS: usize = 50;
 pub const MAX_TRAINS: usize = 3;
 pub const NOMINAL_TRAIN_SIZE: usize = MAX_CARS / MAX_TRAINS;
 
@@ -19,6 +19,7 @@ pub const NOMINAL_TRAIN_SIZE: usize = MAX_CARS / MAX_TRAINS;
 pub enum DisplayState {
     None,
     Score(u16),
+    Segments([u8; NUM_DIGITS as usize]),
     Text([u8; NUM_DIGITS as usize]),
 }
 

@@ -13,6 +13,7 @@ use crate::{
     switch::Switch,
     tone::TimerTone,
     train::{Car, Train},
+    NUM_DIGITS,
 };
 
 pub struct Game<I2C>
@@ -21,7 +22,7 @@ where
 {
     // board components
     board_buzzer: TimerTone,
-    board_digits: AS1115<I2C>,
+    board_digits: AS1115<I2C, NUM_DIGITS>,
     board_input: BoardInput,
     board_leds: IS31FL3731<I2C>,
 
@@ -40,7 +41,7 @@ where
 {
     pub fn new(
         board_buzzer: TimerTone,
-        board_digits: AS1115<I2C>,
+        board_digits: AS1115<I2C, NUM_DIGITS>,
         board_input: BoardInput,
         board_leds: IS31FL3731<I2C>,
         cars: [Car; MAX_CARS],
@@ -152,6 +153,9 @@ where
                 }
                 DisplayState::Score(score) => {
                     self.board_digits.display_number(score).ok();
+                }
+                DisplayState::Segments(ref segments) => {
+                    self.board_digits.display_raw(segments).ok();
                 }
                 DisplayState::Text(ref text) => {
                     self.board_digits.display_ascii(text).ok();

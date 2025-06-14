@@ -1,6 +1,4 @@
-use core::panic;
-
-use heapless::Deque;
+use heapless::{Deque, Vec};
 use random_trait::Random;
 
 use crate::{
@@ -41,6 +39,14 @@ pub struct MenuMode {
 }
 
 impl MenuMode {
+    fn shuffle<T, const N: usize>(vec: &mut Vec<T, N>) {
+        let len = vec.len();
+        for i in (1..len).rev() {
+            let j = Rand::default().get_usize() % (i + 1);
+            vec.swap(i, j);
+        }
+    }
+
     // direction is true if up or right, false if down or left
     fn candidate_snake_locations(
         &self,
@@ -224,6 +230,8 @@ impl MenuMode {
             .any(|s| s.digit == loc.digit && s.segment == loc.segment)
     }
 
+    /// Checks if a movement from `from` to `to` is valid based on the current snake segments, checks for both
+    /// occupied locations and also ensures that the snake does not move through itself in invalid ways.
     fn is_valid_movement(&self, from: &SnakeLocation, direction: bool, to: &SnakeLocation) -> bool {
         if self.is_occupied(to) {
             return false; // Can't move to an occupied location
@@ -282,59 +290,53 @@ impl MenuMode {
         }
     }
 
+    // Finds a path from loc of length path_left, and returns the first location and new direction in that path.
+    fn find_path(&self, loc: &SnakeLocation, path_left: u8) -> Option<(SnakeLocation, bool)> {
+        if path_left == 0 {
+            return Some((loc.clone(), false));
+        }
+
+        let mut next_locations = self.candidate_snake_locations(loc, self.snake_direction);
+        Self::shuffle(&mut next_locations);
+        for (next_loc, dir) in next_locations.iter() {
+            if self.is_valid_movement(loc, *dir, next_loc) {
+                if let Some(_) = self.find_path(next_loc, path_left - 1) {
+                    return Some((next_loc.clone(), *dir));
+                }
+            }
+        }
+        None
+    }
+
     fn snake_slither(&mut self) {
         let snake_head = self.snake_segments.front().unwrap();
-        let next_locations = self.candidate_snake_locations(snake_head, self.snake_direction);
 
-        // Helper to filter valid movements
-        let filter_valid = |locations: &heapless::Vec<(SnakeLocation, bool), 3>| {
-            let mut out: heapless::Vec<(SnakeLocation, bool), 3> = heapless::Vec::new();
-            for (loc, dir) in locations.iter() {
-                if self.is_valid_movement(snake_head, self.snake_direction, loc) {
-                    out.push((loc.clone(), *dir)).ok();
-                }
-            }
-            out
-        };
+        // look for a path to slither
+        let mut new_head = None;
+        let mut new_direction = self.snake_direction;
 
-        let valid_next_locations = filter_valid(&next_locations);
-
-        // For each valid next location, count how many of its onward moves are occupied
-        let mut best_locations: heapless::Vec<(SnakeLocation, bool), 3> = heapless::Vec::new();
-        let mut min_occupied = u8::MAX;
-
-        for (loc, dir) in valid_next_locations.iter() {
-            let next_next_locs = self.candidate_snake_locations(loc, *dir);
-            let mut occupied_count = 0u8;
-            for (onward_loc, _) in next_next_locs.iter() {
-                if self.is_occupied(onward_loc) {
-                    occupied_count += 1;
-                }
-            }
-            if occupied_count < min_occupied {
-                min_occupied = occupied_count;
-                best_locations.clear();
-                best_locations.push((loc.clone(), *dir)).ok();
-            } else if occupied_count == min_occupied {
-                best_locations.push((loc.clone(), *dir)).ok();
+        // search for a path of length 3, 2, or 1
+        for path_length in 3..=1 {
+            if let Some((next_loc, dir)) = self.find_path(snake_head, path_length) {
+                new_head = Some(next_loc);
+                new_direction = dir;
+                break;
             }
         }
 
-        let next_location_options = if !best_locations.is_empty() {
-            &best_locations
-        } else if !valid_next_locations.is_empty() {
-            &valid_next_locations
-        } else {
-            &next_locations
-        };
+        // if still no path found, just move to random candidate location
+        if new_head.is_none() {
+            let next_locs = self.candidate_snake_locations(self.snake_segments.front().unwrap(), self.snake_direction);
+            let (next_loc, next_direction) = next_locs[Rand::default().get_u8() as usize % next_locs.len()];
+            new_head = Some(next_loc);
+            new_direction = next_direction;
+        }
 
-        let index = Rand::default().get_u8() as usize % next_location_options.len();
-        let (new_location, new_direction) = next_location_options[index];
-        let new_head = SnakeLocation::new(new_location.digit, new_location.segment);
-
-        self.snake_direction = new_direction;
+        // pop old tail and push new head
+        let new_head = new_head.unwrap();
         self.snake_segments.pop_back().unwrap();
-        self.snake_segments.push_front(new_head).unwrap();
+        self.snake_direction = new_direction;
+        self.snake_segments.push_front(SnakeLocation::new(new_head.digit, new_head.segment)).unwrap();
     }
 
     fn snake_segment_data(&self) -> [u8; NUM_DIGITS as usize] {

@@ -87,6 +87,21 @@ fn main() -> ! {
     board_digits.init(settings.digit_brightness_level()).unwrap();
     board_digits.clear().unwrap();
 
+    // board_digits.display_ascii(b"crg").unwrap();
+    // delay.delay_ms(1000);
+    // board_digits.display_number(core::mem::size_of::<cargo::Cargo>()).unwrap();
+    // delay.delay_ms(2000);
+
+    // board_digits.display_ascii(b"car").unwrap();
+    // delay.delay_ms(1000);
+    // board_digits.display_number(core::mem::size_of::<train::Car>()).unwrap();
+    // delay.delay_ms(2000);
+
+    // board_digits.display_ascii(b"plt").unwrap();
+    // delay.delay_ms(1000);
+    // board_digits.display_number(core::mem::size_of::<platform::Platform>()).unwrap();
+    // delay.delay_ms(2000);
+
     #[cfg(feature = "atmega32u4")]
     let input_pins = [
         pins.pb6.into_pull_up_input().downgrade(),

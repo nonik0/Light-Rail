@@ -1,6 +1,7 @@
 use heapless::{Deque, Vec};
 use random_trait::Random;
 
+use super::NUM_MODES;
 use crate::{
     cargo::*,
     game_state::*,
@@ -11,13 +12,13 @@ use crate::{
     train::DEFAULT_SPEED,
     NUM_DIGITS,
 };
-
-use super::NUM_MODES;
 use as1115::segments::*;
 
-const SNAKE_LENGTH: usize = 5;
-const SNAKE_PERIOD: u8 = 100;
+const SNAKE_LENGTH: usize = 6; // number of segments in the snake
+const SNAKE_PERIOD: u8 = 100; // number of ticks between snake movements
+const MAX_NEXT_SEGMENTS: usize = 3; // max of 3 options when moving from one segment
 
+// TODO: if needed can squash loc into a byte, 4 bits for digit and 4 bits for segment
 #[derive(Clone, Copy, Debug, Default)]
 struct SnakeLocation {
     digit: u8,
@@ -36,6 +37,7 @@ pub struct MenuMode {
     snake_counter: u8,
     snake_direction: bool,
     snake_segments: Deque<SnakeLocation, SNAKE_LENGTH>,
+    debug: u8,
 }
 
 impl MenuMode {
@@ -47,175 +49,175 @@ impl MenuMode {
         }
     }
 
-    // direction is true if up or right, false if down or left
-    fn candidate_snake_locations(
-        &self,
-        loc: &SnakeLocation,
+    /// Returns a vector of the next possible locations to move from the current loc (digit and segment).
+    fn next_segment_locations(
+        location: &SnakeLocation,
         direction: bool,
-    ) -> heapless::Vec<(SnakeLocation, bool), 3> {
-        let mut next_locations: heapless::Vec<(SnakeLocation, bool), 3> = heapless::Vec::new();
+    ) -> heapless::Vec<(SnakeLocation, bool), MAX_NEXT_SEGMENTS> {
+        let mut next_locations: heapless::Vec<(SnakeLocation, bool), MAX_NEXT_SEGMENTS> =
+            heapless::Vec::new();
         if direction {
-            match loc.segment {
+            match location.segment {
                 A => {
-                    if loc.digit < NUM_DIGITS - 1 {
+                    if location.digit < NUM_DIGITS - 1 {
                         next_locations
-                            .push((SnakeLocation::new(loc.digit + 1, A), true))
+                            .push((SnakeLocation::new(location.digit + 1, A), true))
                             .ok();
                     }
                     next_locations
-                        .push((SnakeLocation::new(loc.digit, B), false))
+                        .push((SnakeLocation::new(location.digit, B), false))
                         .ok();
                 }
                 B => {
-                    if loc.digit < NUM_DIGITS - 1 {
+                    if location.digit < NUM_DIGITS - 1 {
                         next_locations
-                            .push((SnakeLocation::new(loc.digit + 1, A), true))
+                            .push((SnakeLocation::new(location.digit + 1, A), true))
                             .ok();
                     }
                     next_locations
-                        .push((SnakeLocation::new(loc.digit, A), false))
+                        .push((SnakeLocation::new(location.digit, A), false))
                         .ok();
                 }
                 C => {
-                    if loc.digit < NUM_DIGITS - 1 {
+                    if location.digit < NUM_DIGITS - 1 {
                         next_locations
-                            .push((SnakeLocation::new(loc.digit + 1, G), true))
+                            .push((SnakeLocation::new(location.digit + 1, G), true))
                             .ok();
                     }
                     next_locations
-                        .push((SnakeLocation::new(loc.digit, G), false))
+                        .push((SnakeLocation::new(location.digit, G), false))
                         .ok();
                     next_locations
-                        .push((SnakeLocation::new(loc.digit, B), true))
+                        .push((SnakeLocation::new(location.digit, B), true))
                         .ok();
                 }
                 D => {
-                    if loc.digit < NUM_DIGITS - 1 {
+                    if location.digit < NUM_DIGITS - 1 {
                         next_locations
-                            .push((SnakeLocation::new(loc.digit + 1, D), true))
+                            .push((SnakeLocation::new(location.digit + 1, D), true))
                             .ok();
                     }
                     next_locations
-                        .push((SnakeLocation::new(loc.digit, C), true))
+                        .push((SnakeLocation::new(location.digit, C), true))
                         .ok();
                 }
                 E => {
-                    if loc.digit > 0 {
+                    if location.digit > 0 {
                         next_locations
-                            .push((SnakeLocation::new(loc.digit - 1, G), false))
+                            .push((SnakeLocation::new(location.digit - 1, G), false))
                             .ok();
                     }
                     next_locations
-                        .push((SnakeLocation::new(loc.digit, F), true))
+                        .push((SnakeLocation::new(location.digit, F), true))
                         .ok();
                     next_locations
-                        .push((SnakeLocation::new(loc.digit, G), true))
+                        .push((SnakeLocation::new(location.digit, G), true))
                         .ok();
                 }
                 F => {
-                    if loc.digit > 0 {
+                    if location.digit > 0 {
                         next_locations
-                            .push((SnakeLocation::new(loc.digit - 1, A), false))
+                            .push((SnakeLocation::new(location.digit - 1, A), false))
                             .ok();
                     }
                     next_locations
-                        .push((SnakeLocation::new(loc.digit, A), true))
+                        .push((SnakeLocation::new(location.digit, A), true))
                         .ok();
                 }
                 G => {
-                    if loc.digit < NUM_DIGITS - 1 {
+                    if location.digit < NUM_DIGITS - 1 {
                         next_locations
-                            .push((SnakeLocation::new(loc.digit + 1, G), true))
+                            .push((SnakeLocation::new(location.digit + 1, G), true))
                             .ok();
                     }
                     next_locations
-                        .push((SnakeLocation::new(loc.digit, B), true))
+                        .push((SnakeLocation::new(location.digit, B), true))
                         .ok();
                     next_locations
-                        .push((SnakeLocation::new(loc.digit, C), false))
+                        .push((SnakeLocation::new(location.digit, C), false))
                         .ok();
                 }
                 _ => panic_with_error!(600),
             }
         } else {
-            match loc.segment {
+            match location.segment {
                 A => {
-                    if loc.digit > 0 {
+                    if location.digit > 0 {
                         next_locations
-                            .push((SnakeLocation::new(loc.digit - 1, A), false))
+                            .push((SnakeLocation::new(location.digit - 1, A), false))
                             .ok();
                     }
                     next_locations
-                        .push((SnakeLocation::new(loc.digit, F), false))
+                        .push((SnakeLocation::new(location.digit, F), false))
                         .ok();
                 }
                 B => {
-                    if loc.digit < NUM_DIGITS - 1 {
+                    if location.digit < NUM_DIGITS - 1 {
                         next_locations
-                            .push((SnakeLocation::new(loc.digit + 1, G), true))
+                            .push((SnakeLocation::new(location.digit + 1, G), true))
                             .ok();
                     }
                     next_locations
-                        .push((SnakeLocation::new(loc.digit, G), false))
+                        .push((SnakeLocation::new(location.digit, G), false))
                         .ok();
                     next_locations
-                        .push((SnakeLocation::new(loc.digit, C), false))
+                        .push((SnakeLocation::new(location.digit, C), false))
                         .ok();
                 }
                 C => {
-                    if loc.digit < NUM_DIGITS - 1 {
+                    if location.digit < NUM_DIGITS - 1 {
                         next_locations
-                            .push((SnakeLocation::new(loc.digit + 1, D), true))
+                            .push((SnakeLocation::new(location.digit + 1, D), true))
                             .ok();
                     }
                     next_locations
-                        .push((SnakeLocation::new(loc.digit, D), false))
+                        .push((SnakeLocation::new(location.digit, D), false))
                         .ok();
                 }
                 D => {
-                    if loc.digit > 0 {
+                    if location.digit > 0 {
                         next_locations
-                            .push((SnakeLocation::new(loc.digit - 1, D), false))
+                            .push((SnakeLocation::new(location.digit - 1, D), false))
                             .ok();
                     }
                     next_locations
-                        .push((SnakeLocation::new(loc.digit, E), true))
+                        .push((SnakeLocation::new(location.digit, E), true))
                         .ok();
                 }
                 E => {
-                    if loc.digit > 0 {
+                    if location.digit > 0 {
                         next_locations
-                            .push((SnakeLocation::new(loc.digit - 1, D), false))
+                            .push((SnakeLocation::new(location.digit - 1, D), false))
                             .ok();
                     }
                     next_locations
-                        .push((SnakeLocation::new(loc.digit, D), true))
+                        .push((SnakeLocation::new(location.digit, D), true))
                         .ok();
                 }
                 F => {
-                    if loc.digit > 0 {
+                    if location.digit > 0 {
                         next_locations
-                            .push((SnakeLocation::new(loc.digit - 1, G), false))
+                            .push((SnakeLocation::new(location.digit - 1, G), false))
                             .ok();
                     }
                     next_locations
-                        .push((SnakeLocation::new(loc.digit, G), true))
+                        .push((SnakeLocation::new(location.digit, G), true))
                         .ok();
                     next_locations
-                        .push((SnakeLocation::new(loc.digit, E), false))
+                        .push((SnakeLocation::new(location.digit, E), false))
                         .ok();
                 }
                 G => {
-                    if loc.digit > 0 {
+                    if location.digit > 0 {
                         next_locations
-                            .push((SnakeLocation::new(loc.digit - 1, G), false))
+                            .push((SnakeLocation::new(location.digit - 1, G), false))
                             .ok();
                     }
                     next_locations
-                        .push((SnakeLocation::new(loc.digit, F), true))
+                        .push((SnakeLocation::new(location.digit, F), true))
                         .ok();
                     next_locations
-                        .push((SnakeLocation::new(loc.digit, E), false))
+                        .push((SnakeLocation::new(location.digit, E), false))
                         .ok();
                 }
                 _ => panic_with_error!(600),
@@ -227,11 +229,11 @@ impl MenuMode {
     fn is_occupied(&self, loc: &SnakeLocation) -> bool {
         self.snake_segments
             .iter()
-            .any(|s| s.digit == loc.digit && s.segment == loc.segment)
+            .any(|s| s.digit == loc.digit && s.segment == loc.segment) // TODO: s == loc
     }
 
-    /// Checks if a movement from `from` to `to` is valid based on the current snake segments, checks for both
-    /// occupied locations and also ensures that the snake does not move through itself in invalid ways.
+    /// Checks if a movement from one segment to another is valid based on the location of the snake's segments
+    /// Checks for (hopefully) all relevant cases where the snake would move into or "through itself".
     fn is_valid_movement(&self, from: &SnakeLocation, direction: bool, to: &SnakeLocation) -> bool {
         if self.is_occupied(to) {
             return false; // Can't move to an occupied location
@@ -239,67 +241,109 @@ impl MenuMode {
 
         // Helper to check if both locations are occupied
         let both_occupied =
-            |a: SnakeLocation, b: SnakeLocation| self.is_occupied(&a) && self.is_occupied(&b);
-        let any_occupied = |a: SnakeLocation, b: SnakeLocation, c: SnakeLocation| {
-            self.is_occupied(&a) || self.is_occupied(&b) || self.is_occupied(&c)
+            |a: &SnakeLocation, b: &SnakeLocation| self.is_occupied(a) && self.is_occupied(b);
+        let either_occupied =
+            |a: &SnakeLocation, b: &SnakeLocation| self.is_occupied(a) || self.is_occupied(b);
+        let any_occupied = |a: &SnakeLocation, b: &SnakeLocation, c: &SnakeLocation| {
+            self.is_occupied(a) || self.is_occupied(b) || self.is_occupied(c)
         };
 
         match (from.segment, direction, to.segment) {
-            // G segment: can't move right through itself
-            (G, true, G) if from.digit < NUM_DIGITS - 1 && from.digit == to.digit - 1 => {
+            // up/right from B
+            (B, true, A) if from.digit < NUM_DIGITS - 1 && from.digit == to.digit - 1 => {
+                both_occupied(
+                    &SnakeLocation::new(from.digit, A),
+                    &SnakeLocation::new(to.digit, F),
+                )
+            }
+            // down from B and up from C
+            (B, false, C) | (C, true, B)
+                if from.digit < NUM_DIGITS - 1 && from.digit == to.digit =>
+            {
+                !self.is_occupied(&SnakeLocation::new(from.digit, G))
+                    && any_occupied(
+                        &SnakeLocation::new(from.digit + 1, F),
+                        &SnakeLocation::new(from.digit + 1, G),
+                        &SnakeLocation::new(from.digit + 1, E),
+                    )
+            }
+            // down/right from B and  up/right from C
+            (B, false, G) | (C, true, G)
+                if from.digit < NUM_DIGITS - 1 && from.digit == to.digit - 1 =>
+            {
+                !self.is_occupied(&SnakeLocation::new(from.digit, G))
+                    && either_occupied(
+                        &SnakeLocation::new(to.digit, F),
+                        &SnakeLocation::new(to.digit, E),
+                    )
+            }
+            // down/right from C
+            (C, false, D) if from.digit < NUM_DIGITS - 1 && from.digit == to.digit - 1 => {
+                !both_occupied(
+                    &SnakeLocation::new(from.digit, D),
+                    &SnakeLocation::new(to.digit, E),
+                )
+            }
+            // down/left from E
+            (E, false, D) if from.digit > 0 && from.digit == to.digit + 1 => {
+                !both_occupied(
+                    &SnakeLocation::new(from.digit, D),
+                    &SnakeLocation::new(to.digit, C),
+                )
+            }      
+            // down from E
+            (E, true, F) if from.digit > 0 && from.digit == to.digit - 1 => {
                 !(both_occupied(
-                    SnakeLocation::new(from.digit, B),
-                    SnakeLocation::new(from.digit, C),
+                    &SnakeLocation::new(from.digit, G),
+                    &SnakeLocation::new(to.digit, B),
                 ) || both_occupied(
-                    SnakeLocation::new(to.digit, E),
-                    SnakeLocation::new(to.digit, F),
+                    &SnakeLocation::new(from.digit, C),
+                    &SnakeLocation::new(to.digit, D),
                 ))
             }
-            // G segment: can't move left through itself
+            // up from E and down from F
+            (E, true, F) | (F, false, E) if from.digit > 0 && from.digit == to.digit => {
+                !self.is_occupied(&SnakeLocation::new(from.digit, G))
+                    && any_occupied(
+                        &SnakeLocation::new(from.digit - 1, B),
+                        &SnakeLocation::new(from.digit - 1, G),
+                        &SnakeLocation::new(from.digit - 1, C),
+                    )
+            }
+            // left from E and F
+            (E, true, G) | (F, false, G) if from.digit > 0 && from.digit == to.digit + 1 => {
+                !self.is_occupied(&SnakeLocation::new(from.digit, G))
+                    && either_occupied(
+                        &SnakeLocation::new(to.digit, B),
+                        &SnakeLocation::new(to.digit, C),
+                    )
+            }
+            // up/left from F
+            (F, true, A) if from.digit < NUM_DIGITS - 1 && from.digit == to.digit - 1 => {
+                both_occupied(
+                    &SnakeLocation::new(from.digit, A),
+                    &SnakeLocation::new(to.digit, B),
+                )
+            }
+            // left from G
             (G, false, G) if from.digit > 0 && from.digit == to.digit + 1 => {
                 !(both_occupied(
-                    SnakeLocation::new(from.digit, E),
-                    SnakeLocation::new(from.digit, F),
+                    &SnakeLocation::new(from.digit, E),
+                    &SnakeLocation::new(from.digit, F),
                 ) || both_occupied(
-                    SnakeLocation::new(to.digit, B),
-                    SnakeLocation::new(to.digit, C),
+                    &SnakeLocation::new(to.digit, B),
+                    &SnakeLocation::new(to.digit, C),
                 ))
             }
-            // Down from B: can't move down through itself
-            (B, false, C) if from.digit < NUM_DIGITS - 1 && from.digit == to.digit => {
-                self.is_occupied(&SnakeLocation::new(from.digit, G))
-                    && any_occupied(
-                        SnakeLocation::new(from.digit + 1, F),
-                        SnakeLocation::new(from.digit + 1, G),
-                        SnakeLocation::new(from.digit + 1, E),
-                    )
-            }
-            // Down from F: can't move down through itself
-            (F, false, E) if from.digit > 0 && from.digit == to.digit => {
-                self.is_occupied(&SnakeLocation::new(from.digit, G))
-                    && any_occupied(
-                        SnakeLocation::new(from.digit - 1, B),
-                        SnakeLocation::new(from.digit - 1, G),
-                        SnakeLocation::new(from.digit - 1, C),
-                    )
-            }
-            // Up from C: can't move up through itself
-            (C, true, B) if from.digit < NUM_DIGITS - 1 && from.digit == to.digit => {
-                self.is_occupied(&SnakeLocation::new(from.digit, G))
-                    && any_occupied(
-                        SnakeLocation::new(from.digit + 1, F),
-                        SnakeLocation::new(from.digit + 1, G),
-                        SnakeLocation::new(from.digit + 1, E),
-                    )
-            }
-            // Up from E: can't move up through itself
-            (E, true, F) if from.digit > 0 && from.digit == to.digit => {
-                self.is_occupied(&SnakeLocation::new(from.digit, G))
-                    && any_occupied(
-                        SnakeLocation::new(from.digit - 1, B),
-                        SnakeLocation::new(from.digit - 1, G),
-                        SnakeLocation::new(from.digit - 1, C),
-                    )
+            // right from G
+            (G, true, G) if from.digit < NUM_DIGITS - 1 && from.digit == to.digit - 1 => {
+                !(both_occupied(
+                    &SnakeLocation::new(from.digit, B),
+                    &SnakeLocation::new(from.digit, C),
+                ) || both_occupied(
+                    &SnakeLocation::new(to.digit, E),
+                    &SnakeLocation::new(to.digit, F),
+                ))
             }
             _ => true,
         }
@@ -316,7 +360,7 @@ impl MenuMode {
             return Some((loc.clone(), false));
         }
 
-        let mut next_locations = self.candidate_snake_locations(loc, dir);
+        let mut next_locations = Self::next_segment_locations(loc, dir);
         Self::shuffle(&mut next_locations);
         for (next_loc, next_dir) in next_locations.iter() {
             if self.is_valid_movement(loc, dir, next_loc) {
@@ -331,40 +375,47 @@ impl MenuMode {
     fn snake_slither(&mut self) {
         let snake_head = self.snake_segments.front().unwrap();
 
-        // look for a path to slither
-        let mut new_head = None;
-        let mut new_direction = self.snake_direction;
-
-        // search for a path of length 3, 2, or 1
-        for path_length in (1..=3).rev() {
-            if let Some((next_loc, next_dir)) =
-                self.find_path(snake_head, self.snake_direction, path_length)
-            {
-                new_head = Some(next_loc);
-                new_direction = next_dir;
-                break;
-            }
+        if let Some((next_loc, next_dir)) = self.find_path(snake_head, self.snake_direction, 3) {
+            // pop old tail and push new head
+            self.snake_segments.pop_back().unwrap();
+            self.snake_direction = next_dir;
+            self.snake_segments.push_front(next_loc).unwrap();
         }
 
-        // if still no path found, just move to random candidate location
-        if new_head.is_none() {
-            let next_locs = self.candidate_snake_locations(
-                self.snake_segments.front().unwrap(),
-                self.snake_direction,
-            );
-            let (next_loc, next_direction) =
-                next_locs[Rand::default().get_u8() as usize % next_locs.len()];
-            new_head = Some(next_loc);
-            new_direction = next_direction;
-        }
+        // // look for a path to slither
+        // let mut new_head = None;
+        // let mut new_direction = self.snake_direction;
 
-        // pop old tail and push new head
-        let new_head = new_head.unwrap();
-        self.snake_segments.pop_back().unwrap();
-        self.snake_direction = new_direction;
-        self.snake_segments
-            .push_front(SnakeLocation::new(new_head.digit, new_head.segment))
-            .unwrap();
+        // // search for a path of length 3, 2, or 1
+        // for path_length in (1..=3).rev() {
+        //     if let Some((next_loc, next_dir)) =
+        //         self.find_path(snake_head, self.snake_direction, path_length)
+        //     {
+        //         new_head = Some(next_loc);
+        //         new_direction = next_dir;
+        //         break;
+        //     }
+        // }
+
+        // // if still no path found, just move to random candidate location
+        // if new_head.is_none() {
+        //     let next_locs = Self::next_segment_locations(
+        //         self.snake_segments.front().unwrap(),
+        //         self.snake_direction,
+        //     );
+        //     let (next_loc, next_direction) =
+        //         next_locs[Rand::default().get_u8() as usize % next_locs.len()];
+        //     new_head = Some(next_loc);
+        //     new_direction = next_direction;
+        // }
+
+        // // pop old tail and push new head
+        // let new_head = new_head.unwrap();
+        // self.snake_segments.pop_back().unwrap();
+        // self.snake_direction = new_direction;
+        // self.snake_segments
+        //     .push_front(SnakeLocation::new(new_head.digit, new_head.segment))
+        //     .unwrap();
     }
 
     fn snake_segment_data(&self) -> [u8; NUM_DIGITS as usize] {
@@ -398,23 +449,60 @@ impl GameModeHandler for MenuMode {
         );
         state.init_platforms(Cargo::Full(LedPattern::Solid));
 
-        // push snake head onto segments
+        // kill snake
         self.snake_counter = 0;
-        self.snake_direction = Rand::default().get_bool();
         self.snake_segments.clear();
 
-        let snake_segment = SnakeLocation::new(
-            Rand::default().get_u8() % NUM_DIGITS,
-            1u8 << (Rand::default().get_u8() % 7),
-        );
+        // birth snake
+        // self.snake_direction = Rand::default().get_bool();
+        // let snake_segment = SnakeLocation::new(
+        //     Rand::default().get_u8() % NUM_DIGITS,
+        //     1u8 << (Rand::default().get_u8() % 7),
+        // );
+        // for _ in 0..SNAKE_LENGTH {
+        //     self.snake_segments
+        //         .push_back(snake_segment.clone())
+        //         .unwrap();
+        //     self.snake_slither();
+        //}
+        self.snake_direction = false;
+        self.snake_segments
+            .push_back(SnakeLocation::new(2, B))
+            .unwrap();
+        self.snake_segments
+            .push_back(SnakeLocation::new(2, G))
+            .unwrap();
+        self.snake_segments
+            .push_back(SnakeLocation::new(2, G))
+            .unwrap();
+        self.snake_segments
+            .push_back(SnakeLocation::new(1, G))
+            .unwrap();
+        self.snake_segments
+            .push_back(SnakeLocation::new(1, F))
+            .unwrap();
+        self.snake_segments
+            .push_back(SnakeLocation::new(0, A))
+            .unwrap();
 
-        // push snake body segments
-        for _ in 0..SNAKE_LENGTH {
-            self.snake_segments
-                .push_back(snake_segment.clone())
-                .unwrap();
-            self.snake_slither();
-        }
+        // self.snake_segments
+        //     .push_back(SnakeLocation::new(2, D))
+        //     .unwrap();
+        // self.snake_segments
+        //     .push_back(SnakeLocation::new(2, C))
+        //     .unwrap();
+        // self.snake_segments
+        //     .push_back(SnakeLocation::new(2, G))
+        //     .unwrap();
+        // self.snake_segments
+        //     .push_back(SnakeLocation::new(1, G))
+        //     .unwrap();
+        // self.snake_segments
+        //     .push_back(SnakeLocation::new(1, E))
+        //     .unwrap();
+        // self.snake_segments
+        //     .push_back(SnakeLocation::new(0, D))
+        //     .unwrap();
 
         state.display = if self.index == 0 {
             DisplayState::Segments(self.snake_segment_data())
@@ -432,6 +520,27 @@ impl GameModeHandler for MenuMode {
                 state.display = DisplayState::Segments(self.snake_segment_data())
             }
         }
+
+        // // snake animation only on menu index 0
+        // if self.index == 0 {
+        //     self.snake_counter = (self.snake_counter + 1) % SNAKE_PERIOD;
+        //     if self.snake_counter == 0 {
+        //         state.display = match self.debug {
+        //             0 => DisplayState::Text(*b"tst"),
+        //             _ => {
+        //                 let from = SnakeLocation::new(2, E);
+        //                 let to = SnakeLocation::new(2, F);
+        //                 let test = self.is_valid_movement(&from, true, &to);
+        //                 if test {
+        //                     DisplayState::Text(*b"vld")
+        //                 } else {
+        //                     DisplayState::Text(*b"inv")
+        //                 }
+        //             }
+        //         };
+        //         self.debug = (self.debug + 1) % 2;
+        //     }
+        // }
 
         for platform in state.platforms.iter_mut() {
             if platform.is_empty() && Rand::default().get_u16() <= 50 {

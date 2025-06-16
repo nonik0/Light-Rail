@@ -11,7 +11,7 @@ use crate::{
     Rand, NUM_DIGITS,
 };
 
-pub const MAX_CARS: usize = 10;
+pub const MAX_CARS: usize = 30;
 pub const MAX_TRAINS: usize = 3;
 pub const NOMINAL_TRAIN_SIZE: usize = MAX_CARS / MAX_TRAINS;
 

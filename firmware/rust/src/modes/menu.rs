@@ -15,7 +15,7 @@ use crate::{
 use as1115::segments::*;
 
 const SNAKE_LENGTH: usize = 6; // number of segments in the snake
-const SNAKE_PERIOD: u8 = 100; // number of ticks between snake movements
+const SNAKE_PERIOD: u8 = 15; // number of ticks between snake movements
 const MAX_NEXT_SEGMENTS: usize = 3; // max of 3 options when moving from one segment
 
 // TODO: if needed can squash loc into a byte, 4 bits for digit and 4 bits for segment
@@ -37,7 +37,6 @@ pub struct MenuMode {
     snake_counter: u8,
     snake_direction: bool,
     snake_segments: Deque<SnakeLocation, SNAKE_LENGTH>,
-    debug: u8,
 }
 
 impl MenuMode {
@@ -251,7 +250,7 @@ impl MenuMode {
         match (from.segment, direction, to.segment) {
             // up/right from B
             (B, true, A) if from.digit < NUM_DIGITS - 1 && from.digit == to.digit - 1 => {
-                both_occupied(
+                !both_occupied(
                     &SnakeLocation::new(from.digit, A),
                     &SnakeLocation::new(to.digit, F),
                 )
@@ -285,12 +284,10 @@ impl MenuMode {
                 )
             }
             // down/left from E
-            (E, false, D) if from.digit > 0 && from.digit == to.digit + 1 => {
-                !both_occupied(
-                    &SnakeLocation::new(from.digit, D),
-                    &SnakeLocation::new(to.digit, C),
-                )
-            }      
+            (E, false, D) if from.digit > 0 && from.digit == to.digit + 1 => !both_occupied(
+                &SnakeLocation::new(from.digit, D),
+                &SnakeLocation::new(to.digit, C),
+            ),
             // down from E
             (E, true, F) if from.digit > 0 && from.digit == to.digit - 1 => {
                 !(both_occupied(
@@ -319,12 +316,10 @@ impl MenuMode {
                     )
             }
             // up/left from F
-            (F, true, A) if from.digit < NUM_DIGITS - 1 && from.digit == to.digit - 1 => {
-                both_occupied(
-                    &SnakeLocation::new(from.digit, A),
-                    &SnakeLocation::new(to.digit, B),
-                )
-            }
+            (F, true, A) if from.digit > 0 && from.digit == to.digit + 1 => !both_occupied(
+                &SnakeLocation::new(from.digit, A),
+                &SnakeLocation::new(to.digit, B),
+            ),
             // left from G
             (G, false, G) if from.digit > 0 && from.digit == to.digit + 1 => {
                 !(both_occupied(
@@ -375,47 +370,48 @@ impl MenuMode {
     fn snake_slither(&mut self) {
         let snake_head = self.snake_segments.front().unwrap();
 
-        if let Some((next_loc, next_dir)) = self.find_path(snake_head, self.snake_direction, 3) {
-            // pop old tail and push new head
-            self.snake_segments.pop_back().unwrap();
-            self.snake_direction = next_dir;
-            self.snake_segments.push_front(next_loc).unwrap();
+        // if let Some((next_loc, next_dir)) = self.find_path(snake_head, self.snake_direction, 3) {
+        //     // pop old tail and push new head
+        //     self.snake_segments.pop_back().unwrap();
+        //     self.snake_direction = next_dir;
+        //     self.snake_segments.push_front(next_loc).unwrap();
+        // }
+
+        // look for a path to slither
+        let mut new_head = None;
+        let mut new_direction = self.snake_direction;
+
+        // search for a path of at least half the snake length at first, then decreasing length until one is found
+        for path_length in (1..=(SNAKE_LENGTH as u8 / 2)).rev() {
+            if let Some((next_loc, next_dir)) =
+                self.find_path(snake_head, self.snake_direction, path_length)
+            {
+                new_head = Some(next_loc);
+                new_direction = next_dir;
+                break;
+            }
         }
 
-        // // look for a path to slither
-        // let mut new_head = None;
-        // let mut new_direction = self.snake_direction;
+        // if still no path found, return and be stuck (does it happen?)
+        if new_head.is_none() {
+            return;
+            // let next_locs = Self::next_segment_locations(
+            //     self.snake_segments.front().unwrap(),
+            //     self.snake_direction,
+            // );
+            // let (next_loc, next_direction) =
+            //     next_locs[Rand::default().get_u8() as usize % next_locs.len()];
+            // new_head = Some(next_loc);
+            // new_direction = next_direction;
+        }
 
-        // // search for a path of length 3, 2, or 1
-        // for path_length in (1..=3).rev() {
-        //     if let Some((next_loc, next_dir)) =
-        //         self.find_path(snake_head, self.snake_direction, path_length)
-        //     {
-        //         new_head = Some(next_loc);
-        //         new_direction = next_dir;
-        //         break;
-        //     }
-        // }
-
-        // // if still no path found, just move to random candidate location
-        // if new_head.is_none() {
-        //     let next_locs = Self::next_segment_locations(
-        //         self.snake_segments.front().unwrap(),
-        //         self.snake_direction,
-        //     );
-        //     let (next_loc, next_direction) =
-        //         next_locs[Rand::default().get_u8() as usize % next_locs.len()];
-        //     new_head = Some(next_loc);
-        //     new_direction = next_direction;
-        // }
-
-        // // pop old tail and push new head
-        // let new_head = new_head.unwrap();
-        // self.snake_segments.pop_back().unwrap();
-        // self.snake_direction = new_direction;
-        // self.snake_segments
-        //     .push_front(SnakeLocation::new(new_head.digit, new_head.segment))
-        //     .unwrap();
+        // pop old tail and push new head
+        let new_head = new_head.unwrap();
+        self.snake_segments.pop_back().unwrap();
+        self.snake_direction = new_direction;
+        self.snake_segments
+            .push_front(new_head)
+            .unwrap();
     }
 
     fn snake_segment_data(&self) -> [u8; NUM_DIGITS as usize] {
@@ -440,12 +436,12 @@ impl GameModeHandler for MenuMode {
     fn on_restart(&mut self, state: &mut GameState) {
         state.is_over = false;
 
-        state.init_trains(Cargo::Full(LedPattern::Solid), 3, 5);
+        state.init_trains(Cargo::Full(LedPattern::Solid), 5, 5);
         state.add_train(
             Cargo::Full(LedPattern::Solid),
+            3,
             5,
-            5,
-            Some(DEFAULT_SPEED / 2),
+            Some(DEFAULT_SPEED + 5),
         );
         state.init_platforms(Cargo::Full(LedPattern::Solid));
 
@@ -454,55 +450,17 @@ impl GameModeHandler for MenuMode {
         self.snake_segments.clear();
 
         // birth snake
-        // self.snake_direction = Rand::default().get_bool();
-        // let snake_segment = SnakeLocation::new(
-        //     Rand::default().get_u8() % NUM_DIGITS,
-        //     1u8 << (Rand::default().get_u8() % 7),
-        // );
-        // for _ in 0..SNAKE_LENGTH {
-        //     self.snake_segments
-        //         .push_back(snake_segment.clone())
-        //         .unwrap();
-        //     self.snake_slither();
-        //}
-        self.snake_direction = false;
-        self.snake_segments
-            .push_back(SnakeLocation::new(2, B))
-            .unwrap();
-        self.snake_segments
-            .push_back(SnakeLocation::new(2, G))
-            .unwrap();
-        self.snake_segments
-            .push_back(SnakeLocation::new(2, G))
-            .unwrap();
-        self.snake_segments
-            .push_back(SnakeLocation::new(1, G))
-            .unwrap();
-        self.snake_segments
-            .push_back(SnakeLocation::new(1, F))
-            .unwrap();
-        self.snake_segments
-            .push_back(SnakeLocation::new(0, A))
-            .unwrap();
-
-        // self.snake_segments
-        //     .push_back(SnakeLocation::new(2, D))
-        //     .unwrap();
-        // self.snake_segments
-        //     .push_back(SnakeLocation::new(2, C))
-        //     .unwrap();
-        // self.snake_segments
-        //     .push_back(SnakeLocation::new(2, G))
-        //     .unwrap();
-        // self.snake_segments
-        //     .push_back(SnakeLocation::new(1, G))
-        //     .unwrap();
-        // self.snake_segments
-        //     .push_back(SnakeLocation::new(1, E))
-        //     .unwrap();
-        // self.snake_segments
-        //     .push_back(SnakeLocation::new(0, D))
-        //     .unwrap();
+        self.snake_direction = Rand::default().get_bool();
+        let snake_segment = SnakeLocation::new(
+            Rand::default().get_u8() % NUM_DIGITS,
+            1u8 << (Rand::default().get_u8() % 7),
+        );
+        for _ in 0..SNAKE_LENGTH {
+            self.snake_segments
+                .push_back(snake_segment.clone())
+                .unwrap();
+            self.snake_slither();
+        }
 
         state.display = if self.index == 0 {
             DisplayState::Segments(self.snake_segment_data())
@@ -520,27 +478,6 @@ impl GameModeHandler for MenuMode {
                 state.display = DisplayState::Segments(self.snake_segment_data())
             }
         }
-
-        // // snake animation only on menu index 0
-        // if self.index == 0 {
-        //     self.snake_counter = (self.snake_counter + 1) % SNAKE_PERIOD;
-        //     if self.snake_counter == 0 {
-        //         state.display = match self.debug {
-        //             0 => DisplayState::Text(*b"tst"),
-        //             _ => {
-        //                 let from = SnakeLocation::new(2, E);
-        //                 let to = SnakeLocation::new(2, F);
-        //                 let test = self.is_valid_movement(&from, true, &to);
-        //                 if test {
-        //                     DisplayState::Text(*b"vld")
-        //                 } else {
-        //                     DisplayState::Text(*b"inv")
-        //                 }
-        //             }
-        //         };
-        //         self.debug = (self.debug + 1) % 2;
-        //     }
-        // }
 
         for platform in state.platforms.iter_mut() {
             if platform.is_empty() && Rand::default().get_u16() <= 50 {

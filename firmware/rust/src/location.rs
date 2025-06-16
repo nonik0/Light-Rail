@@ -26,6 +26,7 @@ impl Default for Location {
 
 impl Location {
     pub fn new(node_index: u8) -> Self {
+        #[cfg(debug_assertions)]
         if node_index >= NUM_LOCATION_NODES as u8 {
             panic_with_error!(100);
         }
@@ -129,7 +130,12 @@ impl LocationNode {
 
 impl Default for LocationNode {
     fn default() -> Self {
-        Self::default()
+        Self {
+            anode_neighbor: NO_DATA,
+            cathode_neighbor: NO_DATA,
+            anode_neighbor_2: NO_DATA,
+            cathode_neighbor_2: NO_DATA,
+        }
     }
 }
 

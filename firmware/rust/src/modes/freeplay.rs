@@ -115,7 +115,7 @@ impl FreeplayMode {
             Setting::Trains => {
                 if inc {
                     state.add_train(
-                        Cargo::Have(LedPattern::SolidBright),
+                        Cargo::Full(LedPattern::Solid),
                         3,
                         NOMINAL_TRAIN_SIZE as u8,
                         None
@@ -127,7 +127,7 @@ impl FreeplayMode {
             Setting::TrainCars => {
                 if let Some(train) = state.trains.get_mut(self.cur_train_index as usize) {
                     if inc {
-                        train.add_car(Cargo::Have(LedPattern::SolidBright));
+                        train.add_car(Cargo::Full(LedPattern::Solid));
                     } else {
                         train.remove_car();
                     }
@@ -174,17 +174,17 @@ impl GameModeHandler for FreeplayMode {
         state.is_over = false;
 
         state.init_trains(
-            Cargo::Have(LedPattern::SolidBright),
+            Cargo::Full(LedPattern::Solid),
             3,
             NOMINAL_TRAIN_SIZE as u8,
         );
-        state.init_platforms(Cargo::Have(LedPattern::SolidBright));
+        state.init_platforms(Cargo::Full(LedPattern::Solid));
     }
 
     fn on_game_tick(&mut self, state: &mut GameState) {
         for platform in state.platforms.iter_mut() {
             if platform.is_empty() && Rand::default().get_u16() <= 50 {
-                platform.set_cargo(Cargo::Have(LedPattern::SolidBright));
+                platform.set_cargo_out(Cargo::Full(LedPattern::Solid));
             }
         }
     }

@@ -9,10 +9,11 @@ use crate::{
 
 pub struct Platform {
     location: Location,
-    track_location: Location, // remove and use location.next_loc() to save SRAM?
+    track_location: Location,
     cargo: Cargo,
+    is_cargo_in: bool, // is the current cargo going out/shipping, or coming in/receiving?
     last_brightness: u8,
-    phase: u8, // phase of the platform, used for PWM
+    phase: u8,     // phase of the platform, used for PWM
     phase_inc: u8, // phase increment for speed control
 }
 
@@ -22,9 +23,10 @@ impl Platform {
             location,
             track_location,
             cargo: Cargo::Empty,
+            is_cargo_in: false,
             last_brightness: 0,
             phase: Rand::default().get_u8(), // initial phase
-            phase_inc: 1, // default increment
+            phase_inc: 1,                    // default increment
         }
     }
 
@@ -44,13 +46,31 @@ impl Platform {
         platforms
     }
 
-    pub fn update<F>(&mut self, settings: &GameSettings, mut update_callback: F, force_update: bool) -> bool
+    pub fn update<F>(
+        &mut self,
+        settings: &GameSettings,
+        mut update_callback: F,
+        force_update: bool,
+    ) -> bool
     where
         F: FnMut(Location, u8),
     {
         self.phase = self.phase.wrapping_add(self.phase_inc);
 
-        let brightness = self.cargo.platform_brightness(self.phase, settings.platform_brightness());
+        // cargo coming in has an inverse pattern of blinking
+        let brightness = if self.is_cargo_in {
+            self.cargo.platform_brightness(
+                self.phase,
+                settings.platform_brightness() >> 1,
+                0,
+            )
+        } else {
+            self.cargo.platform_brightness(
+                self.phase,
+                settings.platform_brightness() >> 1,
+                settings.platform_brightness(),
+            )
+        };
         if force_update || brightness != self.last_brightness {
             self.last_brightness = brightness;
             update_callback(self.location, brightness);
@@ -64,8 +84,8 @@ impl Platform {
         self.phase_inc = speed;
     }
 
-    pub fn cargo(&self) -> Cargo {
-        self.cargo
+    pub fn cargo(&self) -> (Cargo, bool) {
+        (self.cargo, self.is_cargo_in)
     }
 
     // pub fn location(&self) -> Location {
@@ -80,8 +100,14 @@ impl Platform {
         self.cargo == Cargo::Empty
     }
 
-    pub fn set_cargo(&mut self, cargo: Cargo) {
+    pub fn set_cargo_in(&mut self, cargo: Cargo) {
         self.cargo = cargo;
+        self.is_cargo_in = true;
+    }
+
+    pub fn set_cargo_out(&mut self, cargo: Cargo) {
+        self.cargo = cargo;
+        self.is_cargo_in = false;
     }
 
     pub fn clear_cargo(&mut self) {

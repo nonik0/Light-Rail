@@ -1,8 +1,7 @@
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Cargo {
     Empty,
-    Have(LedPattern),
-    Want(LedPattern),
+    Full(LedPattern),
 }
 
 impl Default for Cargo {
@@ -12,37 +11,34 @@ impl Default for Cargo {
 }
 
 impl Cargo {
-    pub fn platform_brightness(&self, phase: u8, max: u8) -> u8 {
+    pub fn platform_brightness(&self, phase: u8, min: u8, max: u8) -> u8 {
         match self {
-            Cargo::Have(pattern) => pattern.get_pwm(phase, max >> 1, max),
-            Cargo::Want(pattern) => pattern.get_pwm(phase, max >> 1, max >> 2),
-            _ => 0,
+            Cargo::Empty => 0,
+            Cargo::Full(pattern) =>  pattern.get_pwm(phase, min, max),
         }
     }
 
     pub fn car_brightness(&self, phase: u8, max: u8) -> u8 {
         match self {
-            Cargo::Have(pattern) => pattern.get_pwm(phase, max >> 1, max),
-            _ => max >> 1,
+            Cargo::Empty => max >> 1,
+            Cargo::Full(pattern) => pattern.get_pwm(phase, max >> 1, max),
         }
     }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum LedPattern {
-    SolidBright,
-    //SolidDim,
+    Solid,
     Blink1,
     Blink2,
     Blink3,
-    Fade1,
+    Fade,
 }
 
 impl LedPattern {
     pub fn get_pwm(&self, phase: u8, min_b: u8, max_b: u8) -> u8 {
         match self {
-            LedPattern::SolidBright => max_b,
-            //LedPattern::SolidDim => min_b,
+            LedPattern::Solid => max_b,
             LedPattern::Blink1 => match phase % 64 {
                 0..=11 => min_b, // 12 ticks off
                 _ => max_b,      // 52 ticks on
@@ -61,7 +57,7 @@ impl LedPattern {
                 24..=29 => min_b, // 6 ticks off
                 _ => max_b,       // 34 ticks on
             },
-            LedPattern::Fade1 => {
+            LedPattern::Fade => {
                 // Fade up for phase 0..127, fade down for 128..255
                 let half_phase = if phase < 128 {
                     phase as u16

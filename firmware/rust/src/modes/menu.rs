@@ -321,7 +321,7 @@ impl MenuMode {
         for (next_loc, next_dir) in next_locations.iter() {
             if self.is_valid_movement(loc, dir, next_loc) {
                 if let Some(_) = self.find_path(next_loc, *next_dir, path_left - 1) {
-                    return Some((next_loc.clone(), next_dir));
+                    return Some((next_loc.clone(), *next_dir));
                 }
             }
         }
@@ -389,14 +389,14 @@ impl GameModeHandler for MenuMode {
     fn on_restart(&mut self, state: &mut GameState) {
         state.is_over = false;
 
-        state.init_trains(Cargo::Have(LedPattern::SolidBright), 3, 5);
+        state.init_trains(Cargo::Full(LedPattern::Solid), 3, 5);
         state.add_train(
-            Cargo::Have(LedPattern::SolidBright),
+            Cargo::Full(LedPattern::Solid),
             5,
             5,
             Some(DEFAULT_SPEED / 2),
         );
-        state.init_platforms(Cargo::Have(LedPattern::SolidBright));
+        state.init_platforms(Cargo::Full(LedPattern::Solid));
 
         // push snake head onto segments
         self.snake_counter = 0;
@@ -435,7 +435,7 @@ impl GameModeHandler for MenuMode {
 
         for platform in state.platforms.iter_mut() {
             if platform.is_empty() && Rand::default().get_u16() <= 50 {
-                platform.set_cargo(Cargo::Have(LedPattern::SolidBright));
+                platform.set_cargo_out(Cargo::Full(LedPattern::Solid));
             }
         }
     }

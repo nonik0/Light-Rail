@@ -11,7 +11,7 @@ use crate::{
     Rand, NUM_DIGITS,
 };
 
-pub const MAX_CARS: usize = 50;
+pub const MAX_CARS: usize = 10;
 pub const MAX_TRAINS: usize = 3;
 pub const NOMINAL_TRAIN_SIZE: usize = MAX_CARS / MAX_TRAINS;
 
@@ -86,7 +86,7 @@ impl GameState {
     pub fn init_platforms(&mut self, cargo: Cargo) {
         for platform in self.platforms.iter_mut() {
             if !platform.is_empty() {
-                platform.set_cargo(cargo);
+                platform.set_cargo_out(cargo);
                 platform.set_phase_speed(1);
             }
         }

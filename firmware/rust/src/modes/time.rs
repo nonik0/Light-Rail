@@ -50,8 +50,7 @@ impl TimeMode {
             .position(|t| t.platform_index == platform_index)
         {
             self.timers.remove(index);
-        }
-        else {
+        } else {
             crate::panic_with_error!(400);
         }
     }
@@ -101,9 +100,9 @@ impl GameModeHandler for TimeMode {
                         0 => LedPattern::Blink1,
                         1 => LedPattern::Blink2,
                         2 => LedPattern::Blink3,
-                        _ => LedPattern::SolidBright,
+                        _ => LedPattern::Solid,
                     };
-                    platform.set_cargo(Cargo::Have(led_pattern));
+                    platform.set_cargo_out(Cargo::Full(led_pattern));
                     self.add_platform_timer(platform_index as u8);
                 }
             }
@@ -117,19 +116,12 @@ impl GameModeHandler for TimeMode {
             for (platform_index, platform) in state.platforms.iter_mut().enumerate() {
                 // if train is at platform and platform has cargo
                 if !platform.is_empty() && train.at_location(platform.track_location()) {
-                    let platform_cargo = platform.cargo();
-                    match platform_cargo {
-                        // pick up cargo if train has space, add a platform with cargo to dropoff later
-                        Cargo::Have(pattern) => {
-                            if train.load_cargo(platform_cargo) {
-                                platform.clear_cargo();
-                                self.remove_platform_timer(platform_index as u8);
-                                cargo_to_place.push(Cargo::Want(pattern)).ok();
-                            }
-                        }
-                        // drop off cargo if train has what platform wants
-                        Cargo::Want(pattern) => {
-                            if train.unload_cargo(Cargo::Have(pattern)) {
+                    let (platform_cargo, is_receiving) = platform.cargo();
+                    if let Cargo::Full(pattern) = platform_cargo {
+                        // try to unload cargo if platform is receiving cargo
+                        if is_receiving {
+                            // unload is true only if train has the same type of cargo
+                            if train.unload_cargo(Cargo::Full(pattern)) {
                                 platform.clear_cargo();
                                 self.remove_platform_timer(platform_index as u8);
                                 self.score += 1;
@@ -138,9 +130,16 @@ impl GameModeHandler for TimeMode {
                                 if self.score == 3 || self.score == 10 || self.score == 20 {
                                     train.add_car(Cargo::Empty);
                                 }
+
+                                // TODO: platform/difficulty increase
+                            }
+                        } else {
+                            if train.load_cargo(platform_cargo) {
+                                platform.clear_cargo();
+                                self.remove_platform_timer(platform_index as u8);
+                                cargo_to_place.push(Cargo::Full(pattern)).ok();
                             }
                         }
-                        _ => {}
                     }
                 }
             }
@@ -157,7 +156,7 @@ impl GameModeHandler for TimeMode {
                 if !available_platform_indices.is_empty() {
                     let rand_index = Rand::default().get_usize() % available_platform_indices.len();
                     let rand_platform_index = available_platform_indices[rand_index];
-                    state.platforms[rand_platform_index].set_cargo(cargo);
+                    state.platforms[rand_platform_index].set_cargo_in(cargo);
                     self.add_platform_timer(rand_platform_index as u8);
                     available_platform_indices.remove(rand_index);
                 }

@@ -139,11 +139,11 @@ impl GameModeHandler for SettingsMode {
         state.is_over = false;
 
         state.init_trains(
-            Cargo::Have(LedPattern::SolidBright),
+            Cargo::Full(LedPattern::Solid),
             3,
             NOMINAL_TRAIN_SIZE as u8,
         );
-        state.init_platforms(Cargo::Have(LedPattern::SolidBright));
+        state.init_platforms(Cargo::Full(LedPattern::Solid));
     }
 
     fn on_game_tick(&mut self, state: &mut GameState) {
@@ -153,10 +153,10 @@ impl GameModeHandler for SettingsMode {
                     0 => LedPattern::Blink1,
                     1 => LedPattern::Blink2,
                     2 => LedPattern::Blink3,
-                    3 => LedPattern::Fade1,
-                    _ => LedPattern::SolidBright,
+                    3 => LedPattern::Fade,
+                    _ => LedPattern::Solid,
                 };
-                platform.set_cargo(Cargo::Have(led_pattern));
+                platform.set_cargo_out(Cargo::Full(led_pattern));
             }
         }
     }

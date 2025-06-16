@@ -23,15 +23,15 @@ impl GameModeHandler for SnakeMode {
         state.is_over = false;
         state.display = DisplayState::Score(self.score);
 
-        state.init_trains(Cargo::Have(LedPattern::SolidBright), 1, MAX_CARS as u8);
-        state.init_platforms(Cargo::Have(LedPattern::SolidBright));
+        state.init_trains(Cargo::Full(LedPattern::Solid), 1, MAX_CARS as u8);
+        state.init_platforms(Cargo::Full(LedPattern::Solid));
     }
 
     fn on_game_tick(&mut self, state: &mut GameState) {
         for platform in state.platforms.iter_mut() {
             if platform.is_empty() && Rand::default().get_u16() <= 50 {
                 // TODO: check train too
-                platform.set_cargo(Cargo::Have(LedPattern::SolidBright));
+                platform.set_cargo_out(Cargo::Full(LedPattern::Solid));
             }
         }
 
@@ -68,7 +68,7 @@ impl GameModeHandler for SnakeMode {
             if !platform.is_empty() && train.front() == platform.track_location() {
                 platform.clear_cargo();
 
-                train.add_car(Cargo::Have(LedPattern::SolidBright));
+                train.add_car(Cargo::Full(LedPattern::Solid));
 
                 self.score = train.len() as u16;
                 state.display = DisplayState::Score(self.score);

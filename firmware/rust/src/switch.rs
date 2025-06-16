@@ -154,7 +154,7 @@ impl Switch {
                     // Only update active_loc if no train is present
                     let active_occupied = trains.iter().any(|train| train.at_location(active_loc));
                     if !active_occupied {
-                        let brightness = LedPattern::Fade1.get_pwm(
+                        let brightness = LedPattern::Fade.get_pwm(
                             self.phase,
                             settings.switch_brightness() >> 1,
                             settings.switch_brightness(),

@@ -39,7 +39,7 @@ fn panic(_: &core::panic::PanicInfo) -> ! {
         400_000,
     );
     let mut board_digits = as1115::AS1115::new(i2c, DIGITS_I2C_ADDR);
-    board_digits.init(NUM_DIGITS, DIGITS_INTENSITY).unwrap();
+    board_digits.init(NUM_DIGITS, DIGITS_INTENSITY).ok();
 
     let mut error_code: u16 = 0;
     unsafe {
@@ -47,9 +47,9 @@ fn panic(_: &core::panic::PanicInfo) -> ! {
     }
 
     loop {
-        board_digits.display_ascii(b"err").unwrap();
+        board_digits.display_ascii(b"err").ok();
         delay.delay_ms(500);
-        board_digits.display_number(error_code).unwrap();
+        board_digits.display_number(error_code).ok();
         delay.delay_ms(1000);
     }
 }

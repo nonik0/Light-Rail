@@ -1,4 +1,4 @@
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 pub enum Cargo {
     Empty,
     Full(LedPattern),
@@ -26,7 +26,7 @@ impl Cargo {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 pub enum LedPattern {
     Solid,
     Blink1,

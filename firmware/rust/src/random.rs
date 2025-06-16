@@ -3,7 +3,7 @@ use core::cell::Cell;
 use random_trait::Random;
 
 // static struct holding state of the RNG
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy)]
 pub struct RngState {
     value: u32,
     index: usize,

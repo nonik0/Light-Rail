@@ -30,7 +30,6 @@ impl GameModeHandler for SnakeMode {
     fn on_game_tick(&mut self, state: &mut GameState) {
         for platform in state.platforms.iter_mut() {
             if platform.is_empty() && Rand::default().get_u16() <= 50 {
-                // TODO: check train too
                 platform.set_cargo_out(Cargo::Full(LedPattern::Solid));
             }
         }

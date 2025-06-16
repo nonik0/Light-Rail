@@ -8,10 +8,10 @@ use crate::{
     platform::Platform,
     switch::Switch,
     train::{Car, Train, DEFAULT_SPEED},
-    Rand, NUM_DIGITS,
+    random::Rand, NUM_DIGITS,
 };
 
-pub const MAX_CARS: usize = 62;
+pub const MAX_CARS: usize = 100;
 pub const MAX_TRAINS: usize = 3;
 pub const NOMINAL_TRAIN_SIZE: usize = MAX_CARS / MAX_TRAINS;
 
@@ -54,7 +54,7 @@ impl GameState {
         for _ in 1..num_cars {
             train.add_car(cargo);
         }
-        self.trains.push(train).unwrap();
+        self.trains.push(train).ok();
         self.redraw = true;
     }
 

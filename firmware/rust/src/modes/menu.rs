@@ -18,8 +18,7 @@ const SNAKE_LENGTH: usize = 6; // number of segments in the snake
 const SNAKE_PERIOD: u8 = 15; // number of ticks between snake movements
 const MAX_NEXT_SEGMENTS: usize = 3; // max of 3 options when moving from one segment
 
-// TODO: if needed can squash loc into a byte, 4 bits for digit and 4 bits for segment
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Default)]
 struct SnakeLocation {
     digit: u8,
     segment: u8,
@@ -409,9 +408,7 @@ impl MenuMode {
         let new_head = new_head.unwrap();
         self.snake_segments.pop_back().unwrap();
         self.snake_direction = new_direction;
-        self.snake_segments
-            .push_front(new_head)
-            .unwrap();
+        self.snake_segments.push_front(new_head).ok();
     }
 
     fn snake_segment_data(&self) -> [u8; NUM_DIGITS as usize] {
@@ -456,9 +453,7 @@ impl GameModeHandler for MenuMode {
             1u8 << (Rand::default().get_u8() % 7),
         );
         for _ in 0..SNAKE_LENGTH {
-            self.snake_segments
-                .push_back(snake_segment.clone())
-                .unwrap();
+            self.snake_segments.push_back(snake_segment.clone()).ok();
             self.snake_slither();
         }
 

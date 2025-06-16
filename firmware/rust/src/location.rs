@@ -6,14 +6,14 @@ use avr_progmem::progmem;
 /// Direction of travel for a train from LED/node location.
 /// Anode is "exiting" a location from the LED's anode,
 /// cathode is "exiting" a location from the LED's cathode.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy)]
 pub enum Direction {
     Anode,
     Cathode,
 }
 
 /// Lightweight abstraction on top of index into NODE_DATA
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 pub struct Location {
     node_index: u8,
 }
@@ -101,7 +101,7 @@ impl Location {
 /// LocationNode is built at compile time from the packed u32 array from C impl.
 /// Straight tracks have two neighbors, forks have three, and crosses have four.
 #[repr(C, packed)]
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 struct LocationNode {
     anode_neighbor: u8,
     cathode_neighbor: u8,

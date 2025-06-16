@@ -148,7 +148,7 @@ impl GameModeHandler for TimeMode {
             let mut available_platform_indices: Vec<usize, NUM_PLATFORMS> = Vec::new();
             for (i, platform) in state.platforms.iter().enumerate() {
                 if platform.is_empty() && !train.at_location(platform.track_location()) {
-                    available_platform_indices.push(i).unwrap();
+                    available_platform_indices.push(i).ok();
                 }
             }
 

@@ -20,8 +20,6 @@ use embedded_hal::delay::DelayNs;
 use embedded_hal_bus::i2c::{self};
 #[cfg(not(feature = "panic_to_digits"))]
 use panic_halt as _;
-use random::Rand;
-use random_trait::Random;
 
 type Adc = atmega_hal::adc::Adc<CoreClock>;
 #[cfg(feature = "atmega32u4")]
@@ -78,29 +76,13 @@ fn main() -> ! {
     #[cfg(feature = "atmega328p")]
     let board_buzzer = tone::TimerTone::new();
 
-    // TODO: load from EEPROM
     let eeprom = Eeprom::new(dp.EEPROM);
     let settings = game_settings::GameSettings::new(eeprom);
 
     let mut board_digits =
         as1115::AS1115::new(i2c::RefCellDevice::new(&i2c_ref_cell), DIGITS_I2C_ADDR);
-    board_digits.init(settings.digit_brightness_level()).unwrap();
-    board_digits.clear().unwrap();
-
-    // board_digits.display_ascii(b"crg").unwrap();
-    // delay.delay_ms(1000);
-    // board_digits.display_number(core::mem::size_of::<cargo::Cargo>()).unwrap();
-    // delay.delay_ms(2000);
-
-    // board_digits.display_ascii(b"car").unwrap();
-    // delay.delay_ms(1000);
-    // board_digits.display_number(core::mem::size_of::<train::Car>()).unwrap();
-    // delay.delay_ms(2000);
-
-    // board_digits.display_ascii(b"plt").unwrap();
-    // delay.delay_ms(1000);
-    // board_digits.display_number(core::mem::size_of::<platform::Platform>()).unwrap();
-    // delay.delay_ms(2000);
+    board_digits.init(settings.digit_brightness_level()).ok();
+    board_digits.clear().ok();
 
     #[cfg(feature = "atmega32u4")]
     let input_pins = [
@@ -136,8 +118,8 @@ fn main() -> ! {
 
     let mut board_leds =
         is31fl3731::IS31FL3731::new(i2c::RefCellDevice::new(&i2c_ref_cell), LEDS_I2C_ADDR);
-    board_leds.setup_blocking(&mut delay).unwrap();
-    board_leds.clear_blocking().unwrap();
+    board_leds.setup_blocking(&mut delay).unwrap(); // TODO: why does OK hang???
+    board_leds.clear_blocking().ok();
 
     // generate random seed from ADC temperature sensor
     let mut adc = Adc::new(dp.ADC, Default::default());
@@ -149,10 +131,6 @@ fn main() -> ! {
         seed |= lsb << (i * 4);
     }
     random::Rand::seed(seed);
-    board_digits
-        .display_number(Rand::default().get_u8() as u16)
-        .unwrap();
-    board_digits.clear().unwrap();
 
     let cars = [train::Car::default(); game_state::MAX_CARS];
     let mut game = game::Game::new(

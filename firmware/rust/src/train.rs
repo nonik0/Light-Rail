@@ -12,14 +12,13 @@ pub const DEFAULT_SPEED: u8 = 10;
 const MIN_SPEED: u8 = 0;
 const MAX_SPEED: u8 = 100;
 
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Default)]
 pub struct Car {
     pub loc: Location,
     pub cargo: Cargo,
     pub last_brightness: u8,
 }
 
-#[derive(Debug)]
 pub struct Train {
     direction: Direction,
     speed: u8,
@@ -69,8 +68,11 @@ impl Train {
             let caboose_loc = self.caboose().loc;
             let inv_caboose_dir = if self.num_cars > 1 {
                 let next_car_loc = self.cars()[self.num_cars as usize - 2].loc;
-                if caboose_loc.next(Direction::Anode, false).0 == next_car_loc {
-                    // TODO: check for switch
+                if caboose_loc
+                    .next(Direction::Anode, Rand::default().get_bool())
+                    .0
+                    == next_car_loc
+                {
                     Direction::Cathode
                 } else {
                     Direction::Anode
@@ -111,7 +113,13 @@ impl Train {
     }
 
     /// Game tick for train, returns location updates as cars move along track
-    pub fn advance<F>(&mut self, settings: &GameSettings, switches: &[Switch], mut update_callback: F, force_update: bool) -> bool
+    pub fn advance<F>(
+        &mut self,
+        settings: &GameSettings,
+        switches: &[Switch],
+        mut update_callback: F,
+        force_update: bool,
+    ) -> bool
     where
         F: FnMut(Location, u8),
     {
@@ -121,7 +129,9 @@ impl Train {
         // If not enough speed accumulated, just update brightness and return
         if self.speed_counter < MAX_SPEED {
             for car in self.cars_mut().iter_mut() {
-                let brightness = car.cargo.car_brightness(self.phase, settings.car_brightness());
+                let brightness = car
+                    .cargo
+                    .car_brightness(self.phase, settings.car_brightness());
                 if force_update || car.last_brightness != brightness {
                     car.last_brightness = brightness;
                     update_callback(car.loc, brightness);
@@ -139,23 +149,28 @@ impl Train {
         let cars = self.cars_mut();
         for i in (1..cars.len()).rev() {
             cars[i].loc = cars[i - 1].loc;
-            let brightness = cars[i].cargo.car_brightness(self.phase, settings.car_brightness());
+            let brightness = cars[i]
+                .cargo
+                .car_brightness(self.phase, settings.car_brightness());
             update_callback(cars[i].loc, brightness);
         }
 
         // Determine if the front of the train is on a switched track
         let front_loc = self.front();
-        let is_switched = switches.iter().any(|switch| {
-            front_loc == switch.location() && switch.is_switched(self.direction)
-        });
+        let is_switched = switches
+            .iter()
+            .any(|switch| front_loc == switch.location() && switch.is_switched(self.direction));
 
         // Advance the engine to the next location and update brightness
         let (next_loc, new_dir) = self.front().next(self.direction, is_switched);
         self.direction = new_dir;
         self.engine_mut().loc = next_loc;
-        let brightness = self.engine().cargo.car_brightness(self.phase, settings.car_brightness());
+        let brightness = self
+            .engine()
+            .cargo
+            .car_brightness(self.phase, settings.car_brightness());
         update_callback(self.front(), brightness);
-        
+
         true
     }
 
@@ -244,7 +259,6 @@ impl Train {
     fn cars_mut(&self) -> &mut [Car] {
         unsafe { core::slice::from_raw_parts_mut(self.cars_ptr, self.num_cars as usize) }
     }
-
 }
 
 impl core::ops::Index<usize> for Train {

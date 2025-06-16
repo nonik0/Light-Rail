@@ -19,7 +19,7 @@ pub struct GameSettings {
     // gameplay settings
     // game_speed: u8, // TODO: add game speed setting
     // other
-    buzzer_enabled: bool, // TODO: add buzzer enabled setting
+    buzzer_enabled: bool,
 }
 
 impl GameSettings {

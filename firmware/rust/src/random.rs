@@ -24,6 +24,26 @@ impl Rand {
             });
         });
     }
+
+    /// Returns a random u8 in the range [min, max] (inclusive), with uniform distribution.
+    pub fn from_range(min: u8, max: u8) -> u8 {
+        assert!(min <= max, "min must be <= max");
+        let mut instance = Self::default();
+        let span = max.wrapping_sub(min).wrapping_add(1);
+
+        if span == 0 {
+            instance.get_u8();
+        }
+
+        // Avoid modulo bias by only accepting values < zone
+        let span_max = u8::MAX - (u8::MAX % span);
+        loop {
+            let value = instance.get_u8();
+            if value < span_max {
+                return min + (value % span);
+            }
+        }
+    }
 }
 
 impl Random for Rand {

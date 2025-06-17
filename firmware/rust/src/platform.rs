@@ -22,7 +22,7 @@ impl Platform {
             cargo: Cargo::Empty,
             is_cargo_in: false,
             last_brightness: 0,
-            phase: 0, //Rand::default().get_u8(), // initial phase
+            phase: 0, // initial phase
             phase_inc: 1,                    // default increment
         }
     }

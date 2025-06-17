@@ -53,7 +53,6 @@ impl Switch {
 
         Self {
             location,
-            //phase: Rand::default().get_u8(), // initial phase
             phase: 0,
             anode_switched,
             //anode_last_switched: None,

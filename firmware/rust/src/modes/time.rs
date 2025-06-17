@@ -131,7 +131,7 @@ impl GameModeHandler for TimeMode {
         if !self.timers.is_full() {
             for (platform_index, platform) in state.platforms.iter_mut().enumerate() {
                 if platform.is_empty() && Rand::default().get_u16() <= 20 {
-                    let led_pattern = match Rand::default().get_u8() % 3 {
+                    let led_pattern = match Rand::from_range(0, 3) {
                         0 => LedPattern::Blink1,
                         1 => LedPattern::Blink2,
                         2 => LedPattern::Blink3,
@@ -189,7 +189,7 @@ impl GameModeHandler for TimeMode {
 
             for cargo in cargo_to_place {
                 if !available_platform_indices.is_empty() {
-                    let rand_index = Rand::default().get_usize() % available_platform_indices.len();
+                    let rand_index = Rand::from_range(0, available_platform_indices.len() as u8 - 1) as usize;
                     let rand_platform_index = available_platform_indices[rand_index];
                     state.platforms[rand_platform_index].set_cargo_in(cargo);
                     self.add_platform_timer(rand_platform_index as u8);

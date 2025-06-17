@@ -1,5 +1,4 @@
 use heapless::Vec;
-use random_trait::Random;
 
 use crate::{
     cargo::*,
@@ -96,7 +95,7 @@ impl GameState {
     }
 
     pub fn rand_platform(&self) -> &Platform {
-        let rand_platform_index = Rand::default().get_usize() % self.platforms.len();
+        let rand_platform_index = Rand::from_range(0, self.platforms.len() as u8 - 1) as usize;
         &self.platforms[rand_platform_index]
     }
 

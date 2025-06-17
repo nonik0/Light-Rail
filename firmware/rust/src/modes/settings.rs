@@ -142,7 +142,7 @@ impl GameModeHandler for SettingsMode {
     fn on_game_tick(&mut self, state: &mut GameState) {
         for platform in state.platforms.iter_mut() {
             if platform.is_empty() && Rand::default().get_u16() <= 50 {
-                let led_pattern = match Rand::default().get_u8() % 5 {
+                let led_pattern = match Rand::from_range(0, 4) {
                     0 => LedPattern::Blink1,
                     1 => LedPattern::Blink2,
                     2 => LedPattern::Blink3,

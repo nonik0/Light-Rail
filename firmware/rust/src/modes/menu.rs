@@ -32,17 +32,20 @@ impl SnakeLocation {
 #[derive(Default)]
 pub struct MenuMode {
     index: usize,
+    snake_grow: bool,
     snake_counter: u8,
+    snake_hunger: u8, // hunger counter that reduces length of snake
     snake_direction: bool,
     snake_segments: Deque<SnakeLocation, SNAKE_LENGTH>,
+    snake_food: u8, // bitmask of digits that have food (decimal point)
 }
 
 impl MenuMode {
     fn shuffle<T, const N: usize>(vec: &mut Vec<T, N>) {
         let len = vec.len();
         for i in (1..len).rev() {
-            let j = Rand::default().get_usize() % (i + 1);
-            vec.swap(i, j);
+            let j = Rand::from_range(0, i as u8);
+            vec.swap(i, j as usize);
         }
     }
 
@@ -365,15 +368,29 @@ impl MenuMode {
         None
     }
 
+    fn snake_eat(&mut self) {
+        if let Some(snake_head) = self.snake_segments.front() {
+            let head_digit = snake_head.digit;
+            let food_mask = 1 << head_digit;
+
+            match (snake_head.segment, self.snake_direction) {
+                // Eats food on current digit if moving down from C or right from D
+                (C, false) | (D, true) if (self.snake_food & food_mask) != 0 => {
+                    self.snake_food &= !food_mask;
+                    self.snake_grow = true; // grow snake
+                }
+                // Eats food on previous digit if moving left from D
+                (D, false) if head_digit > 0 && (self.snake_food & (food_mask >> 1)) != 0 => {
+                    self.snake_food &= !(food_mask >> 1);
+                    self.snake_grow = true; // grow snake
+                }
+                _ => {}
+            }
+        }
+    }
+
     fn snake_slither(&mut self) {
         let snake_head = self.snake_segments.front().unwrap();
-
-        // if let Some((next_loc, next_dir)) = self.find_path(snake_head, self.snake_direction, 3) {
-        //     // pop old tail and push new head
-        //     self.snake_segments.pop_back().unwrap();
-        //     self.snake_direction = next_dir;
-        //     self.snake_segments.push_front(next_loc).unwrap();
-        // }
 
         // look for a path to slither
         let mut new_head = None;
@@ -393,19 +410,15 @@ impl MenuMode {
         // if still no path found, return and be stuck (does it happen?)
         if new_head.is_none() {
             return;
-            // let next_locs = Self::next_segment_locations(
-            //     self.snake_segments.front().unwrap(),
-            //     self.snake_direction,
-            // );
-            // let (next_loc, next_direction) =
-            //     next_locs[Rand::default().get_u8() as usize % next_locs.len()];
-            // new_head = Some(next_loc);
-            // new_direction = next_direction;
         }
 
         // pop old tail and push new head
         let new_head = new_head.unwrap();
-        self.snake_segments.pop_back().unwrap();
+        // grow by not popping tail when slithering
+        if !self.snake_grow || self.snake_segments.is_full() {
+            self.snake_segments.pop_back();
+        }
+        self.snake_grow = false;
         self.snake_direction = new_direction;
         self.snake_segments.push_front(new_head).ok();
     }
@@ -414,6 +427,12 @@ impl MenuMode {
         let mut segment_data = [0; NUM_DIGITS as usize];
         for segment in self.snake_segments.iter() {
             segment_data[segment.digit as usize] |= segment.segment;
+        }
+
+        for digit in 0..NUM_DIGITS {
+            if (self.snake_food & (1 << digit)) != 0 {
+                segment_data[digit as usize] |= DP;
+            }
         }
         segment_data
     }
@@ -443,15 +462,16 @@ impl GameModeHandler for MenuMode {
 
         // kill snake
         self.snake_counter = 0;
+        self.snake_food = 0;
         self.snake_segments.clear();
 
         // birth snake
         self.snake_direction = Rand::default().get_bool();
         let snake_segment = SnakeLocation::new(
-            Rand::default().get_u8() % NUM_DIGITS,
-            1u8 << (Rand::default().get_u8() % 7),
+            Rand::from_range(0, NUM_DIGITS - 1),
+            1u8 << Rand::from_range(0, 6), // random segment A-G
         );
-        for _ in 0..SNAKE_LENGTH {
+        for _ in 0..1 {
             self.snake_segments.push_back(snake_segment.clone()).ok();
             self.snake_slither();
         }
@@ -469,9 +489,52 @@ impl GameModeHandler for MenuMode {
             self.snake_counter = (self.snake_counter + 1) % SNAKE_PERIOD;
             if self.snake_counter == 0 {
                 self.snake_slither();
+                self.snake_eat();
+
+                // the longer the snake, the faster it gets hungry
+                let snake_length = self.snake_segments.len() as u8;
+                if snake_length > 1 {
+                    self.snake_hunger += 1;
+
+                    let hunger_threshold = 0xFF >> snake_length - 1;
+                    if self.snake_hunger >= hunger_threshold {
+                        self.snake_hunger = 0;
+                        self.snake_segments.pop_back();
+                    }
+                }
+
                 state.display = DisplayState::Segments(self.snake_segment_data())
             }
-        }
+
+            // randomly spawn food if snake is not occupying the vicinity and the head is not a neighbor
+            if self.snake_food < 0b111 && Rand::from_range(0, 100) == 0 {
+                let food_digit = Rand::from_range(0, NUM_DIGITS - 1);
+                let mut neighbors: Vec<SnakeLocation, MAX_NEXT_SEGMENTS> = Vec::new();
+                neighbors.push(SnakeLocation::new(food_digit, C)).ok();
+                neighbors.push(SnakeLocation::new(food_digit, D)).ok();
+                if food_digit < NUM_DIGITS - 1 {
+                    neighbors.push(SnakeLocation::new(food_digit + 1, D)).ok();
+                }
+
+                let occupied_neighbors = self
+                    .snake_segments
+                    .iter()
+                    .filter(|s| {
+                        neighbors
+                            .iter()
+                            .any(|n| n.digit == s.digit && n.segment == s.segment)
+                    })
+                    .count();
+                let head_is_neighbor = self
+                    .snake_segments
+                    .front()
+                    .map_or(false, |s| s.digit == food_digit);
+                if occupied_neighbors < 2 && !head_is_neighbor {
+                    self.snake_food |= 1 << food_digit;
+                    state.display = DisplayState::Segments(self.snake_segment_data());
+                }
+            } // end food spawning
+        } // end snake animation
 
         for platform in state.platforms.iter_mut() {
             if platform.is_empty() && Rand::default().get_u16() <= 50 {
@@ -502,7 +565,7 @@ impl GameModeHandler for MenuMode {
         if Rand::default().get_bool() {
             state.train_switch(train_index);
         }
-        
+
         // Clear cargo if train front is at a platform with cargo
         let train = &state.trains[train_index];
         for platform in state.platforms.iter_mut() {

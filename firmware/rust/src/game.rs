@@ -76,6 +76,7 @@ where
     }
 
     pub fn restart(&mut self) {
+        self.board_digits.display_number(1).ok();
         self.mode = GameMode::from_index(self.mode_index);
         self.mode.on_restart(&mut self.state);
         self.state.redraw = true;

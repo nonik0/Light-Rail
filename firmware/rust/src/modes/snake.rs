@@ -28,18 +28,19 @@ impl GameModeHandler for SnakeMode {
     }
 
     fn on_game_tick(&mut self, state: &mut GameState) {
-        for platform in state.platforms.iter_mut() {
-            if platform.is_empty() && Rand::default().get_u16() <= 50 {
-                platform.set_cargo_out(Cargo::Full(LedPattern::Solid));
-            }
-        }
-
         if state.is_over {
             self.counter += 1;
             if self.counter == 0 {
                 state.display = DisplayState::Text(*b"ded");
             } else if self.counter == u8::MAX >> 1 {
                 state.display = DisplayState::Score(self.score);
+            }
+            return;
+        }
+
+        for platform in state.platforms.iter_mut() {
+            if platform.is_empty() && Rand::default().get_u16() <= 50 {
+                platform.set_cargo_out(Cargo::Full(LedPattern::Solid));
             }
         }
     }

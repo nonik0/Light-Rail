@@ -1,13 +1,15 @@
-use crate::{game_state::*, input::InputEvent};
+use crate::{game_state::*, input::InputEvent, NUM_DIGITS};
 use enum_dispatch::enum_dispatch;
 
-pub mod freeplay;
+//pub mod freeplay;
+pub mod juggle;
 pub mod menu;
 pub mod settings;
 pub mod snake;
 pub mod time;
 
-pub use freeplay::*;
+//pub use freeplay::*;
+pub use juggle::*;
 pub use menu::*;
 pub use settings::*;
 pub use snake::*;
@@ -33,7 +35,8 @@ pub trait GameModeHandler {
 #[enum_dispatch(GameModeHandler)]
 pub enum GameMode {
     Menu(MenuMode),
-    Freeplay(FreeplayMode),
+    //Freeplay(FreeplayMode),
+    Juggle(JuggleMode),
     Snake(SnakeMode),
     Time(TimeMode),
     SettingsMode(SettingsMode),
@@ -47,21 +50,23 @@ impl Default for GameMode {
 
 impl GameMode {
     pub fn from_index(mode_index: usize) -> Self {
-        match mode_index {
-            1 => GameMode::Freeplay(FreeplayMode::default()),
-            2 => GameMode::Snake(SnakeMode::default()),
-            3 => GameMode::Time(TimeMode::default()),
-            4 => GameMode::SettingsMode(SettingsMode::default()),
+        match mode_index + 1{
+            //1 => GameMode::Freeplay(FreeplayMode::default()),
+            2 => GameMode::Juggle(JuggleMode::default()),
+            3 => GameMode::Snake(SnakeMode::default()),
+            4 => GameMode::Time(TimeMode::default()),
+            5 => GameMode::SettingsMode(SettingsMode::default()),
             _ => GameMode::Menu(MenuMode::default()),
         }
     }
 
-    pub fn mode_name(mode_index: usize) -> [u8; 3] {
-        match mode_index {
-            1 => *b"ply", // Play
-            2 => *b"snk", // Snake
-            3 => *b"tme", // Time (pick up and deliver)
-            4 => *b"set", // Settings
+    pub fn mode_name(mode_index: usize) -> [u8; NUM_DIGITS as usize] {
+        match mode_index + 1 {
+            //1 => *b"ply", // Play
+            2 => *b"jgl", // Juggle
+            3 => *b"snk", // Snake
+            4 => *b"tme", // Time (pick up and deliver)
+            5 => *b"set", // Settings
             _ => *b"err",
         }
     }

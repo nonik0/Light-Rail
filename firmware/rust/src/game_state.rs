@@ -4,16 +4,17 @@ use random_trait::Random;
 use crate::{
     cargo::*,
     game_settings::GameSettings,
-    location::{NUM_PLATFORMS, NUM_SWITCHES},
+    location::{Direction, NUM_PLATFORMS, NUM_SWITCHES},
     platform::Platform,
+    random::Rand,
     switch::Switch,
     train::{Car, Train, DEFAULT_SPEED},
-    random::Rand, NUM_DIGITS,
+    NUM_DIGITS,
 };
 
-pub const MAX_CARS: usize = 100;
-pub const MAX_TRAINS: usize = 3;
-pub const NOMINAL_TRAIN_SIZE: usize = MAX_CARS / MAX_TRAINS;
+pub const MAX_CARS: usize = 128;
+pub const MAX_TRAINS: usize = 8;
+pub const TRAIN_SIZE: usize = MAX_CARS / MAX_TRAINS;
 
 #[derive(Clone, Copy, PartialEq)]
 pub enum DisplayState {
@@ -44,11 +45,7 @@ impl GameState {
         }
 
         // TODO: for now, simple allocation method that divides evenly on MAX_TRAINS, only snake allocated single train with max cars
-        let cars_ptr = unsafe {
-            self.cars
-                .as_mut_ptr()
-                .add(self.trains.len() * NOMINAL_TRAIN_SIZE)
-        };
+        let cars_ptr = unsafe { self.cars.as_mut_ptr().add(self.trains.len() * TRAIN_SIZE) };
         let loc = self.rand_platform().track_location();
         let mut train = Train::new(cars_ptr, max_cars, loc, cargo, speed);
         for _ in 1..num_cars {
@@ -101,5 +98,25 @@ impl GameState {
     pub fn rand_platform(&self) -> &Platform {
         let rand_platform_index = Rand::default().get_usize() % self.platforms.len();
         &self.platforms[rand_platform_index]
+    }
+
+    /// If the train just left a switch, switch it.
+    pub fn train_switch(&mut self, train_index: usize) {
+        let train = &self.trains[train_index];
+        let caboose_loc = train.caboose().loc;
+        let last_loc = train.last_loc();
+
+        // If train just left a switch, randomly switch it
+        for switch in self.switches.iter_mut() {
+            if caboose_loc == switch.location() {
+                continue; // Train is entering, not leaving
+            }
+            for dir in [Direction::Anode, Direction::Cathode] {
+                if switch.active_location(dir) == Some(last_loc) {
+                    switch.switch();
+                    break;
+                }
+            }
+        }
     }
 }

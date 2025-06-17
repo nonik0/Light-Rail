@@ -61,6 +61,7 @@ impl GameSettings {
         self.eeprom.write_byte(1, self.car_brightness_level);
         self.eeprom.write_byte(2, self.platform_brightness_level);
         self.eeprom.write_byte(3, self.switch_brightness_level);
+        self.eeprom.write_byte(4, self.buzzer_enabled as u8);
     }
 
     #[inline(always)]

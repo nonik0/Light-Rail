@@ -6,7 +6,6 @@ use crate::{
     cargo::*,
     game_state::*,
     input::{InputDirection, InputEvent},
-    location::Direction,
     modes::{GameMode, GameModeHandler},
     random::Rand,
     train::DEFAULT_SPEED,
@@ -500,24 +499,12 @@ impl GameModeHandler for MenuMode {
     }
 
     fn on_train_advance(&mut self, train_index: usize, state: &mut GameState) {
-        let train = &state.trains[train_index];
-        let caboose_loc = train.caboose().loc;
-        let last_loc = train.last_loc();
-
-        // If train just left a switch, randomly switch it
-        for switch in state.switches.iter_mut() {
-            if caboose_loc == switch.location() {
-                continue; // Train is entering, not leaving
-            }
-            for dir in [Direction::Anode, Direction::Cathode] {
-                if switch.active_location(dir) == Some(last_loc) && Rand::default().get_bool() {
-                    switch.switch();
-                    break;
-                }
-            }
+        if Rand::default().get_bool() {
+            state.train_switch(train_index);
         }
-
+        
         // Clear cargo if train front is at a platform with cargo
+        let train = &state.trains[train_index];
         for platform in state.platforms.iter_mut() {
             if !platform.is_empty() && train.front() == platform.track_location() {
                 platform.clear_cargo();

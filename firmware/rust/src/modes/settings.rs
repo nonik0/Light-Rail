@@ -1,3 +1,4 @@
+use as1115::ascii_to_segment;
 use random_trait::Random;
 
 use crate::{
@@ -25,43 +26,35 @@ pub struct SettingsMode {
 
 impl SettingsMode {
     fn setting_display(&self, settings: &GameSettings) -> DisplayState {
+        let mut segments = [b' '; NUM_DIGITS as usize];
         match self.cur_setting {
             Setting::DigitBrightness => {
-                let mut text = [b' '; NUM_DIGITS as usize];
-                text[0] = b'D';
-                text[1] = b'B';
-                text[2] = b'0' + settings.digit_brightness_level();
-                DisplayState::Text(text)
+                segments[0] = ascii_to_segment(b'D');
+                segments[1] = ascii_to_segment(b'B') | as1115::segments::DP;
+                segments[2] = ascii_to_segment(b'0' + settings.digit_brightness_level());
             }
             Setting::TrainBrightness => {
-                let mut text = [b' '; NUM_DIGITS as usize];
-                text[0] = b'T';
-                text[1] = b'B';
-                text[2] = b'0' + settings.car_brightness_level();
-                DisplayState::Text(text)
+                segments[0] = ascii_to_segment(b'T');
+                segments[1] = ascii_to_segment(b'B') | as1115::segments::DP;
+                segments[2] = ascii_to_segment(b'0' + settings.car_brightness_level());
             }
             Setting::PlatformBrightness => {
-                let mut text = [b' '; NUM_DIGITS as usize];
-                text[0] = b'P';
-                text[1] = b'B';
-                text[2] = b'0' + settings.platform_brightness_level();
-                DisplayState::Text(text)
+                segments[0] = ascii_to_segment(b'P');
+                segments[1] = ascii_to_segment(b'B') | as1115::segments::DP;
+                segments[2] = ascii_to_segment(b'0' + settings.platform_brightness_level());
             }
             Setting::SwitchBrightness => {
-                let mut text = [b' '; NUM_DIGITS as usize];
-                text[0] = b'Y';
-                text[1] = b'B';
-                text[2] = b'0' + settings.switch_brightness_level();
-                DisplayState::Text(text)
+                segments[0] = ascii_to_segment(b'Y');
+                segments[1] = ascii_to_segment(b'B') | as1115::segments::DP;
+                segments[2] = ascii_to_segment(b'0' + settings.switch_brightness_level());
             }
             Setting::BuzzerEnabled => {
-                let mut text = [b' '; NUM_DIGITS as usize];
-                text[0] = b'B';
-                text[1] = b'Z';
-                text[2] = if settings.is_buzzer_enabled() { b'1' } else { b'0' };
-                DisplayState::Text(text)
+                segments[0] = ascii_to_segment(b'B');
+                segments[1] = ascii_to_segment(b'Z') | as1115::segments::DP;
+                segments[2] = ascii_to_segment(if settings.is_buzzer_enabled() { b'1' } else { b'0' });
             }
         }
+        DisplayState::Segments(segments)
     }
 
     fn next_setting(&mut self) {
@@ -141,7 +134,7 @@ impl GameModeHandler for SettingsMode {
         state.init_trains(
             Cargo::Full(LedPattern::Solid),
             3,
-            NOMINAL_TRAIN_SIZE as u8,
+            TRAIN_SIZE as u8,
         );
         state.init_platforms(Cargo::Full(LedPattern::Solid));
     }

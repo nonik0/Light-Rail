@@ -1,22 +1,19 @@
 use random_trait::Random;
 
-use crate::{
-    cargo::*, game_state::*, input::InputEvent, modes::GameModeHandler, random::Rand,
-    train::DEFAULT_SPEED,
-};
+use crate::{cargo::*, game_state::*, input::InputEvent, modes::GameModeHandler, random::Rand};
 
 const START_SPEED: u8 = 5;
 
 pub struct JuggleMode {
-    score: u16,
     counter: u8,
+    score: u16,
 }
 
 impl Default for JuggleMode {
     fn default() -> Self {
         JuggleMode {
-            score: 0,
             counter: 0,
+            score: 0,
         }
     }
 }
@@ -30,7 +27,7 @@ impl GameModeHandler for JuggleMode {
 
         state.init_trains(Cargo::Full(LedPattern::Solid), 3, MAX_CARS as u8);
         state.trains[0].set_speed(START_SPEED);
-        state.add_train(Cargo::Full(LedPattern::Solid), 3, 5, Some(START_SPEED));
+        state.add_train(Cargo::Full(LedPattern::Solid), 4, 5, Some(START_SPEED));
         state.init_platforms(Cargo::Full(LedPattern::Solid));
     }
 
@@ -43,26 +40,6 @@ impl GameModeHandler for JuggleMode {
                 state.display = DisplayState::Score(self.score);
             }
             return;
-        }
-
-        self.counter += 1;
-        if self.counter == 0 {
-            self.score += 1;
-
-            match self.score {
-                5 => state.trains[0].set_speed(START_SPEED + 3),
-                10 => state.trains[1].set_speed(START_SPEED + 3),
-                15 => state.add_train(Cargo::Full(LedPattern::Solid), 3, 5, Some(START_SPEED+3)),
-                20 => state.trains[1].set_speed(START_SPEED + 6),
-                25 => state.trains[2].set_speed(START_SPEED + 6),
-                30 => state.trains[3].set_speed(START_SPEED + 6),
-                35 => state.trains[1].set_speed(START_SPEED + 6),
-                40 => state.trains[2].set_speed(START_SPEED + 6),
-                45 => state.trains[3].set_speed(START_SPEED + 6),
-                _ => {}
-            }
-
-            state.display = DisplayState::Score(self.score);
         }
 
         for platform in state.platforms.iter_mut() {
@@ -92,12 +69,15 @@ impl GameModeHandler for JuggleMode {
         // }
 
         // Clear cargo if train front is at a platform with cargo
+        let mut score_updated = false;
         for platform in state.platforms.iter_mut() {
             if !platform.is_empty() && train.front() == platform.track_location() {
                 platform.clear_cargo();
-            }
 
-            // TODO: train increases in length after picking up X cargo
+                score_updated = true;
+                self.score += 1;
+                state.display = DisplayState::Score(self.score);
+            }
         }
 
         // Check if train collided with another train
@@ -107,6 +87,33 @@ impl GameModeHandler for JuggleMode {
                 state.display = DisplayState::Text(*b" GG");
                 state.is_over = true;
                 return;
+            }
+        }
+
+        // difficulty scaling
+        if score_updated {
+            match self.score {
+                05 => state.trains[0].set_speed(START_SPEED + 3),
+                10 => state.trains[1].set_speed(START_SPEED + 3),
+                15 => state.trains[0].set_speed(START_SPEED + 6),
+                20 => state.trains[1].set_speed(START_SPEED + 6),
+                25 => state.trains[0].set_speed(START_SPEED + 10),
+                30 => state.trains[1].set_speed(START_SPEED + 10),
+                35 => {
+                    state.add_train(Cargo::Full(LedPattern::Solid), 5, 5, Some(START_SPEED));
+                    state.trains[0].set_speed(START_SPEED);
+                    state.trains[1].set_speed(START_SPEED);
+                }
+                40 => state.trains[0].set_speed(START_SPEED + 3),
+                45 => state.trains[1].set_speed(START_SPEED + 3),
+                50 => state.trains[2].set_speed(START_SPEED + 3),
+                55 => state.trains[0].set_speed(START_SPEED + 6),
+                60 => state.trains[1].set_speed(START_SPEED + 6),
+                65 => state.trains[2].set_speed(START_SPEED + 6),
+                70 => state.trains[0].set_speed(START_SPEED + 10),
+                75 => state.trains[1].set_speed(START_SPEED + 10),
+                80 => state.trains[2].set_speed(START_SPEED + 10),
+                _ => {}
             }
         }
     }

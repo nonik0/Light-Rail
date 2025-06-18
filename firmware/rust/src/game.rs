@@ -53,6 +53,7 @@ where
 
         let state = GameState {
             target_mode_index: 0,
+            is_paused: false,
             is_over: false,
             redraw: false,
             display: DisplayState::None,
@@ -122,6 +123,7 @@ where
                     self.state.target_mode_index = 0;
                     self.mode_index = 0;
                     self.state.is_over = false;
+                    self.state.is_paused = false;
                     self.restart();
                     //return;
                 }
@@ -169,8 +171,8 @@ where
             self.board_leds.clear_blocking().ok();
         }
 
-        // skip updating game entities if game is over
-        if self.state.is_over {
+        // skip updating game entities if game is paused or over
+        if self.state.is_over || self.state.is_paused {
             return;
         }
 

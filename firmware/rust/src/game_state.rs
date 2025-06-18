@@ -22,10 +22,19 @@ pub enum DisplayState {
     Segments([u8; NUM_DIGITS as usize]),
     Text([u8; NUM_DIGITS as usize]),
 }
+impl DisplayState {
+    pub const DED: DisplayState = DisplayState::Text(*b"ded");
+    pub const GG: DisplayState = DisplayState::Text(*b" gg");
+    pub const OVR: DisplayState = DisplayState::Text(*b"ovr");
+    pub const PAUSE_BYTES: [u8; NUM_DIGITS as usize] = [0u8, 0x36, 0u8];
+    pub const PAUSE: DisplayState = DisplayState::Segments(Self::PAUSE_BYTES);
+}
 
+// TODO: move mutable stuff to methods and make stuff private?
 pub struct GameState {
     pub target_mode_index: usize, // in state so menu mode can manipulate it
-    pub is_over: bool,            // stops entity updates
+    pub is_over: bool,            // stops entity updates, game is over
+    pub is_paused: bool,          // stops entity updates, game is still active
     pub redraw: bool,             // flag to redraw board LEDs
     pub display: DisplayState,
     pub settings: GameSettings,

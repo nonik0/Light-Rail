@@ -13,6 +13,7 @@ use crate::{
 };
 use as1115::segments::*;
 
+const IDLE_CYCLES: u16 = 400; // number of cycles before switching back to animation
 const SNAKE_LENGTH: usize = 6; // number of segments in the snake
 const SNAKE_PERIOD: u8 = 15; // number of ticks between snake movements
 const MAX_NEXT_SEGMENTS: usize = 3; // max of 3 options when moving from one segment
@@ -31,6 +32,7 @@ impl SnakeLocation {
 
 #[derive(Default)]
 pub struct MenuMode {
+    counter: u16,
     index: usize,
     snake_grow: bool,
     snake_counter: u8,
@@ -534,7 +536,15 @@ impl GameModeHandler for MenuMode {
                     state.display = DisplayState::Segments(self.snake_segment_data());
                 }
             } // end food spawning
-        } // end snake animation
+        }
+        // end snake animation
+        else {
+            self.counter += 1;
+            if self.counter > IDLE_CYCLES {
+                self.counter = 0;
+                self.index = 0;
+            }
+        }
 
         for platform in state.platforms.iter_mut() {
             if platform.is_empty() && Rand::default().get_u16() <= 50 {
@@ -544,6 +554,7 @@ impl GameModeHandler for MenuMode {
     }
 
     fn on_input_event(&mut self, event: InputEvent, state: &mut GameState) {
+        self.counter = 0;
         match event {
             InputEvent::DirectionButtonPressed(direction) => match direction {
                 InputDirection::Up => {

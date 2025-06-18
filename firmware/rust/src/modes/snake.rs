@@ -1,6 +1,12 @@
 use random_trait::Random;
 
-use crate::{cargo::*, game_state::*, input::InputEvent, modes::GameModeHandler, random::Rand};
+use crate::{
+    cargo::*,
+    game_state::*,
+    input::{InputDirection, InputEvent},
+    modes::GameModeHandler,
+    random::Rand,
+};
 
 pub struct SnakeMode {
     score: u16,
@@ -21,6 +27,7 @@ impl GameModeHandler for SnakeMode {
         self.counter = 0;
         self.score = 1;
         state.is_over = false;
+        state.is_paused = false;
         state.display = DisplayState::Score(self.score);
 
         state.init_trains(Cargo::Full(LedPattern::Solid), 1, MAX_CARS as u8);
@@ -28,10 +35,14 @@ impl GameModeHandler for SnakeMode {
     }
 
     fn on_game_tick(&mut self, state: &mut GameState) {
-        if state.is_over {
+        if state.is_over || state.is_paused {
             self.counter += 1;
             if self.counter == 0 {
-                state.display = DisplayState::Text(*b"ded");
+                state.display = if state.is_paused {
+                    DisplayState::PAUSE
+                } else {
+                    DisplayState::DED
+                }
             } else if self.counter == u8::MAX >> 1 {
                 state.display = DisplayState::Score(self.score);
             }
@@ -45,9 +56,19 @@ impl GameModeHandler for SnakeMode {
         }
     }
 
-    fn on_input_event(&mut self, _: InputEvent, state: &mut GameState) {
+    fn on_input_event(&mut self, event: InputEvent, state: &mut GameState) {
         if state.is_over {
             self.on_restart(state);
+        }
+
+        match event {
+            InputEvent::DirectionButtonPressed(direction) => match direction {
+                InputDirection::Up | InputDirection::Down => {
+                    state.is_paused = !state.is_paused;
+                }
+                _ => {}
+            },
+            _ => {}
         }
     }
 
@@ -57,7 +78,7 @@ impl GameModeHandler for SnakeMode {
         // Check if train collided with itself
         for i in 1..train.len() {
             if train[i].loc == train.front() {
-                state.display = DisplayState::Text(*b"ded");
+                state.display = DisplayState::DED;
                 state.is_over = true;
                 return;
             }

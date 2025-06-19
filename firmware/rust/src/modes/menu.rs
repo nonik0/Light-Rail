@@ -509,7 +509,9 @@ impl GameModeHandler for MenuMode {
             }
 
             // randomly spawn food if snake is not occupying the vicinity and the head is not a neighbor
-            if self.snake_food < 0b111 && Rand::from_range(0, 100) == 0 {
+            let snake_length = self.snake_segments.len() as u8;
+            let spawn_chance = 4 - snake_length.min(3);
+            if self.snake_food < 0b111 && Rand::from_range(0, 100) < spawn_chance {
                 let food_digit = Rand::from_range(0, NUM_DIGITS - 1);
                 let mut neighbors: Vec<SnakeLocation, MAX_NEXT_SEGMENTS> = Vec::new();
                 neighbors.push(SnakeLocation::new(food_digit, C)).ok();
@@ -536,8 +538,7 @@ impl GameModeHandler for MenuMode {
                     state.display = DisplayState::Segments(self.snake_segment_data());
                 }
             } // end food spawning
-        }
-        // end snake animation
+        } // end snake animation
         else {
             self.counter += 1;
             if self.counter > IDLE_CYCLES {

@@ -27,9 +27,8 @@ panic-halt = "1.0.0"
 ufmt = "0.2.0"
 
 [dependencies.as1115]
-#git = "https://github.com/nonik0/as1115"
-#rev = "1a16eaa54253c2c7507fb8790ad490ed39d47195"
-path = "G:\\rust\\drivers\\as1115"
+git = "https://github.com/nonik0/as1115"
+branch = "main"
 
 [dependencies.is31fl3731]
 git = "https://github.com/nonik0/is31fl3731"

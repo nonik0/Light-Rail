@@ -5,6 +5,7 @@ version = 3
 [[package]]
 name = "as1115"
 version = "0.1.0"
+source = "git+https://github.com/nonik0/as1115?branch=main#fdd8259a2a66f4b062e658654cea1a13ea922f39"
 dependencies = [
  "embedded-hal 1.0.0",
  "num-traits",

@@ -77,7 +77,7 @@ where
     }
 
     pub fn restart(&mut self) {
-        self.board_digits.display_number(1).ok();
+        self.board_digits.display_value(1).ok();
         self.mode = GameMode::from_index(self.mode_index);
         self.mode.on_restart(&mut self.state);
         self.state.redraw = true;
@@ -155,10 +155,10 @@ where
                     self.board_digits.clear().ok();
                 }
                 DisplayState::Score(score) => {
-                    self.board_digits.display_number(score).ok();
+                    self.board_digits.display_value(score).ok();
                 }
                 DisplayState::Segments(ref segments) => {
-                    self.board_digits.display_raw(segments).ok();
+                    self.board_digits.display_segments(segments).ok();
                 }
                 DisplayState::Text(ref text) => {
                     self.board_digits.display_ascii(text).ok();

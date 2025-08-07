@@ -80,7 +80,7 @@ fn main() -> ! {
     let settings = game_settings::GameSettings::new(eeprom);
 
     let mut board_digits =
-        as1115::AS1115::new(i2c::RefCellDevice::new(&i2c_ref_cell), DIGITS_I2C_ADDR);
+        as1115::AS1115::new_with_addr(i2c::RefCellDevice::new(&i2c_ref_cell), DIGITS_I2C_ADDR);
     board_digits.init(settings.digit_brightness_level()).ok();
     board_digits.clear().ok();
 

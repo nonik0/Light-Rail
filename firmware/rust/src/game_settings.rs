@@ -1,7 +1,4 @@
-use crate::{
-
-    Eeprom,
-};
+use crate::Eeprom;
 
 const DIGITS_MAX_BRIGHTNESS: u8 = 9; //as1115::constants::MAX_INTENSITY;
 const LED_BRIGHTNESS_LEVELS: u8 = 6; // 6 levels of brightness between 0 and 255

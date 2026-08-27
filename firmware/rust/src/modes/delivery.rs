@@ -11,23 +11,68 @@ use crate::{
     NUM_DIGITS,
 };
 
+// macro for newtypes for delivery mode variants (needed for enum_dispatch that needs unique types for each variant)
+macro_rules! impl_delivery_mode_wrapper {
+    ($wrapper:ident, $enabled:expr) => {
+        pub struct $wrapper(pub crate::modes::delivery::DeliveryMode);
+
+        impl Default for $wrapper {
+            fn default() -> Self {
+                Self(crate::modes::delivery::DeliveryMode::new($enabled))
+            }
+        }
+
+        impl GameModeHandler for $wrapper {
+            fn on_restart(&mut self, state: &mut GameState) {
+                self.0.on_restart(state);
+            }
+
+            fn on_game_tick(&mut self, entities: &mut GameState) {
+                self.0.on_game_tick(entities);
+            }
+
+            fn on_input_event(&mut self, event: InputEvent, state: &mut GameState) {
+                self.0.on_input_event(event, state);
+            }
+
+            fn on_train_advance(&mut self, train_index: usize, state: &mut GameState) {
+                self.0.on_train_advance(train_index, state);
+            }
+        }
+    };
+}
+
+impl_delivery_mode_wrapper!(FreeplayDeliveryMode, false);
+impl_delivery_mode_wrapper!(TimedDeliveryMode, true);
+
 pub struct CargoTimer {
     platform_index: u8,
     ticks_left: u16,
 }
 
-pub struct TimeMode {
+pub struct DeliveryMode {
     counter: u8,
     score: u16,
-    timers: Vec<CargoTimer, { TimeMode::MAX_TIMERS as usize }>,
-    timer_dots: u8, // indicate time left with the 3 decimal points on display
+    timers: Vec<CargoTimer, { DeliveryMode::MAX_TIMERS as usize }>,
+    timer_dots: u8,      // indicate time left with the 3 decimal points on display
+    timer_enabled: bool, // whether expired timers cause game over or not
 }
 
-impl TimeMode {
+impl DeliveryMode {
     const MAX_TIMERS: u8 = 5;
     const MAX_SPEED: u8 = 15;
     const SPEED_INC: u8 = 5;
     const DEFAULT_TIMER_TICKS: u16 = 8000; // ~ 120 seconds with current runtime at 10ms base delay
+
+    pub fn new(enabled: bool) -> Self {
+        DeliveryMode {
+            counter: 0,
+            score: 0,
+            timers: Vec::new(),
+            timer_dots: NUM_DIGITS,
+            timer_enabled: enabled,
+        }
+    }
 
     // difficulty calc functions
     #[inline(always)]
@@ -103,18 +148,7 @@ impl TimeMode {
     }
 }
 
-impl Default for TimeMode {
-    fn default() -> Self {
-        TimeMode {
-            counter: 0,
-            score: 0,
-            timers: Vec::new(),
-            timer_dots: NUM_DIGITS,
-        }
-    }
-}
-
-impl GameModeHandler for TimeMode {
+impl GameModeHandler for DeliveryMode {
     fn on_restart(&mut self, state: &mut GameState) {
         self.counter = 0;
         self.score = 0;
@@ -145,6 +179,7 @@ impl GameModeHandler for TimeMode {
             return;
         }
 
+        // decrement cargo timers
         let mut timer_update = false;
         for timer in self.timers.iter_mut() {
             timer.ticks_left = timer.ticks_left.saturating_sub(1);
@@ -168,7 +203,7 @@ impl GameModeHandler for TimeMode {
                     self.timer_dots = 0;
                     timer_update = true;
                 }
-            } else if timer.ticks_left == 0 {
+            } else if self.timer_enabled && timer.ticks_left == 0 {
                 state.display = DisplayState::OVR;
                 state.is_over = true;
                 return;
@@ -179,8 +214,9 @@ impl GameModeHandler for TimeMode {
             state.display = self.score_display();
         }
 
-        // amount of active timers increases with score
-        if self.timers.len() < self.max_timer_count() as usize && !self.timers.is_full() {
+        // spawn a new cargo timer if conditions are all met
+        if self.timers.len() < self.max_timer_count() as usize && !self.timers.is_full()
+        {
             for (platform_index, platform) in state.platforms.iter_mut().enumerate() {
                 // cargo spawn chance increases with score
                 if platform.is_empty() && Rand::default().get_u16() <= self.spawn_chance() {
@@ -202,7 +238,7 @@ impl GameModeHandler for TimeMode {
             }
         }
 
-        // if train is stopped
+        // if train is stopped, check for cargo to pick up or drop off at platforms
         let train = &mut state.trains[0];
         if train.speed() == 0 {
             let mut cargo_to_place: Vec<Cargo, NUM_PLATFORMS> = Vec::new();

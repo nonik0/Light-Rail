@@ -1,19 +1,19 @@
 use crate::{game_state::*, input::InputEvent, NUM_DIGITS};
 use enum_dispatch::enum_dispatch;
 
+pub mod delivery;
 //pub mod freeplay;
 pub mod juggle;
 pub mod menu;
 pub mod settings;
 pub mod snake;
-pub mod time;
 
+pub use delivery::*;
 //pub use freeplay::*;
 pub use juggle::*;
 pub use menu::*;
 pub use settings::*;
 pub use snake::*;
-pub use time::*;
 
 pub const NUM_MODES: usize = 5;
 
@@ -36,9 +36,10 @@ pub trait GameModeHandler {
 pub enum GameMode {
     Menu(MenuMode),
     //Freeplay(FreeplayMode),
+    DeliveryFreeplay(FreeplayDeliveryMode),
+    DeliveryTimed(TimedDeliveryMode),
     Juggle(JuggleMode),
     Snake(SnakeMode),
-    Time(TimeMode),
     SettingsMode(SettingsMode),
 }
 
@@ -50,12 +51,13 @@ impl Default for GameMode {
 
 impl GameMode {
     pub fn from_index(mode_index: usize) -> Self {
-        match mode_index + 1{
+        match mode_index + 1 {
             //1 => GameMode::Freeplay(FreeplayMode::default()),
-            2 => GameMode::Juggle(JuggleMode::default()),
-            3 => GameMode::Snake(SnakeMode::default()),
-            4 => GameMode::Time(TimeMode::default()),
-            5 => GameMode::SettingsMode(SettingsMode::default()),
+            2 => GameMode::DeliveryFreeplay(FreeplayDeliveryMode::default()),
+            3 => GameMode::DeliveryTimed(TimedDeliveryMode::default()),
+            4 => GameMode::Juggle(JuggleMode::default()),
+            5 => GameMode::Snake(SnakeMode::default()),
+            6 => GameMode::SettingsMode(SettingsMode::default()),
             _ => GameMode::Menu(MenuMode::default()),
         }
     }
@@ -63,10 +65,11 @@ impl GameMode {
     pub fn mode_name(mode_index: usize) -> [u8; NUM_DIGITS as usize] {
         match mode_index + 1 {
             //1 => *b"ply", // Play
-            2 => *b"jgl", // Juggle
-            3 => *b"snk", // Snake
-            4 => *b"tme", // Time (pick up and deliver)
-            5 => *b"set", // Settings
+            2 => *b"1df", // Delivery (untimed)
+            3 => *b"2dt", // Delivery (timed)
+            4 => *b"3jg", // Juggle
+            5 => *b"4sn", // Snake
+            6 => *b"0st", // Settings
             _ => *b"err",
         }
     }

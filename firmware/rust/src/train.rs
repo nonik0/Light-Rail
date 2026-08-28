@@ -156,16 +156,10 @@ impl Train {
             update_callback(cars[i].loc, brightness);
         }
 
-        // Determine if the front of the train is on a switched track
-        let front_loc = self.front();
-        let is_switched = switches
-            .iter()
-            .any(|switch| front_loc == switch.location() && switch.is_switched(self.direction));
-
         // Advance the engine to the next location and update brightness
-        let (next_loc, new_dir) = self.front().next(self.direction, is_switched);
-        self.direction = new_dir;
+        let (next_loc, new_dir) = self.next(switches);
         self.engine_mut().loc = next_loc;
+        self.direction = new_dir;
         let brightness = self
             .engine()
             .cargo
@@ -173,6 +167,22 @@ impl Train {
         update_callback(self.front(), brightness);
 
         true
+    }
+
+    pub fn next_loc(&self, switches: &[Switch]) -> Location {
+        let (loc, _) = self.next(switches);
+        loc
+    }
+
+    pub fn next(&self, switches: &[Switch]) -> (Location, Direction) {
+        // Determine if the front of the train is on a switched track
+        let front_loc = self.front();
+        let is_switched = switches
+            .iter()
+            .any(|switch| front_loc == switch.location() && switch.is_switched(self.direction));
+
+        // Get next location and direction
+        self.front().next(self.direction, is_switched)
     }
 
     /// Returns the vector of cars in the train

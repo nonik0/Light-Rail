@@ -64,9 +64,9 @@ impl GameMode {
 
     pub fn mode_name(mode_index: usize) -> [u8; NUM_DIGITS as usize] {
         match mode_index + 1 {
-            //1 => *b"ply", // Play
-            2 => *b"1df", // Delivery (untimed)
-            3 => *b"2dt", // Delivery (timed)
+            //1 => *b"0ply", // Play
+            2 => *b"1dl", // Delivery (untimed)
+            3 => *b"2ti", // Delivery (timed)
             4 => *b"3jg", // Juggle
             5 => *b"4sn", // Snake
             6 => *b"0st", // Settings

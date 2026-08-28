@@ -18,6 +18,7 @@ enum Setting {
     PlatformBrightness,
     SwitchBrightness,
     BuzzerEnabled,
+    // TODO: Gameplay Speed: control core delays in various places to speed up/down game
 }
 
 pub struct SettingsMode {

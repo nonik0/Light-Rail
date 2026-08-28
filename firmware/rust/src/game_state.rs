@@ -63,6 +63,7 @@ impl GameState {
         self.redraw = true;
     }
 
+    #[allow(dead_code)]
     pub fn remove_train(&mut self) {
         if self.trains.len() > 1 {
             self.trains.pop();

@@ -91,6 +91,7 @@ impl Train {
         Some(loc)
     }
 
+    #[allow(dead_code)]
     pub fn remove_car(&mut self) -> Option<Location> {
         if self.num_cars <= 1 {
             return None;

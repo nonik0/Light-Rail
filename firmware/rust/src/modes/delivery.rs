@@ -77,18 +77,63 @@ impl DeliveryMode {
     // difficulty calc functions
     #[inline(always)]
     fn cargo_ticks_left(&self, cargo: Cargo) -> u16 {
-        match cargo {
-            Cargo::Full(LedPattern::Blink1) => Self::DEFAULT_TIMER_TICKS >> 0,
-            Cargo::Full(LedPattern::Blink2) => Self::DEFAULT_TIMER_TICKS >> 1,
-            Cargo::Full(LedPattern::Blink3) => Self::DEFAULT_TIMER_TICKS >> 2,
-            _ => Self::DEFAULT_TIMER_TICKS,
+        if self.timer_enabled {
+            match cargo {
+                Cargo::Full(LedPattern::Blink1) => Self::DEFAULT_TIMER_TICKS >> 0,
+                Cargo::Full(LedPattern::Blink2) => Self::DEFAULT_TIMER_TICKS >> 1,
+                Cargo::Full(LedPattern::Blink3) => Self::DEFAULT_TIMER_TICKS >> 2,
+                _ => Self::DEFAULT_TIMER_TICKS,
+            }
+        } else {
+            Self::DEFAULT_TIMER_TICKS
         }
     }
 
     #[inline(always)]
-    fn led_pattern_options(&self) -> u8 {
-        let count = (self.score / 5 + 1) as u8;
-        return if count > 5 { 5 } else { count };
+    fn spawn_cargo(&self) -> Cargo {
+        let divisor = if self.timer_enabled { 3 } else { 10 };
+        let count = (self.score / divisor) as u8;
+
+        if self.timer_enabled {
+            let count = if count > 5 { 5 } else { count };
+            let led_pattern = match Rand::from_range(0, count) {
+                0 | 1 | 2 => LedPattern::Blink1,
+                3 | 4 => LedPattern::Blink2,
+                5 => LedPattern::Blink3,
+                _ => LedPattern::Solid,
+            };
+
+            Cargo::Full(led_pattern)
+        } else {
+            let count = if count > 3 { 3 } else { count };
+            let led_pattern = match Rand::from_range(0, count) {
+                0 => LedPattern::Blink1,
+                1 => LedPattern::Blink2,
+                2 => LedPattern::Blink3,
+                _ => LedPattern::Solid,
+            };
+
+            Cargo::Full(led_pattern)
+        }
+    }
+
+    #[inline(always)]
+    fn get_cargo_score(&self, cargo: Cargo) -> u16 {
+        match cargo {
+            Cargo::Full(led_pattern) => {
+                if self.timer_enabled {
+                    match led_pattern {
+                        LedPattern::Blink1 => 1,
+                        LedPattern::Blink2 => 2,
+                        LedPattern::Blink3 => 3,
+                        _ => 0,
+                    }
+                } else {
+                    1
+                }
+            }
+            _ => 0,
+        }
     }
 
     #[inline(always)]
@@ -137,6 +182,25 @@ impl DeliveryMode {
         }
     }
 
+    fn update_timer_dots(&mut self, ticks_left: u16) -> bool {
+        let new_timer_dots = if ticks_left <= (Self::DEFAULT_TIMER_TICKS >> 3) {
+            0
+        } else if ticks_left <= (Self::DEFAULT_TIMER_TICKS >> 2) {
+            1
+        } else if ticks_left <= (Self::DEFAULT_TIMER_TICKS >> 1) {
+            2
+        } else {
+            3
+        };
+
+        if new_timer_dots != self.timer_dots {
+            self.timer_dots = new_timer_dots;
+            true
+        } else {
+            false
+        }
+    }
+
     fn score_display(&self) -> DisplayState {
         let mut segment_data = [0u8; NUM_DIGITS as usize];
         segment_data[0] = as1115::NUMBERS[((self.score / 100) % 10) as usize];
@@ -179,61 +243,49 @@ impl GameModeHandler for DeliveryMode {
             return;
         }
 
-        // decrement cargo timers
-        let mut timer_update = false;
+        // decrement cargo timers and update blink period
+        let mut min_ticks = Self::DEFAULT_TIMER_TICKS;
         for timer in self.timers.iter_mut() {
             timer.ticks_left = timer.ticks_left.saturating_sub(1);
 
             let timer_platform = &mut state.platforms[timer.platform_index as usize];
+
             if timer.ticks_left == (Self::DEFAULT_TIMER_TICKS >> 1) {
                 timer_platform.set_phase_speed(2);
-                if self.timer_dots > 2 {
-                    self.timer_dots = 2;
-                    timer_update = true;
-                }
             } else if timer.ticks_left == (Self::DEFAULT_TIMER_TICKS >> 2) {
                 timer_platform.set_phase_speed(3);
-                if self.timer_dots > 1 {
-                    self.timer_dots = 1;
-                    timer_update = true;
-                }
             } else if timer.ticks_left == (Self::DEFAULT_TIMER_TICKS >> 3) {
                 timer_platform.set_phase_speed(6);
-                if self.timer_dots > 0 {
-                    self.timer_dots = 0;
-                    timer_update = true;
-                }
             } else if self.timer_enabled && timer.ticks_left == 0 {
                 state.display = DisplayState::OVR;
                 state.is_over = true;
                 return;
             }
+
+            min_ticks = min_ticks.min(timer.ticks_left);
         }
 
-        if timer_update {
+        // update display with new timer dots if needed
+        if self.update_timer_dots(min_ticks) {
             state.display = self.score_display();
         }
 
         // spawn a new cargo timer if conditions are all met
-        if self.timers.len() < self.max_timer_count() as usize && !self.timers.is_full()
-        {
+        if self.timers.len() < self.max_timer_count() as usize && !self.timers.is_full() {
             for (platform_index, platform) in state.platforms.iter_mut().enumerate() {
                 // cargo spawn chance increases with score
                 if platform.is_empty() && Rand::default().get_u16() <= self.spawn_chance() {
-                    // chances to spawn different cargo increase with score
-                    let led_pattern = match Rand::from_range(0, self.led_pattern_options()) {
-                        0 | 1 | 2 => LedPattern::Blink1,
-                        3 | 4 => LedPattern::Blink2,
-                        5 => LedPattern::Blink3,
-                        _ => LedPattern::Solid,
-                    };
-                    let spawned_cargo = Cargo::Full(led_pattern);
-
+                    let spawned_cargo = self.spawn_cargo();
                     platform.set_cargo_out(spawned_cargo);
                     self.add_platform_timer(
                         platform_index as u8,
                         self.cargo_ticks_left(spawned_cargo),
                     );
+
+                    // we're done now if we hit max timers after adding this one
+                    if self.timers.len() as u8 > self.max_timer_count() {
+                        break;
+                    }
                 }
             }
         }
@@ -247,34 +299,28 @@ impl GameModeHandler for DeliveryMode {
                 // if train is at platform and platform has cargo
                 if !platform.is_empty() && train.at_location(platform.track_location()) {
                     let (platform_cargo, is_receiving) = platform.cargo();
-                    if let Cargo::Full(pattern) = platform_cargo {
-                        // try to unload cargo if platform is receiving cargo
-                        if is_receiving {
-                            // unload is true only if train has the same type of cargo
-                            if train.unload_cargo(Cargo::Full(pattern)) {
-                                platform.clear_cargo();
-                                self.remove_platform_timer(platform_index as u8);
+                    
+                    if platform_cargo == Cargo::Empty {
+                        continue; // skip if platform has no cargo
+                    }
 
-                                // increase score based on cargo type
-                                match pattern {
-                                    LedPattern::Blink1 => self.score += 1,
-                                    LedPattern::Blink2 => self.score += 2,
-                                    LedPattern::Blink3 => self.score += 3,
-                                    _ => {}
-                                }
-                                state.display = self.score_display();
+                    if is_receiving {
+                        // unload is true only if train has the same type of cargo
+                        if train.unload_cargo(platform_cargo) {
+                            platform.clear_cargo();
+                            self.remove_platform_timer(platform_index as u8);
 
-                                if self.score == 3 || self.score % 10 == 0 {
-                                    train.add_car(Cargo::Empty);
-                                }
-                            }
-                        } else {
-                            if train.load_cargo(platform_cargo) {
-                                platform.clear_cargo();
-                                self.remove_platform_timer(platform_index as u8);
-                                cargo_to_place.push(Cargo::Full(pattern)).ok();
+                            self.score += self.get_cargo_score(platform_cargo);
+                            state.display = self.score_display();
+
+                            if self.score == 3 || self.score % 10 == 0 {
+                                train.add_car(Cargo::Empty);
                             }
                         }
+                    } else if train.load_cargo(platform_cargo) {
+                        platform.clear_cargo();
+                        self.remove_platform_timer(platform_index as u8);
+                        cargo_to_place.push(platform_cargo).ok();
                     }
                 }
             }

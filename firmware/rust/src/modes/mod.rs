@@ -15,7 +15,7 @@ pub use menu::*;
 pub use settings::*;
 pub use snake::*;
 
-pub const NUM_MODES: usize = 5;
+pub const NUM_MODES: usize = 6;
 
 #[enum_dispatch]
 pub trait GameModeHandler {

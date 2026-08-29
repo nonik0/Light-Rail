@@ -18,7 +18,8 @@ enum Setting {
     PlatformBrightness,
     SwitchBrightness,
     BuzzerEnabled,
-    // TODO: Gameplay Speed: control core delays in various places to speed up/down game
+    GameSpeed,
+    AutostopLevel,
 }
 
 pub struct SettingsMode {
@@ -30,29 +31,39 @@ impl SettingsMode {
         let mut segments = [b' '; NUM_DIGITS as usize];
         match self.cur_setting {
             Setting::DigitBrightness => {
-                segments[0] = ascii_to_segment(b'D');
-                segments[1] = ascii_to_segment(b'B') | as1115::segments::DP;
+                segments[0] = ascii_to_segment(b'B');
+                segments[1] = ascii_to_segment(b'D') | as1115::segments::DP;
                 segments[2] = ascii_to_segment(b'0' + settings.digit_brightness_level());
             }
             Setting::TrainBrightness => {
-                segments[0] = ascii_to_segment(b'T');
-                segments[1] = ascii_to_segment(b'B') | as1115::segments::DP;
+                segments[0] = ascii_to_segment(b'B');
+                segments[1] = ascii_to_segment(b'T') | as1115::segments::DP;
                 segments[2] = ascii_to_segment(b'0' + settings.car_brightness_level());
             }
             Setting::PlatformBrightness => {
-                segments[0] = ascii_to_segment(b'P');
-                segments[1] = ascii_to_segment(b'B') | as1115::segments::DP;
+                segments[0] = ascii_to_segment(b'B');
+                segments[1] = ascii_to_segment(b'P') | as1115::segments::DP;
                 segments[2] = ascii_to_segment(b'0' + settings.platform_brightness_level());
             }
             Setting::SwitchBrightness => {
-                segments[0] = ascii_to_segment(b'Y');
-                segments[1] = ascii_to_segment(b'B') | as1115::segments::DP;
+                segments[0] = ascii_to_segment(b'B');
+                segments[1] = ascii_to_segment(b'S') | as1115::segments::DP;
                 segments[2] = ascii_to_segment(b'0' + settings.switch_brightness_level());
             }
             Setting::BuzzerEnabled => {
                 segments[0] = ascii_to_segment(b'B');
-                segments[1] = ascii_to_segment(b'Z') | as1115::segments::DP;
+                segments[1] = ascii_to_segment(b'E') | as1115::segments::DP;
                 segments[2] = ascii_to_segment(if settings.is_buzzer_enabled() { b'1' } else { b'0' });
+            }
+            Setting::GameSpeed => {
+                segments[0] = ascii_to_segment(b'S');
+                segments[1] = ascii_to_segment(b'P') | as1115::segments::DP;
+                segments[2] = ascii_to_segment(b'1' + settings.game_speed_level());
+            }
+            Setting::AutostopLevel => {
+                segments[0] = ascii_to_segment(b'A');
+                segments[1] = ascii_to_segment(b'S') | as1115::segments::DP;
+                segments[2] = ascii_to_segment(b'0' + settings.autostop_level());
             }
         }
         DisplayState::Segments(segments)
@@ -64,17 +75,21 @@ impl SettingsMode {
             Setting::TrainBrightness => Setting::PlatformBrightness,
             Setting::PlatformBrightness => Setting::SwitchBrightness,
             Setting::SwitchBrightness => Setting::BuzzerEnabled,
-            Setting::BuzzerEnabled => Setting::DigitBrightness,
+            Setting::BuzzerEnabled => Setting::GameSpeed,
+            Setting::GameSpeed => Setting::AutostopLevel,
+            Setting::AutostopLevel => Setting::DigitBrightness,
         };
     }
 
     fn prev_setting(&mut self) {
         self.cur_setting = match self.cur_setting {
-            Setting::DigitBrightness => Setting::BuzzerEnabled,
+            Setting::DigitBrightness => Setting::AutostopLevel,
             Setting::TrainBrightness => Setting::DigitBrightness,
             Setting::PlatformBrightness => Setting::TrainBrightness,
             Setting::SwitchBrightness => Setting::PlatformBrightness,
             Setting::BuzzerEnabled => Setting::SwitchBrightness,
+            Setting::GameSpeed => Setting::BuzzerEnabled,
+            Setting::AutostopLevel => Setting::GameSpeed,
         };
     }
 
@@ -95,6 +110,12 @@ impl SettingsMode {
             Setting::BuzzerEnabled => {
                 settings.toggle_buzzer();
             }
+            Setting::GameSpeed => {
+                settings.inc_game_speed();
+            }
+            Setting::AutostopLevel => {
+                settings.inc_autostop_level();
+            }
         }
     }
 
@@ -114,6 +135,12 @@ impl SettingsMode {
             }
             Setting::BuzzerEnabled => {
                 settings.toggle_buzzer();
+            }
+            Setting::GameSpeed => {
+                settings.dec_game_speed();
+            }
+            Setting::AutostopLevel => {
+                settings.dec_autostop_level();
             }
         }
     }
@@ -141,6 +168,8 @@ impl GameModeHandler for SettingsMode {
     }
 
     fn on_game_tick(&mut self, state: &mut GameState) {
+        // TODO: demonstrate autostop setting when enabled
+
         for platform in state.platforms.iter_mut() {
             if platform.is_empty() && Rand::default().get_u16() <= 50 {
                 let led_pattern = match Rand::from_range(0, 4) {

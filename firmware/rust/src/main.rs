@@ -46,7 +46,6 @@ mod switch;
 mod tone;
 mod train;
 
-const BASE_DELAY: u32 = 10;
 const NUM_BUTTONS: usize = 12;
 const NUM_DIGITS: u8 = 3;
 const DIGITS_I2C_ADDR: u8 = as1115::DEFAULT_ADDRESS;
@@ -145,6 +144,6 @@ fn main() -> ! {
 
     loop {
         game.tick();
-        delay.delay_ms(BASE_DELAY);
+        delay.delay_ms(game.base_delay());
     }
 }

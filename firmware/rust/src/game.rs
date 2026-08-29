@@ -76,6 +76,10 @@ where
         }
     }
 
+    pub fn base_delay(&self) -> u32 {
+        self.state.settings.game_speed() as u32
+    }
+
     pub fn restart(&mut self) {
         self.board_digits.display_value(1).ok();
         self.mode = GameMode::from_index(self.mode_index);

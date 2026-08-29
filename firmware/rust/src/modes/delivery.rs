@@ -16,15 +16,12 @@ use crate::{
 
 // macro for newtypes for delivery mode variants (needed for enum_dispatch that needs unique types for each variant)
 macro_rules! impl_delivery_mode_wrapper {
-    ($wrapper:ident, $autostop_enabled:expr, $timer_enabled:expr) => {
+    ($wrapper:ident,$timer_enabled:expr) => {
         pub struct $wrapper(pub crate::modes::delivery::DeliveryMode);
 
         impl Default for $wrapper {
             fn default() -> Self {
-                Self(crate::modes::delivery::DeliveryMode::new(
-                    $autostop_enabled,
-                    $timer_enabled,
-                ))
+                Self(crate::modes::delivery::DeliveryMode::new($timer_enabled))
             }
         }
 
@@ -48,8 +45,8 @@ macro_rules! impl_delivery_mode_wrapper {
     };
 }
 
-impl_delivery_mode_wrapper!(FreeplayDeliveryMode, true, false);
-impl_delivery_mode_wrapper!(TimedDeliveryMode, true, true);
+impl_delivery_mode_wrapper!(FreeplayDeliveryMode, false);
+impl_delivery_mode_wrapper!(TimedDeliveryMode, true);
 
 pub struct CargoTimer {
     platform_index: u8,
@@ -59,7 +56,6 @@ pub struct CargoTimer {
 pub struct DeliveryMode {
     is_alt_display: bool,
     autostop_active: bool,
-    autostop_enabled: bool,
     cooldown_ticks_left: u8, // event cooldown timer
     score: u16,
     timers: Vec<CargoTimer, { DeliveryMode::CARGO_TIMERS_MAX_COUNT as usize }>,
@@ -74,11 +70,10 @@ impl DeliveryMode {
     const TRAIN_MAX_SPEED: u8 = 15;
     const TRAIN_SPEED_INC: u8 = 5;
 
-    pub fn new(autostop_enabled: bool, timer_enabled: bool) -> Self {
+    pub fn new(timer_enabled: bool) -> Self {
         DeliveryMode {
             is_alt_display: false,
             autostop_active: false,
-            autostop_enabled,
             cooldown_ticks_left: 0,
             score: 0,
             timers: Vec::new(),
@@ -245,7 +240,6 @@ impl DeliveryMode {
 
     /// When a train's engine is at the last platform track, i.e.  the train is fully "in position"
     /// in front of all the adjacent plaforms, and the train has cargo to pick up or drop off
-    #[inline(always)]
     fn train_ready_at_platform(
         train: &Train,
         platforms: &[Platform; NUM_PLATFORMS],
@@ -422,7 +416,7 @@ impl GameModeHandler for DeliveryMode {
         let train = &mut state.trains[0];
 
         // handle all the train behavior
-        if self.autostop_enabled
+        if state.settings.autostop_level() > 0
             && !self.autostop_active
             && train.speed() == Self::TRAIN_SPEED_INC
             && Self::train_ready_at_platform(train, &state.platforms, &state.switches)

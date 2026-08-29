@@ -171,11 +171,6 @@ where
             self.board_leds.clear_blocking().ok();
         }
 
-        // skip updating game entities if game is paused or over
-        if self.state.is_over || self.state.is_paused {
-            return;
-        }
-
         // helper closure to update entity LEDs
         let mut do_led_update = |location: Location, brightness: u8| {
             self.board_leds
@@ -183,22 +178,31 @@ where
                 .ok();
         };
 
-        // update train, platform, and switch entities
+        // update train entities
         let mut event_indices = heapless::Vec::<usize, MAX_TRAINS>::new();
         for (train_index, train) in self.state.trains.iter_mut().enumerate() {
-            if train.advance(
-                &self.state.settings,
-                &self.state.switches,
-                &mut do_led_update,
-                self.state.redraw,
-            ) {
-                event_indices.push(train_index).ok();
+            // skip updating game entities if game is paused or over
+            // just update train rather than advance if game over or paused
+            if self.state.is_over || self.state.is_paused {
+                train.update(&self.state.settings, &mut do_led_update, self.state.redraw);
+            } else {
+                if train.advance(
+                    &self.state.settings,
+                    &self.state.switches,
+                    &mut do_led_update,
+                    self.state.redraw,
+                ) {
+                    event_indices.push(train_index).ok();
+                }
             }
         }
+
+        // call advance callbacks for any trains that moved
         for &train_index in event_indices.iter() {
             self.mode.on_train_advance(train_index, &mut self.state);
         }
 
+        // update platform and switches entities
         for platform in self.state.platforms.iter_mut() {
             platform.update(&self.state.settings, &mut do_led_update, self.state.redraw);
         }

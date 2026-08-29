@@ -22,6 +22,8 @@ pub enum DisplayState {
     Segments([u8; NUM_DIGITS as usize]),
     Text([u8; NUM_DIGITS as usize]),
 }
+
+#[allow(dead_code)]
 impl DisplayState {
     pub const DED: DisplayState = DisplayState::Text(*b"ded");
     pub const GG: DisplayState = DisplayState::Text(*b" gg");
@@ -33,6 +35,7 @@ impl DisplayState {
 // TODO: move mutable stuff to methods and make stuff private?
 pub struct GameState {
     pub target_mode_index: usize, // in state so menu mode can manipulate it
+    // TODO: combine active/over/paused into single enum state
     pub is_over: bool,            // stops entity updates, game is over
     pub is_paused: bool,          // stops entity updates, game is still active
     pub redraw: bool,             // flag to redraw board LEDs

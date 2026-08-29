@@ -57,10 +57,10 @@ pub struct CargoTimer {
 }
 
 pub struct DeliveryMode {
+    is_alt_display: bool,
     autostop_active: bool,
     autostop_enabled: bool,
-    counter: u8,
-    cooldown_ticks_left: u16, // event cooldown timer
+    cooldown_ticks_left: u8, // event cooldown timer
     score: u16,
     timers: Vec<CargoTimer, { DeliveryMode::CARGO_TIMERS_MAX_COUNT as usize }>,
     timer_dots: u8,      // indicate time left with the 3 decimal points on display
@@ -70,16 +70,16 @@ pub struct DeliveryMode {
 impl DeliveryMode {
     const CARGO_TIMER_TICKS: u16 = 8000; // ~ 120 seconds with current runtime at 10ms base delay
     const CARGO_TIMERS_MAX_COUNT: u8 = 6;
-    const COOLDOWN_TICKS: u16 = 100;
+    const COOLDOWN_TICKS: u8 = 75;
     const TRAIN_MAX_SPEED: u8 = 15;
     const TRAIN_SPEED_INC: u8 = 5;
 
     pub fn new(autostop_enabled: bool, timer_enabled: bool) -> Self {
         DeliveryMode {
+            is_alt_display: false,
             autostop_active: false,
             autostop_enabled,
             cooldown_ticks_left: 0,
-            counter: 0,
             score: 0,
             timers: Vec::new(),
             timer_dots: NUM_DIGITS,
@@ -226,6 +226,20 @@ impl DeliveryMode {
         DisplayState::Segments(segment_data)
     }
 
+    fn set_display(&mut self, state: &mut GameState, alt: bool) {
+        state.display = match (alt, state.is_paused) {
+            (false, _) => self.score_display(),
+            (true, false) => DisplayState::OVR,
+            (true, true) => {
+                let mut segment_data = DisplayState::PAUSE_BYTES;
+                self.add_timer_indicators(&mut segment_data);
+                DisplayState::Segments(segment_data)
+            }
+        };
+        self.is_alt_display = alt;
+        self.cooldown_ticks_left = Self::COOLDOWN_TICKS;
+    }
+
     // TODO: below helpers might be more better off in game_state.rs, platform state is
     // implicit here and can simplify the calls, even train state can be as well
 
@@ -333,8 +347,8 @@ impl DeliveryMode {
 
 impl GameModeHandler for DeliveryMode {
     fn on_restart(&mut self, state: &mut GameState) {
+        self.is_alt_display = false;
         self.autostop_active = false;
-        self.counter = 0;
         self.score = 0;
         self.timer_dots = NUM_DIGITS;
         self.timers.clear();
@@ -347,26 +361,17 @@ impl GameModeHandler for DeliveryMode {
     }
 
     fn on_game_tick(&mut self, state: &mut GameState) {
-        if state.is_over || state.is_paused {
-            self.counter += 1;
-            if self.counter == 0 {
-                state.display = if state.is_paused {
-                    let mut segment_data = DisplayState::PAUSE_BYTES;
-                    self.add_timer_indicators(&mut segment_data);
-                    DisplayState::Segments(segment_data)
-                } else {
-                    DisplayState::DED
-                }
-            } else if self.counter == u8::MAX >> 1 {
-                state.display = self.score_display();
-            }
+        if self.cooldown_ticks_left > 0 {
+            self.cooldown_ticks_left -= 1;
             return;
         }
 
-        // do cooldown before timers, cooldowns are for visual effect and do not penalize with
-        // a secondary delay in the in-game timers
-        if self.cooldown_ticks_left > 0 {
-            self.cooldown_ticks_left -= 1;
+        // toggle score and gameover/pause screens
+        if state.is_over || state.is_paused {
+            if self.cooldown_ticks_left == 0 {
+                self.is_alt_display = !self.is_alt_display;
+                self.set_display(state, self.is_alt_display);
+            }
             return;
         }
 
@@ -384,8 +389,8 @@ impl GameModeHandler for DeliveryMode {
             } else if timer.ticks_left == (Self::CARGO_TIMER_TICKS >> 3) {
                 timer_platform.set_phase_speed(6);
             } else if self.timer_enabled && timer.ticks_left == 0 {
-                state.display = DisplayState::OVR;
                 state.is_over = true;
+                self.set_display(state, true);
                 return;
             }
 
@@ -459,11 +464,14 @@ impl GameModeHandler for DeliveryMode {
                     }
                     InputDirection::Right => {
                         let speed = state.trains[0].speed();
-                        let new_speed = speed.saturating_add(Self::TRAIN_SPEED_INC).min(Self::TRAIN_MAX_SPEED);
+                        let new_speed = speed
+                            .saturating_add(Self::TRAIN_SPEED_INC)
+                            .min(Self::TRAIN_MAX_SPEED);
                         state.trains[0].set_speed(new_speed);
                     }
                     InputDirection::Up | InputDirection::Down => {
                         state.is_paused = !state.is_paused;
+                        self.set_display(state, state.is_paused);
                     }
                 }
             }

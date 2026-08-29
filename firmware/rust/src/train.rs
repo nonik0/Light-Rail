@@ -113,6 +113,29 @@ impl Train {
         }
     }
 
+    // Game tick for train during game over or pause, to keep led updates occuring
+    pub fn update<F>(
+        &mut self,
+        settings: &GameSettings,
+        mut update_callback: F,
+        force_update: bool,
+    )
+    where
+        F: FnMut(Location, u8),
+    {
+        self.phase = self.phase.wrapping_add(1);
+
+        for car in self.cars_mut().iter_mut() {
+            let brightness = car
+                .cargo
+                .car_brightness(self.phase, settings.car_brightness());
+            if force_update || car.last_brightness != brightness {
+                car.last_brightness = brightness;
+                update_callback(car.loc, brightness);
+            }
+        }
+    }
+
     /// Game tick for train, returns location updates as cars move along track
     pub fn advance<F>(
         &mut self,
@@ -124,23 +147,15 @@ impl Train {
     where
         F: FnMut(Location, u8),
     {
-        self.phase = self.phase.wrapping_add(1);
         self.speed_counter += self.speed;
 
         // If not enough speed accumulated, just update brightness and return
         if self.speed_counter < MAX_SPEED {
-            for car in self.cars_mut().iter_mut() {
-                let brightness = car
-                    .cargo
-                    .car_brightness(self.phase, settings.car_brightness());
-                if force_update || car.last_brightness != brightness {
-                    car.last_brightness = brightness;
-                    update_callback(car.loc, brightness);
-                }
-            }
+            self.update(settings, update_callback, force_update);
             return false;
         }
 
+        self.phase = self.phase.wrapping_add(1);
         self.speed_counter -= MAX_SPEED;
 
         // Move train cars from rear to front, updating locations and brightness

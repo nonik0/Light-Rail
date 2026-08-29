@@ -12,7 +12,7 @@ const PLATFORM_BRIGHTNESS_LEVEL_DEFAULT: u8 = LED_BRIGHTNESS_LEVEL_COUNT >> 1; /
 const SWITCH_BRIGHTNESS_LEVEL_DEFAULT: u8 = 1; // red, min brightness
 
 const GAME_SPEED_LEVEL_COUNT: u8 = 3;
-const GAME_SPEED_LEVELS: [u8; GAME_SPEED_LEVEL_COUNT as usize] = [5, 10, 20];
+const GAME_SPEED_LEVELS: [u8; GAME_SPEED_LEVEL_COUNT as usize] = [20, 10, 5];
 const GAME_SPEED_LEVEL_DEFAULT: u8 = 1;
 
 const AUTOSTOP_LEVEL_COUNT: u8 = 3; // the higher the level the faster the speeds the train will stop

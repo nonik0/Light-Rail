@@ -52,7 +52,7 @@ impl SettingsMode {
             }
             Setting::BuzzerEnabled => {
                 segments[0] = ascii_to_segment(b'B');
-                segments[1] = ascii_to_segment(b'E') | as1115::segments::DP;
+                segments[1] = ascii_to_segment(b'P') | as1115::segments::DP;
                 segments[2] = ascii_to_segment(if settings.is_buzzer_enabled() { b'1' } else { b'0' });
             }
             Setting::GameSpeed => {

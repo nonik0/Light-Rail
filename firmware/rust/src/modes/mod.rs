@@ -69,7 +69,7 @@ impl GameMode {
             3 => *b"2ti", // Delivery (timed)
             4 => *b"3jg", // Juggle
             5 => *b"4sn", // Snake
-            6 => *b"0st", // Settings
+            6 => *b"set", // Settings
             _ => *b"err",
         }
     }

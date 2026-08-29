@@ -425,10 +425,12 @@ impl GameModeHandler for DeliveryMode {
             }
         } else if self.autostop_active > 0 {
             let target_speed = Self::TRAIN_SPEED_INC * self.autostop_active as u8;
-
             if speed < target_speed {
-                state.trains[Self::TRAIN_INDEX].set_speed(speed + Self::TRAIN_SPEED_INC);
-                self.cooldown_ticks_left = Self::COOLDOWN_TICKS;
+                let new_speed = speed + Self::TRAIN_SPEED_INC;
+                state.trains[Self::TRAIN_INDEX].set_speed(new_speed);
+                if new_speed < target_speed {
+                    self.cooldown_ticks_left = Self::COOLDOWN_TICKS >> 2;
+                }
             } else {
                 self.autostop_active = 0;
             }

@@ -134,8 +134,25 @@ impl GameState {
         }
     }
 
-    // True if train is within steps advances to a platform that has a cargo that the train
-    // is able to pick up, or the train can drop off
+    /// True if the train can actually transfer with a given platform: either the
+    /// platform wants cargo the train is carrying, or the platform is offering
+    /// cargo and the train has room to take it.
+    #[inline(always)]
+    fn platform_transfer_possible(train: &Train, platform: &Platform) -> bool {
+        if platform.is_empty() {
+            return false;
+        }
+
+        let (platform_cargo, is_receiving) = platform.cargo();
+        if is_receiving {
+            train.has_cargo(platform_cargo)
+        } else {
+            !train.is_full()
+        }
+    }
+
+    // True if train is within `steps` advances of a platform that has cargo the
+    // train is actually able to pick up or drop off
     pub fn train_approaching_platform(&self, train_index: usize, steps: u8) -> bool {
         let train = &self.trains[train_index];
         let mut loc = train.front();
@@ -150,14 +167,14 @@ impl GameState {
             loc = next_loc;
             dir = next_dir;
         }
-        // TODO: check train cargo
-        self.platforms
-            .iter()
-            .any(|platform| platform.track_location() == loc)
+
+        self.platforms.iter().any(|platform| {
+            platform.track_location() == loc && Self::platform_transfer_possible(train, platform)
+        })
     }
 
-    /// True if a train's engine is at the last platform track, i.e.  the train is fully "in position"
-    /// in front of a set of adjacent plaforms, and the train has cargo to pick up or drop off
+    /// True if a train's engine is at the last platform track, i.e. the train is fully "in position"
+    /// in front of a set of adjacent platforms, and the train has cargo to pick up or drop off
     pub fn train_ready_at_platform(&self, train_index: usize) -> bool {
         let train = &self.trains[train_index];
         let engine_loc = train.front();
@@ -176,8 +193,7 @@ impl GameState {
             if loc == next_loc {
                 next_loc_at_platform = true;
             }
-            // TODO: check if train has cargo in future that matches platform if receving
-            if !platform.is_empty() && train.at_location(loc) {
+            if train.at_location(loc) && Self::platform_transfer_possible(train, platform) {
                 any_ready = true;
             }
         }

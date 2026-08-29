@@ -184,11 +184,13 @@ impl Train {
         true
     }
 
+    // Returns the train engine's next location
     pub fn next_loc(&self, switches: &[Switch]) -> Location {
         let (loc, _) = self.next(switches);
         loc
     }
 
+    /// Returns the train engine's next location and direction
     pub fn next(&self, switches: &[Switch]) -> (Location, Direction) {
         // Determine if the front of the train is on a switched track
         let front_loc = self.front();
@@ -221,28 +223,39 @@ impl Train {
         self.speed_counter = 0;
     }
 
+    // Returns true if the train has a car with cargo
+    pub fn has_cargo(&self, cargo: Cargo) -> bool {
+        self.cars().iter().any(|car| car.cargo == cargo)
+    }
+
+    /// Returns true if every car is currently carrying cargo
+    pub fn is_full(&self) -> bool {
+        self.cars().iter().all(|car| car.cargo != Cargo::Empty)
+    }
+
     /// Adds cargo to train, returns true if train loads cargo into an available empty car
     /// TODO: add location so cargo can be added to nearest empty car?
     pub fn load_cargo(&mut self, cargo: Cargo) -> bool {
-        for car in self.cars_mut().iter_mut() {
-            if car.cargo == Cargo::Empty {
+        match self.cars_mut().iter_mut().find(|car| car.cargo == Cargo::Empty) {
+            Some(car) => {
                 car.cargo = cargo;
-                return true;
+                true
             }
+            None => false,
         }
-        false
     }
 
     /// Unloads cargo from the train, returns true if train removes cargo from a car that has it
     pub fn unload_cargo(&mut self, cargo: Cargo) -> bool {
-        for car in self.cars_mut().iter_mut() {
-            if car.cargo == cargo {
+        match self.cars_mut().iter_mut().find(|car| car.cargo == cargo) {
+            Some(car) => {
                 car.cargo = Cargo::Empty;
-                return true;
+                true
             }
+            None => false,
         }
-        false
     }
+
 
     /// Returns reference to the first car of the train (engine)
     pub fn engine(&self) -> &Car {
@@ -257,6 +270,11 @@ impl Train {
     /// Returns reference to the last car of the train (caboose)
     pub fn caboose(&self) -> &Car {
         self.cars().last().unwrap()
+    }
+
+    /// Returns the direction of the train
+    pub fn direction(&self) -> Direction {
+        self.direction
     }
 
     /// Returns the previous location of the caboose before the last move

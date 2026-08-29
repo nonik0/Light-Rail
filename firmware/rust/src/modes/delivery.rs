@@ -5,11 +5,10 @@ use crate::{
     cargo::*,
     game_state::*,
     input::{InputDirection, InputEvent},
-    location::{NUM_PLATFORMS, NUM_SWITCHES},
+    location::NUM_PLATFORMS,
     modes::GameModeHandler,
     platform::Platform,
     random::Rand,
-    switch::Switch,
     train::Train,
     NUM_DIGITS,
 };
@@ -55,7 +54,7 @@ pub struct CargoTimer {
 
 pub struct DeliveryMode {
     is_alt_display: bool,
-    autostop_active: bool,
+    autostop_active: i8,
     cooldown_ticks_left: u8, // event cooldown timer
     score: u16,
     timers: Vec<CargoTimer, { DeliveryMode::CARGO_TIMERS_MAX_COUNT as usize }>,
@@ -67,13 +66,15 @@ impl DeliveryMode {
     const CARGO_TIMER_TICKS: u16 = 8000; // ~ 120 seconds with current runtime at 10ms base delay
     const CARGO_TIMERS_MAX_COUNT: u8 = 6;
     const COOLDOWN_TICKS: u8 = 75;
+    const TRAIN_INDEX: usize = 0;
+    const TRAIN_LOOKAHEAD: u8 = 3;
     const TRAIN_MAX_SPEED: u8 = 15;
     const TRAIN_SPEED_INC: u8 = 5;
 
     pub fn new(timer_enabled: bool) -> Self {
         DeliveryMode {
             is_alt_display: false,
-            autostop_active: false,
+            autostop_active: 0,
             cooldown_ticks_left: 0,
             score: 0,
             timers: Vec::new(),
@@ -238,38 +239,6 @@ impl DeliveryMode {
     // TODO: below helpers might be more better off in game_state.rs, platform state is
     // implicit here and can simplify the calls, even train state can be as well
 
-    /// When a train's engine is at the last platform track, i.e.  the train is fully "in position"
-    /// in front of all the adjacent plaforms, and the train has cargo to pick up or drop off
-    fn train_ready_at_platform(
-        train: &Train,
-        platforms: &[Platform; NUM_PLATFORMS],
-        switches: &[Switch; NUM_SWITCHES],
-    ) -> bool {
-        let engine_loc = train.engine().loc;
-        let next_loc = train.next_loc(switches);
-
-        let mut engine_at_platform = false;
-        let mut next_loc_at_platform = false;
-        let mut any_ready = false;
-
-        for platform in platforms.iter() {
-            let loc = platform.track_location();
-
-            if loc == engine_loc {
-                engine_at_platform = true;
-            }
-            if loc == next_loc {
-                next_loc_at_platform = true;
-            }
-            // TODO: check if train has cargo in future that matches platform if receving
-            if !platform.is_empty() && train.at_location(loc) {
-                any_ready = true;
-            }
-        }
-
-        engine_at_platform && !next_loc_at_platform && any_ready
-    }
-
     /// Places a dropoff location for a cargo on a random empty platform that the train is not currently at and
     /// is not the "source" platform location for the dropoff cargo location being placed.
     fn place_dropoff_for_cargo(
@@ -342,7 +311,7 @@ impl DeliveryMode {
 impl GameModeHandler for DeliveryMode {
     fn on_restart(&mut self, state: &mut GameState) {
         self.is_alt_display = false;
-        self.autostop_active = false;
+        self.autostop_active = 0;
         self.score = 0;
         self.timer_dots = NUM_DIGITS;
         self.timers.clear();
@@ -413,31 +382,52 @@ impl GameModeHandler for DeliveryMode {
             }
         }
 
-        let train = &mut state.trains[0];
-
-        // handle all the train behavior
-        if state.settings.autostop_level() > 0
-            && !self.autostop_active
-            && train.speed() == Self::TRAIN_SPEED_INC
-            && Self::train_ready_at_platform(train, &state.platforms, &state.switches)
-        {
-            train.set_speed(0);
-            self.autostop_active = true;
-            self.cooldown_ticks_left = Self::COOLDOWN_TICKS;
+        let autostop_level = state.settings.autostop_level();
+        if autostop_level > 0 {
+            if self.autostop_active == 0
+                && autostop_level >= 2
+                && state.trains[Self::TRAIN_INDEX].speed() == Self::TRAIN_SPEED_INC * 2
+                && state.train_approaching_platform(Self::TRAIN_INDEX, Self::TRAIN_LOOKAHEAD)
+            {
+                state.trains[Self::TRAIN_INDEX].set_speed(Self::TRAIN_SPEED_INC);
+                self.autostop_active = -2;
+                // no cooldown needed, train will stop at end of platform
+            } else if state.trains[Self::TRAIN_INDEX].speed() == Self::TRAIN_SPEED_INC
+                && self.autostop_active <= 0 // not currently resuming
+                && state.train_ready_at_platform(Self::TRAIN_INDEX)
+            {
+                state.trains[Self::TRAIN_INDEX].set_speed(0);
+                self.autostop_active = -1.min(self.autostop_active);
+                self.cooldown_ticks_left = Self::COOLDOWN_TICKS;
+                return; // do not do stopped behavior below yet!
+            }
         }
-        // if train is stopped, check for cargo to pick up or drop off at platforms
-        else if train.speed() == 0 {
-            let acted = self.try_transfer_one(train, &mut state.platforms);
+
+        let speed = state.trains[Self::TRAIN_INDEX].speed();
+        if speed == 0 {
+            let acted =
+                self.try_transfer_one(&mut state.trains[Self::TRAIN_INDEX], &mut state.platforms);
 
             if acted {
                 state.display = self.score_display();
                 self.cooldown_ticks_left = Self::COOLDOWN_TICKS;
-            } else if self.autostop_active {
-                train.set_speed(Self::TRAIN_SPEED_INC);
-                self.autostop_active = false;
+            } else if self.autostop_active < 0 {
+                self.autostop_active = -self.autostop_active; // resume to speed
+                state.trains[Self::TRAIN_INDEX].set_speed(Self::TRAIN_SPEED_INC);
                 self.cooldown_ticks_left = Self::COOLDOWN_TICKS;
             }
+        } else if self.autostop_active > 0 {
+            // resuming: ramp up until target is reached
+            let target_speed = Self::TRAIN_SPEED_INC * self.autostop_active as u8;
+            if speed < target_speed {
+                state.trains[Self::TRAIN_INDEX].set_speed(speed + Self::TRAIN_SPEED_INC);
+                self.cooldown_ticks_left = Self::COOLDOWN_TICKS;
+            } else {
+                self.autostop_active = 0;
+            }
         }
+        // else: speed > 0 and autostop_active > 0 -> still coasting toward the
+        // platform under autostop control, leave it alone
     }
 
     fn on_input_event(&mut self, event: InputEvent, state: &mut GameState) {
@@ -448,7 +438,7 @@ impl GameModeHandler for DeliveryMode {
         match event {
             InputEvent::DirectionButtonPressed(direction) => {
                 // any direction input cancels current autostop behavior
-                self.autostop_active = false;
+                self.autostop_active = 0;
                 self.cooldown_ticks_left = Self::COOLDOWN_TICKS;
 
                 match direction {

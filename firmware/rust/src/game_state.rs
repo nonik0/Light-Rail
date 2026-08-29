@@ -36,9 +36,9 @@ impl DisplayState {
 pub struct GameState {
     pub target_mode_index: usize, // in state so menu mode can manipulate it
     // TODO: combine active/over/paused into single enum state
-    pub is_over: bool,            // stops entity updates, game is over
-    pub is_paused: bool,          // stops entity updates, game is still active
-    pub redraw: bool,             // flag to redraw board LEDs
+    pub is_over: bool,   // stops entity updates, game is over
+    pub is_paused: bool, // stops entity updates, game is still active
+    pub redraw: bool,    // flag to redraw board LEDs
     pub display: DisplayState,
     pub settings: GameSettings,
 
@@ -112,6 +112,8 @@ impl GameState {
         &self.platforms[rand_platform_index]
     }
 
+    // Helper/utility functions for state
+
     /// If the train just left a switch, switch it.
     pub fn train_switch(&mut self, train_index: usize) {
         let train = &self.trains[train_index];
@@ -130,5 +132,56 @@ impl GameState {
                 }
             }
         }
+    }
+
+    // True if train is within steps advances to a platform that has a cargo that the train
+    // is able to pick up, or the train can drop off
+    pub fn train_approaching_platform(&self, train_index: usize, steps: u8) -> bool {
+        let train = &self.trains[train_index];
+        let mut loc = train.front();
+        let mut dir = train.direction();
+
+        for _ in 0..steps {
+            let is_switched = self
+                .switches
+                .iter()
+                .any(|switch| loc == switch.location() && switch.is_switched(dir));
+            let (next_loc, next_dir) = loc.next(dir, is_switched);
+            loc = next_loc;
+            dir = next_dir;
+        }
+        // TODO: check train cargo
+        self.platforms
+            .iter()
+            .any(|platform| platform.track_location() == loc)
+    }
+
+    /// True if a train's engine is at the last platform track, i.e.  the train is fully "in position"
+    /// in front of a set of adjacent plaforms, and the train has cargo to pick up or drop off
+    pub fn train_ready_at_platform(&self, train_index: usize) -> bool {
+        let train = &self.trains[train_index];
+        let engine_loc = train.front();
+        let next_loc = train.next_loc(&self.switches);
+
+        let mut engine_at_platform = false;
+        let mut next_loc_at_platform = false;
+        let mut any_ready = false;
+
+        for platform in self.platforms.iter() {
+            let loc = platform.track_location();
+
+            if loc == engine_loc {
+                engine_at_platform = true;
+            }
+            if loc == next_loc {
+                next_loc_at_platform = true;
+            }
+            // TODO: check if train has cargo in future that matches platform if receving
+            if !platform.is_empty() && train.at_location(loc) {
+                any_ready = true;
+            }
+        }
+
+        engine_at_platform && !next_loc_at_platform && any_ready
     }
 }

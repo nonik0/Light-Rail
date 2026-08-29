@@ -64,7 +64,7 @@ pub struct DeliveryMode {
 
 impl DeliveryMode {
     const CARGO_TIMER_TICKS: u16 = 8000; // ~ 120 seconds with current runtime at 10ms base delay
-    const CARGO_TIMERS_MAX_COUNT: u8 = 6;
+    const CARGO_TIMERS_MAX_COUNT: u8 = 8;
     const COOLDOWN_TICKS: u8 = 75;
     const TRAIN_INDEX: usize = 0;
     const TRAIN_LOOKAHEAD: u8 = 3;
@@ -85,7 +85,7 @@ impl DeliveryMode {
 
     #[inline(always)]
     fn get_timer_count(&self) -> u8 {
-        (3 + self.score / 15) as u8
+        (3 + self.score / 7) as u8
     }
 
     // difficulty calc functions
@@ -397,7 +397,9 @@ impl GameModeHandler for DeliveryMode {
                 && state.train_ready_at_platform(Self::TRAIN_INDEX)
             {
                 state.trains[Self::TRAIN_INDEX].set_speed(0);
-                self.autostop_active = -1.min(self.autostop_active);
+                if self.autostop_active == 0 {
+                    self.autostop_active = -1;
+                }
                 self.cooldown_ticks_left = Self::COOLDOWN_TICKS;
                 return; // do not do stopped behavior below yet!
             }
@@ -405,20 +407,25 @@ impl GameModeHandler for DeliveryMode {
 
         let speed = state.trains[Self::TRAIN_INDEX].speed();
         if speed == 0 {
-            let acted =
-                self.try_transfer_one(&mut state.trains[Self::TRAIN_INDEX], &mut state.platforms);
+            if self.autostop_active <= 0 {
+                let acted = self
+                    .try_transfer_one(&mut state.trains[Self::TRAIN_INDEX], &mut state.platforms);
 
-            if acted {
-                state.display = self.score_display();
-                self.cooldown_ticks_left = Self::COOLDOWN_TICKS;
-            } else if self.autostop_active < 0 {
-                self.autostop_active = -self.autostop_active; // resume to speed
+                if acted {
+                    state.display = self.score_display();
+                    self.cooldown_ticks_left = Self::COOLDOWN_TICKS;
+                } else if self.autostop_active < 0 {
+                    self.autostop_active = -self.autostop_active;
+                    self.cooldown_ticks_left = Self::COOLDOWN_TICKS;
+                }
+            } else {
                 state.trains[Self::TRAIN_INDEX].set_speed(Self::TRAIN_SPEED_INC);
+                state.trains[Self::TRAIN_INDEX].force_advance_next_tick();
                 self.cooldown_ticks_left = Self::COOLDOWN_TICKS;
             }
         } else if self.autostop_active > 0 {
-            // resuming: ramp up until target is reached
             let target_speed = Self::TRAIN_SPEED_INC * self.autostop_active as u8;
+
             if speed < target_speed {
                 state.trains[Self::TRAIN_INDEX].set_speed(speed + Self::TRAIN_SPEED_INC);
                 self.cooldown_ticks_left = Self::COOLDOWN_TICKS;
@@ -426,8 +433,6 @@ impl GameModeHandler for DeliveryMode {
                 self.autostop_active = 0;
             }
         }
-        // else: speed > 0 and autostop_active > 0 -> still coasting toward the
-        // platform under autostop control, leave it alone
     }
 
     fn on_input_event(&mut self, event: InputEvent, state: &mut GameState) {

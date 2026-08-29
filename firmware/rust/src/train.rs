@@ -223,6 +223,11 @@ impl Train {
         self.speed_counter = 0;
     }
 
+    /// Advances speed counter so train advances next tick
+    pub fn force_advance_next_tick(&mut self) {
+        self.speed_counter = MAX_SPEED;
+    }
+
     // Returns true if the train has a car with cargo
     pub fn has_cargo(&self, cargo: Cargo) -> bool {
         self.cars().iter().any(|car| car.cargo == cargo)

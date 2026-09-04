@@ -22,8 +22,8 @@ impl Platform {
             cargo: Cargo::Empty,
             is_cargo_in: false,
             last_brightness: 0,
-            phase: 0, // initial phase
-            phase_inc: 1,                    // default increment
+            phase: 0,     // initial phase
+            phase_inc: 1, // default increment
         }
     }
 
@@ -53,21 +53,12 @@ impl Platform {
         F: FnMut(Location, u8),
     {
         self.phase = self.phase.wrapping_add(self.phase_inc);
+        let brightness = self.cargo.platform_brightness(
+            self.phase,
+            settings.platform_brightness(),
+            self.is_cargo_in,
+        );
 
-        // cargo coming in has an inverse pattern of blinking
-        let brightness = if self.is_cargo_in {
-            self.cargo.platform_brightness(
-                self.phase,
-                settings.platform_brightness() >> 1,
-                0,
-            )
-        } else {
-            self.cargo.platform_brightness(
-                self.phase,
-                settings.platform_brightness() >> 1,
-                settings.platform_brightness(),
-            )
-        };
         if force_update || brightness != self.last_brightness {
             self.last_brightness = brightness;
             update_callback(self.location, brightness);
@@ -85,9 +76,9 @@ impl Platform {
         (self.cargo, self.is_cargo_in)
     }
 
-    // pub fn location(&self) -> Location {
-    //     self.location
-    // }
+    pub fn location(&self) -> Location {
+        self.location
+    }
 
     pub fn track_location(&self) -> Location {
         self.track_location

@@ -85,7 +85,7 @@ impl DeliveryMode {
 
     #[inline(always)]
     fn get_timer_count(&self) -> u8 {
-        (3 + self.score / 7) as u8
+        (4 + self.score / 7) as u8
     }
 
     // difficulty calc functions

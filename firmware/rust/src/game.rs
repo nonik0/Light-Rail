@@ -149,7 +149,6 @@ where
         if self.last_display != self.state.display {
             self.last_display = self.state.display;
 
-            // TODO: flag or something to avoid calling unnecessarily
             self.board_digits
                 .set_intensity(self.state.settings.digit_brightness_level())
                 .ok();

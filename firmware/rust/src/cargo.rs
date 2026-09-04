@@ -11,17 +11,25 @@ impl Default for Cargo {
 }
 
 impl Cargo {
-    pub fn platform_brightness(&self, phase: u8, min: u8, max: u8) -> u8 {
+    pub fn platform_brightness(&self, phase: u8, max_b: u8, is_cargo_in: bool) -> u8 {
         match self {
             Cargo::Empty => 0,
-            Cargo::Full(pattern) =>  pattern.get_pwm(phase, min, max),
+            Cargo::Full(pattern) => {
+                // cargo importing is inverse brightness (mostly dim)
+                if is_cargo_in {
+                    pattern.get_pwm(phase % 64, max_b, 0)
+                }
+                else {
+                    pattern.get_pwm(phase, max_b >> 1, max_b)
+                }
+            }
         }
     }
 
-    pub fn car_brightness(&self, phase: u8, max: u8) -> u8 {
+    pub fn car_brightness(&self, phase: u8, max_b: u8) -> u8 {
         match self {
-            Cargo::Empty => max >> 1,
-            Cargo::Full(pattern) => pattern.get_pwm(phase, max >> 1, max),
+            Cargo::Empty => max_b,
+            Cargo::Full(pattern) => pattern.get_pwm(phase % 64, max_b >> 1, max_b),
         }
     }
 }

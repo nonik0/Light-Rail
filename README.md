@@ -31,7 +31,7 @@ See the [Bill of Material (BoM)](hardware/documents/Light_Rail_BOM.xlsx) for com
 ## Firmware
 
 The firmware initially started as a C++/PlatformIO project, which can be found in the [firmware/cpp](firmware/cpp) directory. Before I actually received the inital prototype boards I decided to pivot and write everything in Rust, which can be found in the [firmware/rust](firmware/rust) directory. As part of the effort to get back to where I left off with the C++ firmware, I did the following:
-- Wrote a new [AS1115 driver](https://github.com/nonik0/as1115) (TODO: finish and polish design before publishing to crates.io)
+- Wrote a new [AS1115 driver](https://github.com/nonik0/as1115)
 - Wrote new tone library for avr-hal (TODO: integrate into avr-hal and open PR)
 - Updated existing fork of [IS31FL3731](https://github.com/nonik0/is31fl3731) driver to latest embedded-hal with other minor additions
 

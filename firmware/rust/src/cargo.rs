@@ -17,7 +17,7 @@ impl Cargo {
             Cargo::Full(pattern) => {
                 // cargo importing is inverse brightness (mostly dim)
                 if is_cargo_in {
-                    pattern.get_pwm(phase % 64, max_b, 0)
+                    pattern.get_pwm(phase, max_b, 0)
                 }
                 else {
                     pattern.get_pwm(phase, max_b >> 1, max_b)
@@ -28,8 +28,8 @@ impl Cargo {
 
     pub fn car_brightness(&self, phase: u8, max_b: u8) -> u8 {
         match self {
-            Cargo::Empty => max_b,
-            Cargo::Full(pattern) => pattern.get_pwm(phase % 64, max_b >> 1, max_b),
+            Cargo::Empty => max_b - (max_b >> 3),
+            Cargo::Full(pattern) => pattern.get_pwm(phase, max_b >> 1, max_b),
         }
     }
 }

@@ -1,7 +1,7 @@
 use crate::{
     cargo::*,
     game_settings::GameSettings,
-    location::{Direction, Location, NUM_PLATFORMS},
+    location::{Location, NUM_PLATFORMS},
 };
 
 pub struct Platform {
@@ -37,7 +37,7 @@ impl Platform {
         }
 
         let platforms = Location::platform_locs().map(|location| {
-            let track_location = location.next_loc(Direction::Anode, false); // args are ignored
+            let track_location = location.adjacent_loc().unwrap_or_else(|| panic_with_error!(201));
             Platform::new(location, track_location)
         });
         platforms
@@ -76,9 +76,9 @@ impl Platform {
         (self.cargo, self.is_cargo_in)
     }
 
-    pub fn location(&self) -> Location {
-        self.location
-    }
+    // pub fn location(&self) -> Location {
+    //     self.location
+    // }
 
     pub fn track_location(&self) -> Location {
         self.track_location

@@ -20,7 +20,9 @@ pub struct Location {
 
 impl Default for Location {
     fn default() -> Self {
-        Self { node_index: NO_DATA }
+        Self {
+            node_index: NO_DATA,
+        }
     }
 }
 
@@ -37,7 +39,21 @@ impl Location {
         self.node_index
     }
 
-    /// Returns the next Location in the given direction, ignoring the resulting direction.
+    /// Returns the adjacent location, if any, for a track or platform (i.e. the
+    /// adjacent track if a location is a platform, or vice versa)
+    pub fn adjacent_loc(&self) -> Option<Location> {
+        let loc_data = self.location_data();
+
+        if loc_data.is_platform() {
+            Some(Location::new(loc_data.anode_neighbor))
+        } else if loc_data.is_platform_adjacent() {
+            Some(Location::new(loc_data.anode_neighbor_2))
+        } else {
+            None
+        }
+    }
+
+    /// Returns the next Location in the given direction, dropping the resulting direction.
     pub fn next_loc(&self, direction: Direction, is_switched: bool) -> Location {
         let (loc, _) = self.next(direction, is_switched);
         loc
@@ -50,12 +66,7 @@ impl Location {
         let loc_data = self.location_data();
 
         if loc_data.is_platform() {
-            return (
-                Location {
-                    node_index: loc_data.anode_neighbor,
-                },
-                Direction::Anode,
-            );
+            panic_with_error!(101);
         }
 
         let (next_index, next_index_2) = match direction {
@@ -123,9 +134,9 @@ impl LocationNode {
         is_node_platform(*self)
     }
 
-    // fn is_track(&self) -> bool {
-    //     !self.is_platform()
-    // }
+    fn is_platform_adjacent(&self) -> bool {
+        is_node_platform_adjacent(*self)
+    }
 }
 
 impl Default for LocationNode {
@@ -213,13 +224,26 @@ progmem! {
     };
 }
 
-// platforms are encoded with all fields equal and referencing the adjacent track
+/// Node data has 4 fields, normal tracks only use the first two for pointing to
+/// its neighbors. Platforms and special tracks (switches, crosses, and platform-adjacent
+/// tracks) use the latter two fields for encoding additional data.
+
+// platforms are encoded with the primary fields equal and referencing the adjacent track
 const fn is_node_platform(location: LocationNode) -> bool {
     location.anode_neighbor == location.cathode_neighbor // just check one match
 }
 
+// tracks with adjacent platforms are encoded with the secondary fields equal and
+// referencing the adjacent platform
+const fn is_node_platform_adjacent(location: LocationNode) -> bool {
+    !is_node_platform(location) && location.anode_neighbor_2 == location.cathode_neighbor_2
+}
+
+// tracks that are switches or crosses use the secondary fields to pointing to the
+// additional neighbors -- switchs have 3 and crosses have 4 neighbors total
 const fn is_node_switch(location: LocationNode) -> bool {
     !is_node_platform(location)
+        && !is_node_platform_adjacent(location)
         && (location.anode_neighbor_2 != NO_DATA || location.cathode_neighbor_2 != NO_DATA)
 }
 
@@ -237,36 +261,36 @@ const fn get_node_data(index: usize) -> LocationNode {
         0 => unpack_node_data(0x6111FFFF),   // track 0/0x00
         1 => unpack_node_data(0x20202020),   // platf 1/0x01
         2 => unpack_node_data(0x3003FFFF),   // track 2/0x02
-        3 => unpack_node_data(0x7002FFFF),   // track 3/0x03
+        3 => unpack_node_data(0x70024040),   // track 3/0x03 ADJ
         4 => unpack_node_data(0x5082FFFF),   // track 4/0x04
         5 => unpack_node_data(0x60606060),   // platf 5/0x05
         6 => unpack_node_data(0x70707070),   // platf 6/0x06
         7 => unpack_node_data(0x8042FFFF),   // track 7/0x07
         8 => unpack_node_data(0x0D69FF1D),   // track 8/0x08 SWITCH
-        9 => unpack_node_data(0x682DFFFF),   // track 9/0x09
+        9 => unpack_node_data(0x682D2828),   // track 9/0x09 ADJ
         10 => unpack_node_data(0x4838FFFF),  // track 10/0x0A
         11 => unpack_node_data(0x3B5CFFFF),  // track 11/0x0B
-        12 => unpack_node_data(0x1839FFFF),  // track 12/0x0C
+        12 => unpack_node_data(0x18395858),  // track 12/0x0C ADJ
         13 => unpack_node_data(0x0868FFFF),  // track 13/0x0D
         14 => unpack_node_data(0x4C4EFFFF),  // track 14/0x0E
         15 => unpack_node_data(0x88888888),  // platf 15/0x0F
         16 => unpack_node_data(0x4920FFFF),  // track 16/0x10
         17 => unpack_node_data(0x0021FFFF),  // track 17/0x11
-        18 => unpack_node_data(0x2933FFFF),  // track 18/0x12
+        18 => unpack_node_data(0x29333131),  // track 18/0x12 ADJ
         19 => unpack_node_data(0x53535353),  // platf 19/0x13
         20 => unpack_node_data(0x5154FFFF),  // track 20/0x14
         21 => unpack_node_data(0x61616161),  // platf 21/0x15
-        22 => unpack_node_data(0x5351FFFF),  // track 22/0x16
-        23 => unpack_node_data(0x1E81FFFF),  // track 23/0x17
+        22 => unpack_node_data(0x53514141),  // track 22/0x16 ADJ
+        23 => unpack_node_data(0x1E817C7C),  // track 23/0x17 ADJ
         24 => unpack_node_data(0x4F0CFFFF),  // track 24/0x18
         25 => unpack_node_data(0x594AFFFF),  // track 25/0x19
         26 => unpack_node_data(0x39393939),  // platf 26/0x1A
         27 => unpack_node_data(0x6949FFFF),  // track 27/0x1B
         28 => unpack_node_data(0x59595959),  // platf 28/0x1C
         29 => unpack_node_data(0x0848FFFF),  // track 29/0x1D
-        30 => unpack_node_data(0x171FFFFF),  // track 30/0x1E
+        30 => unpack_node_data(0x171F7979),  // track 30/0x1E ADJ
         31 => unpack_node_data(0x1E5FFFFF),  // track 31/0x1F
-        32 => unpack_node_data(0x6010FFFF),  // track 32/0x20
+        32 => unpack_node_data(0x60100101),  // track 32/0x20 ADJ
         33 => unpack_node_data(0x3211FFFF),  // track 33/0x21
         34 => unpack_node_data(0x6230FFFF),  // track 34/0x22
         35 => unpack_node_data(0x73737373),  // platf 35/0x23
@@ -291,9 +315,9 @@ const fn get_node_data(index: usize) -> LocationNode {
         54 => unpack_node_data(0x7335FFFF),  // track 54/0x36
         55 => unpack_node_data(0x8447FFFF),  // track 55/0x37
         56 => unpack_node_data(0x390AFFFF),  // track 56/0x38
-        57 => unpack_node_data(0x380CFFFF),  // track 57/0x39
+        57 => unpack_node_data(0x380C1A1A),  // track 57/0x39 ADJ
         58 => unpack_node_data(0x5B5B5B5B),  // platf 58/0x3A
-        59 => unpack_node_data(0x0B4DFFFF),  // track 59/0x3B
+        59 => unpack_node_data(0x0B4D4B4B),  // track 59/0x3B ADJ
         60 => unpack_node_data(0x5D5D5D5D),  // platf 60/0x3C
         61 => unpack_node_data(0x2A6FFFFF),  // track 61/0x3D
         62 => unpack_node_data(0x7B6FFFFF),  // track 62/0x3E
@@ -304,34 +328,34 @@ const fn get_node_data(index: usize) -> LocationNode {
         67 => unpack_node_data(0x72727272),  // platf 67/0x43
         68 => unpack_node_data(0x5455FFFF),  // track 68/0x44
         69 => unpack_node_data(0x6764FFFF),  // track 69/0x45
-        70 => unpack_node_data(0x8774FFFF),  // track 70/0x46
+        70 => unpack_node_data(0x87747575),  // track 70/0x46 ADJ
         71 => unpack_node_data(0x8537FF83),  // track 71/0x47 SWITCH
         72 => unpack_node_data(0x1D0AFFFF),  // track 72/0x48
         73 => unpack_node_data(0x1B10FFFF),  // track 73/0x49
         74 => unpack_node_data(0x194EFFFF),  // track 74/0x4A
         75 => unpack_node_data(0x3B3B3B3B),  // platf 75/0x4B
         76 => unpack_node_data(0x6E0EFFFF),  // track 76/0x4C
-        77 => unpack_node_data(0x3B88FFFF),  // track 77/0x4D
+        77 => unpack_node_data(0x3B886C6C),  // track 77/0x4D ADJ
         78 => unpack_node_data(0x2B0E4A78),  // track 78/0x4E CROSS
         79 => unpack_node_data(0x188CFFFF),  // track 79/0x4F
         80 => unpack_node_data(0x0434FFFF),  // track 80/0x50
-        81 => unpack_node_data(0x1614FFFF),  // track 81/0x51
+        81 => unpack_node_data(0x16147171),  // track 81/0x51 ADJ
         82 => unpack_node_data(0x2426FFFF),  // track 82/0x52
-        83 => unpack_node_data(0x3416FFFF),  // track 83/0x53
+        83 => unpack_node_data(0x34161313),  // track 83/0x53 ADJ
         84 => unpack_node_data(0x1444FFFF),  // track 84/0x54
         85 => unpack_node_data(0x4466FFFF),  // track 85/0x55
         86 => unpack_node_data(0x87878787),  // platf 86/0x56
         87 => unpack_node_data(0x7785FFFF),  // track 87/0x57
         88 => unpack_node_data(0x0C0C0C0C),  // platf 88/0x58
-        89 => unpack_node_data(0x7F19FFFF),  // track 89/0x59
-        90 => unpack_node_data(0x5B8AFFFF),  // track 90/0x5A
-        91 => unpack_node_data(0x5D5AFFFF),  // track 91/0x5B
+        89 => unpack_node_data(0x7F191C1C),  // track 89/0x59 ADJ
+        90 => unpack_node_data(0x5B8A2C2C),  // track 90/0x5A ADJ
+        91 => unpack_node_data(0x5D5A3A3A),  // track 91/0x5B ADJ
         92 => unpack_node_data(0x780BFFFF),  // track 92/0x5C
-        93 => unpack_node_data(0x5B6DFFFF),  // track 93/0x5D
+        93 => unpack_node_data(0x5B6D3C3C),  // track 93/0x5D ADJ
         94 => unpack_node_data(0x8D5FFFFF),  // track 94/0x5E
         95 => unpack_node_data(0x5E1FFFFF),  // track 95/0x5F
-        96 => unpack_node_data(0x6120FFFF),  // track 96/0x60
-        97 => unpack_node_data(0x6000FFFF),  // track 97/0x61
+        96 => unpack_node_data(0x61200505),  // track 96/0x60 ADJ
+        97 => unpack_node_data(0x60001515),  // track 97/0x61 ADJ
         98 => unpack_node_data(0x2532FF22),  // track 98/0x62 SWITCH
         99 => unpack_node_data(0x2535FFFF),  // track 99/0x63
         100 => unpack_node_data(0x4565FFFF), // track 100/0x64
@@ -344,13 +368,13 @@ const fn get_node_data(index: usize) -> LocationNode {
         107 => unpack_node_data(0x8E2AFFFF), // track 107/0x6B
         108 => unpack_node_data(0x4D4D4D4D), // platf 108/0x6C
         109 => unpack_node_data(0x8B5DFFFF), // track 109/0x6D
-        110 => unpack_node_data(0x8F4CFFFF), // track 110/0x6E
+        110 => unpack_node_data(0x8F4C7E7E), // track 110/0x6E ADJ
         111 => unpack_node_data(0x3E3DFFFF), // track 111/0x6F
-        112 => unpack_node_data(0x0380FFFF), // track 112/0x70
+        112 => unpack_node_data(0x03800606), // track 112/0x70 ADJ
         113 => unpack_node_data(0x51515151), // platf 113/0x71
-        114 => unpack_node_data(0x7326FFFF), // track 114/0x72
-        115 => unpack_node_data(0x7236FFFF), // track 115/0x73
-        116 => unpack_node_data(0x4667FFFF), // track 116/0x74
+        114 => unpack_node_data(0x73264343), // track 114/0x72 ADJ
+        115 => unpack_node_data(0x72362323), // track 115/0x73 ADJ
+        116 => unpack_node_data(0x46678686), // track 116/0x74 ADJ
         117 => unpack_node_data(0x46464646), // platf 117/0x75
         118 => unpack_node_data(0x6624FFFF), // track 118/0x76
         119 => unpack_node_data(0x8757FFFF), // track 119/0x77
@@ -369,8 +393,8 @@ const fn get_node_data(index: usize) -> LocationNode {
         132 => unpack_node_data(0x8137FFFF), // track 132/0x84
         133 => unpack_node_data(0x5747FFFF), // track 133/0x85
         134 => unpack_node_data(0x74747474), // platf 134/0x86
-        135 => unpack_node_data(0x4677FFFF), // track 135/0x87
-        136 => unpack_node_data(0x7B4DFFFF), // track 136/0x88
+        135 => unpack_node_data(0x46775656), // track 135/0x87 ADJ
+        136 => unpack_node_data(0x7B4D0F0F), // track 136/0x88 ADJ
         137 => unpack_node_data(0x8F27FFFF), // track 137/0x89
         138 => unpack_node_data(0x2F5AFFFF), // track 138/0x8A
         139 => unpack_node_data(0x6D3FFFFF), // track 139/0x8B

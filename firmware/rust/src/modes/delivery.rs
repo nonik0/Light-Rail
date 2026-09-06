@@ -5,11 +5,8 @@ use crate::{
     cargo::*,
     game_state::*,
     input::{InputDirection, InputEvent},
-    location::NUM_PLATFORMS,
     modes::GameModeHandler,
-    platform::Platform,
     random::Rand,
-    train::Train,
     NUM_DIGITS,
 };
 
@@ -122,40 +119,78 @@ impl DeliveryMode {
         }
     }
 
-    #[inline(always)]
-    fn spawn_cargo(&self) -> Cargo {
-        let divisor = if self.timer_enabled { 3 } else { 10 };
-        let count = (self.score / divisor) as u8;
-
-        if self.timer_enabled {
-            let count = if count > 5 { 5 } else { count };
-            let led_pattern = match Rand::from_range(0, count) {
-                0 | 1 | 2 => LedPattern::Blink1,
-                3 | 4 => LedPattern::Blink2,
-                5 => LedPattern::Blink3,
-                _ => LedPattern::Solid,
-            };
-
-            Cargo::Full(led_pattern)
-        } else {
-            let count = if count > 3 { 3 } else { count };
-            let led_pattern = match Rand::from_range(0, count) {
-                0 => LedPattern::Blink1,
-                1 => LedPattern::Blink2,
-                2 => LedPattern::Blink3,
-                _ => LedPattern::Solid,
-            };
-
-            Cargo::Full(led_pattern)
+    fn add_timer_indicators(&self, segment_data: &mut [u8; NUM_DIGITS as usize]) {
+        for i in (3 - self.timer_dots as usize)..3 {
+            segment_data[i] |= as1115::segments::DP;
         }
     }
 
-    #[inline(always)]
-    fn spawn_chance(&self) -> u16 {
-        20 + self.score / 10
+    fn get_score_display(&self) -> DisplayState {
+        let mut segment_data = [0u8; NUM_DIGITS as usize];
+        segment_data[0] = as1115::NUMBERS[((self.score / 100) % 10) as usize];
+        segment_data[1] = as1115::NUMBERS[((self.score / 010) % 10) as usize];
+        segment_data[2] = as1115::NUMBERS[((self.score / 001) % 10) as usize];
+
+        self.add_timer_indicators(&mut segment_data);
+        DisplayState::Segments(segment_data)
     }
 
-    fn add_platform_timer(&mut self, platform_index: u8, cargo: Cargo) {
+    fn set_display(&mut self, state: &mut GameState, alt: bool) {
+        state.display = match (alt, state.is_paused) {
+            (false, _) => self.get_score_display(),
+            (true, false) => DisplayState::OVR,
+            (true, true) => {
+                let mut segment_data = DisplayState::PAUSE_BYTES;
+                self.add_timer_indicators(&mut segment_data);
+                DisplayState::Segments(segment_data)
+            }
+        };
+        self.is_alt_display = alt;
+        self.cooldown_ticks_left = Self::COOLDOWN_TICKS;
+    }
+
+    #[inline(always)]
+    fn spawn_cargo(&self) -> Cargo {
+        // TEMP: for testing
+        let led_pattern = match Rand::from_range(0, 2) {
+            1 => LedPattern::Blink2,
+            2 => LedPattern::Blink3,
+            _ => LedPattern::Blink1,
+        };
+        Cargo::Full(led_pattern)
+
+        // let divisor = if self.timer_enabled { 3 } else { 10 };
+        // let count = (self.score / divisor) as u8;
+
+        // if self.timer_enabled {
+        //     let count = if count > 5 { 5 } else { count };
+        //     let led_pattern = match Rand::from_range(0, count) {
+        //         0 | 1 | 2 => LedPattern::Blink1,
+        //         3 | 4 => LedPattern::Blink2,
+        //         5 => LedPattern::Blink3,
+        //         _ => LedPattern::Solid,
+        //     };
+
+        //     Cargo::Full(led_pattern)
+        // } else {
+        //     let count = if count > 3 { 3 } else { count };
+        //     let led_pattern = match Rand::from_range(0, count) {
+        //         0 => LedPattern::Blink1,
+        //         1 => LedPattern::Blink2,
+        //         2 => LedPattern::Blink3,
+        //         _ => LedPattern::Solid,
+        //     };
+
+        //     Cargo::Full(led_pattern)
+        // }
+    }
+
+    #[inline(always)]
+    fn get_cargo_spawn_chance(&self) -> u16 {
+        200 + self.score
+    }
+
+    fn add_timer(&mut self, platform_index: u8, cargo: Cargo) {
         if self.timers.is_full()
             || self
                 .timers
@@ -173,7 +208,7 @@ impl DeliveryMode {
     }
 
     /// Removes timer from a platform and returns the ticks left for that timer.
-    fn remove_platform_timer(&mut self, platform_index: u8) -> u16 {
+    fn remove_timer(&mut self, platform_index: u8) -> u16 {
         if let Some(index) = self
             .timers
             .iter()
@@ -186,125 +221,112 @@ impl DeliveryMode {
         }
     }
 
-    #[inline(always)]
-    fn add_timer_indicators(&self, segment_data: &mut [u8; NUM_DIGITS as usize]) {
-        for i in (3 - self.timer_dots as usize)..3 {
-            segment_data[i] |= as1115::segments::DP;
-        }
-    }
+    fn update_timers(&mut self, state: &mut GameState) {
+        // decrement cargo timers and update blink period
+        let mut min_ticks = Self::CARGO_TIMER_TICKS;
+        for timer in self.timers.iter_mut() {
+            timer.ticks_left = timer.ticks_left.saturating_sub(1);
 
-    fn update_timer_dots(&mut self, ticks_left: u16) -> bool {
-        let new_timer_dots = if ticks_left <= (Self::CARGO_TIMER_TICKS >> 3) {
+            let platform = &mut state.platforms[timer.platform_index as usize];
+
+            if timer.ticks_left == (Self::CARGO_TIMER_TICKS >> 1) {
+                platform.set_phase_speed(2);
+            } else if timer.ticks_left == (Self::CARGO_TIMER_TICKS >> 2) {
+                platform.set_phase_speed(3);
+            } else if timer.ticks_left == (Self::CARGO_TIMER_TICKS >> 3) {
+                platform.set_phase_speed(6);
+            } else if self.timer_enabled && timer.ticks_left == 0 {
+                state.is_over = true;
+                self.set_display(state, true);
+                return;
+            }
+
+            min_ticks = min_ticks.min(timer.ticks_left);
+        }
+
+        // update display with new timer indicator dots if needed
+        let new_timer_dots = if min_ticks <= (Self::CARGO_TIMER_TICKS >> 3) {
             0
-        } else if ticks_left <= (Self::CARGO_TIMER_TICKS >> 2) {
+        } else if min_ticks <= (Self::CARGO_TIMER_TICKS >> 2) {
             1
-        } else if ticks_left <= (Self::CARGO_TIMER_TICKS >> 1) {
+        } else if min_ticks <= (Self::CARGO_TIMER_TICKS >> 1) {
             2
         } else {
             3
         };
-
         if new_timer_dots != self.timer_dots {
             self.timer_dots = new_timer_dots;
-            true
-        } else {
-            false
+            state.display = self.get_score_display();
+        }
+
+        // spawn a new cargo timer if conditions are all met
+        if self.timers.len() < self.get_timer_count() as usize
+            && !self.timers.is_full()
+            && Rand::default().get_u16() <= self.get_cargo_spawn_chance()
+        {
+            if let Some(platform_index) = state.get_available_platform(None) {
+                let platform = &mut state.platforms[platform_index];
+                let spawned_cargo = self.spawn_cargo();
+
+                platform.set_cargo_out(spawned_cargo);
+                self.add_timer(platform_index as u8, spawned_cargo);
+            }
         }
     }
 
-    fn score_display(&self) -> DisplayState {
-        let mut segment_data = [0u8; NUM_DIGITS as usize];
-        segment_data[0] = as1115::NUMBERS[((self.score / 100) % 10) as usize];
-        segment_data[1] = as1115::NUMBERS[((self.score / 010) % 10) as usize];
-        segment_data[2] = as1115::NUMBERS[((self.score / 001) % 10) as usize];
-
-        self.add_timer_indicators(&mut segment_data);
-        DisplayState::Segments(segment_data)
-    }
-
-    fn set_display(&mut self, state: &mut GameState, alt: bool) {
-        state.display = match (alt, state.is_paused) {
-            (false, _) => self.score_display(),
-            (true, false) => DisplayState::OVR,
-            (true, true) => {
-                let mut segment_data = DisplayState::PAUSE_BYTES;
-                self.add_timer_indicators(&mut segment_data);
-                DisplayState::Segments(segment_data)
-            }
-        };
-        self.is_alt_display = alt;
-        self.cooldown_ticks_left = Self::COOLDOWN_TICKS;
-    }
-
-    // TODO: below helpers might be more better off in game_state.rs, platform state is
-    // implicit here and can simplify the calls, even train state can be as well
-
-    /// Places a dropoff location for a cargo on a random empty platform that the train is not currently at and
-    /// is not the "source" platform location for the dropoff cargo location being placed.
-    fn place_dropoff_for_cargo(
-        &mut self,
-        train: &Train,
-        platforms: &mut [Platform; NUM_PLATFORMS],
-        source_index: usize,
-        cargo: Cargo,
-    ) {
-        let mut available: Vec<usize, NUM_PLATFORMS> = Vec::new();
-        for (i, platform) in platforms.iter().enumerate() {
-            if i != source_index
-                && platform.is_empty()
-                && !train.at_location(platform.track_location())
+    fn check_autostop_behavior(&mut self, state: &mut GameState) {
+        let autostop_level = state.settings.autostop_level();
+        if autostop_level > 0 {
+            if self.autostop_active == 0
+                && autostop_level >= 2
+                && state.trains[Self::TRAIN_INDEX].speed() == Self::TRAIN_SPEED_INC * 2
+                && state.is_train_approaching_platform(Self::TRAIN_INDEX, Self::TRAIN_LOOKAHEAD)
             {
-                available.push(i).ok();
+                state.trains[Self::TRAIN_INDEX].set_speed(Self::TRAIN_SPEED_INC);
+                self.autostop_active = -2;
+                // no cooldown needed, train will stop at end of platform
+            } else if state.trains[Self::TRAIN_INDEX].speed() == Self::TRAIN_SPEED_INC
+                && self.autostop_active <= 0 // not currently resuming
+                && state.is_train_ready_at_platform(Self::TRAIN_INDEX)
+            {
+                state.trains[Self::TRAIN_INDEX].set_speed(0);
+                if self.autostop_active == 0 {
+                    self.autostop_active = -1;
+                }
+                self.cooldown_ticks_left = Self::COOLDOWN_TICKS;
             }
-        }
-
-        if !available.is_empty() {
-            let rand_index = Rand::from_range(0, available.len() as u8 - 1) as usize;
-            let dest_index = available[rand_index];
-            platforms[dest_index].set_cargo_in(cargo);
-            self.add_platform_timer(dest_index as u8, cargo);
         }
     }
 
     /// Try to load or unload cargo from the train to an adjacent platform, returns true if a transfer was made
-    fn try_transfer_one(
-        &mut self,
-        train: &mut Train,
-        platforms: &mut [Platform; NUM_PLATFORMS],
-    ) -> bool {
-        for (platform_index, platform) in platforms.iter_mut().enumerate() {
-            // skip empty platforms the train is not at
-            if platform.is_empty() || !train.at_location(platform.track_location()) {
-                continue;
-            }
+    fn try_cargo_transfer(&mut self, state: &mut GameState) -> bool {
+        if let Some((platform_index, cargo, was_received)) =
+            state.try_cargo_transfer(Self::TRAIN_INDEX)
+        {
+            self.remove_timer(platform_index as u8);
 
-            let (platform_cargo, is_receiving) = platform.cargo();
+            if was_received {
+                self.score += self.get_timer_score(cargo);
 
-            if platform_cargo == Cargo::Empty {
-                crate::panic_with_error!(401); // should not happen, platform is not empty but cargo is empty
-            }
-
-            if is_receiving {
-                if train.unload_cargo(platform_cargo) {
-                    platform.clear_cargo();
-                    self.remove_platform_timer(platform_index as u8);
-                    self.score += self.get_timer_score(platform_cargo);
-
-                    // bonus car for score milestones
-                    if self.score == 3 || self.score == 10 || self.score == 20 || self.score == 30 {
-                        train.add_car(Cargo::Empty);
-                    }
-                    return true;
+                // bonus car for score milestones
+                if self.score == 3 || self.score == 10 || self.score == 20 || self.score == 30 {
+                    state.trains[Self::TRAIN_INDEX].add_car(Cargo::Empty);
                 }
-            } else if train.load_cargo(platform_cargo) {
-                platform.clear_cargo();
-                self.remove_platform_timer(platform_index as u8);
-                self.place_dropoff_for_cargo(train, platforms, platform_index, platform_cargo);
-                return true;
+                true
+            } else if let Some(dest_index) = state.get_available_platform(Some(platform_index))
+            {
+                state.platforms[dest_index].set_cargo_in(cargo);
+                self.add_timer(dest_index as u8, cargo);
+                true
+            } else {
+                // remove cargo from train if unable to find delivery platform
+                // state.trains[Self::TRAIN_INDEX].unload_cargo(cargo);
+                // false
+                crate::panic_with_error!(400);
             }
+        } else {
+            false
         }
-
-        false
     }
 }
 
@@ -320,7 +342,7 @@ impl GameModeHandler for DeliveryMode {
         state.is_paused = false;
         state.init_trains(Cargo::Empty, 3, 5);
         state.clear_platforms();
-        state.display = self.score_display();
+        state.display = self.get_score_display();
     }
 
     fn on_game_tick(&mut self, state: &mut GameState) {
@@ -338,81 +360,21 @@ impl GameModeHandler for DeliveryMode {
             return;
         }
 
-        // decrement cargo timers and update blink period
-        let mut min_ticks = Self::CARGO_TIMER_TICKS;
-        for timer in self.timers.iter_mut() {
-            timer.ticks_left = timer.ticks_left.saturating_sub(1);
+        self.update_timers(state);
+        self.check_autostop_behavior(state);
 
-            let timer_platform = &mut state.platforms[timer.platform_index as usize];
-
-            if timer.ticks_left == (Self::CARGO_TIMER_TICKS >> 1) {
-                timer_platform.set_phase_speed(2);
-            } else if timer.ticks_left == (Self::CARGO_TIMER_TICKS >> 2) {
-                timer_platform.set_phase_speed(3);
-            } else if timer.ticks_left == (Self::CARGO_TIMER_TICKS >> 3) {
-                timer_platform.set_phase_speed(6);
-            } else if self.timer_enabled && timer.ticks_left == 0 {
-                state.is_over = true;
-                self.set_display(state, true);
-                return;
-            }
-
-            min_ticks = min_ticks.min(timer.ticks_left);
-        }
-
-        // update display with new timer dots if needed
-        if self.update_timer_dots(min_ticks) {
-            state.display = self.score_display();
-        }
-
-        // spawn a new cargo timer if conditions are all met
-        if self.timers.len() < self.get_timer_count() as usize && !self.timers.is_full() {
-            for (platform_index, platform) in state.platforms.iter_mut().enumerate() {
-                // cargo spawn chance increases with score
-                if platform.is_empty() && Rand::default().get_u16() <= self.spawn_chance() {
-                    let spawned_cargo = self.spawn_cargo();
-                    platform.set_cargo_out(spawned_cargo);
-                    self.add_platform_timer(platform_index as u8, spawned_cargo);
-
-                    // we're done now if we hit max timers after adding this one
-                    if self.timers.len() as u8 > self.get_timer_count() {
-                        break;
-                    }
-                }
-            }
-        }
-
-        let autostop_level = state.settings.autostop_level();
-        if autostop_level > 0 {
-            if self.autostop_active == 0
-                && autostop_level >= 2
-                && state.trains[Self::TRAIN_INDEX].speed() == Self::TRAIN_SPEED_INC * 2
-                && state.train_approaching_platform(Self::TRAIN_INDEX, Self::TRAIN_LOOKAHEAD)
-            {
-                state.trains[Self::TRAIN_INDEX].set_speed(Self::TRAIN_SPEED_INC);
-                self.autostop_active = -2;
-                // no cooldown needed, train will stop at end of platform
-            } else if state.trains[Self::TRAIN_INDEX].speed() == Self::TRAIN_SPEED_INC
-                && self.autostop_active <= 0 // not currently resuming
-                && state.train_ready_at_platform(Self::TRAIN_INDEX)
-            {
-                state.trains[Self::TRAIN_INDEX].set_speed(0);
-                if self.autostop_active == 0 {
-                    self.autostop_active = -1;
-                }
-                self.cooldown_ticks_left = Self::COOLDOWN_TICKS;
-                return; // do not do stopped behavior below yet!
-            }
+        // do not do stopped behavior below yet if cooldown added
+        if self.cooldown_ticks_left > 0 {
+            return;
         }
 
         let speed = state.trains[Self::TRAIN_INDEX].speed();
         if speed == 0 {
             if self.autostop_active <= 0 {
-                let acted = self
-                    .try_transfer_one(&mut state.trains[Self::TRAIN_INDEX], &mut state.platforms);
+                let acted = self.try_cargo_transfer(state);
 
                 if acted {
-                    state.display = self.score_display();
+                    state.display = self.get_score_display();
                     self.cooldown_ticks_left = Self::COOLDOWN_TICKS;
                 } else if self.autostop_active < 0 {
                     self.autostop_active = -self.autostop_active;
@@ -444,16 +406,18 @@ impl GameModeHandler for DeliveryMode {
 
         match event {
             InputEvent::DirectionButtonPressed(direction) => {
-                // any direction input cancels current autostop behavior
-                self.autostop_active = 0;
                 self.cooldown_ticks_left = Self::COOLDOWN_TICKS;
 
                 match direction {
                     InputDirection::Left => {
+                        self.autostop_active = 0;
+
                         let speed = state.trains[0].speed();
                         state.trains[0].set_speed(speed.saturating_sub(Self::TRAIN_SPEED_INC));
                     }
                     InputDirection::Right => {
+                        self.autostop_active = 0;
+
                         let speed = state.trains[0].speed();
                         let new_speed = speed
                             .saturating_add(Self::TRAIN_SPEED_INC)
@@ -470,5 +434,10 @@ impl GameModeHandler for DeliveryMode {
         }
     }
 
-    fn on_train_advance(&mut self, _: usize, _: &mut GameState) {}
+    fn on_train_advance(&mut self, train_index: usize, state: &mut GameState) {
+        // TEMP
+        if Rand::default().get_bool() {
+            state.train_switch(train_index);
+        }
+    }
 }

@@ -136,10 +136,11 @@ impl Switch {
                     //     }
                     // }
 
+                    let fork_location = fork_location.unwrap_or_else(|| panic_with_error!(301));
                     let (active_loc, inactive_loc) = if switched {
-                        (fork_location.unwrap(), next_location)
+                        (fork_location, next_location)
                     } else {
-                        (next_location, fork_location.unwrap())
+                        (next_location, fork_location)
                     };
 
                     // Only update inactive_loc if no train is present

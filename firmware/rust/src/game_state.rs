@@ -134,11 +134,42 @@ impl GameState {
         }
     }
 
+    /// Try to load or unload cargo from the train to an adjacent platform. Returns None if no transfer was made,
+    /// or a tuple of (platform_index, cargo, was_unloaded) if cargo was successfully loaded/unloaded
+    pub fn try_cargo_transfer(&mut self, train_index: usize) -> Option<(usize, Cargo, bool)> {
+        let train = &mut self.trains[train_index];
+
+        for (platform_index, platform) in self.platforms.iter_mut().enumerate() {
+            // skip empty platforms the train is not at
+            if platform.is_empty() || !train.at_location(platform.track_location()) {
+                continue;
+            }
+
+            let (cargo, is_receiving) = platform.cargo();
+
+            if cargo == Cargo::Empty {
+                crate::panic_with_error!(501); // should not happen, platform is not empty but cargo is empty
+            }
+
+            if is_receiving {
+                if train.unload_cargo(cargo) {
+                    platform.clear_cargo();
+                    return Some((platform_index, cargo, is_receiving));
+                }
+            } else if train.load_cargo(cargo) {
+                platform.clear_cargo();
+                return Some((platform_index, cargo, is_receiving));
+            }
+        }
+
+        None
+    }
+
     /// True if the train can actually transfer with a given platform: either the
     /// platform wants cargo the train is carrying, or the platform is offering
     /// cargo and the train has room to take it.
     #[inline(always)]
-    fn platform_transfer_possible(train: &Train, platform: &Platform) -> bool {
+    fn is_platform_transfer_possible(train: &Train, platform: &Platform) -> bool {
         if platform.is_empty() {
             return false;
         }
@@ -151,9 +182,9 @@ impl GameState {
         }
     }
 
-    // True if train is within `steps` advances of a platform that has cargo the
-    // train is actually able to pick up or drop off
-    pub fn train_approaching_platform(&self, train_index: usize, steps: u8) -> bool {
+    /// True if train is within `steps` advances of a platform that has cargo the
+    /// train is actually able to pick up or drop off
+    pub fn is_train_approaching_platform(&self, train_index: usize, steps: u8) -> bool {
         let train = &self.trains[train_index];
         let mut loc = train.front();
         let mut dir = train.direction();
@@ -169,13 +200,13 @@ impl GameState {
         }
 
         self.platforms.iter().any(|platform| {
-            platform.track_location() == loc && Self::platform_transfer_possible(train, platform)
+            platform.track_location() == loc && Self::is_platform_transfer_possible(train, platform)
         })
     }
 
     /// True if a train's engine is at the last platform track, i.e. the train is fully "in position"
     /// in front of a set of adjacent platforms, and the train has cargo to pick up or drop off
-    pub fn train_ready_at_platform(&self, train_index: usize) -> bool {
+    pub fn is_train_ready_at_platform(&self, train_index: usize) -> bool {
         let train = &self.trains[train_index];
         let engine_loc = train.front();
         let next_loc = train.next_loc(&self.switches);
@@ -193,11 +224,37 @@ impl GameState {
             if loc == next_loc {
                 next_loc_at_platform = true;
             }
-            if train.at_location(loc) && Self::platform_transfer_possible(train, platform) {
+            if train.at_location(loc) && Self::is_platform_transfer_possible(train, platform) {
                 any_ready = true;
             }
         }
 
         engine_at_platform && !next_loc_at_platform && any_ready
+    }
+
+    /// Returns a random, valid platform index for a cargo to spawn where platform is 1) not the given
+    /// `source_index`, 2) empty/does not have cargo already, and 3) is not next to a train
+    pub fn get_available_platform(&self, source_index: Option<usize>) -> Option<usize> {
+        let mut available: Vec<usize, NUM_PLATFORMS> = Vec::new();
+        for (platform_index, platform) in self.platforms.iter().enumerate() {
+            if platform_index != source_index.unwrap_or(usize::max_value())
+                && platform.is_empty()
+                && !self
+                    .trains
+                    .iter()
+                    .any(|t| t.at_location(platform.track_location()))
+            {
+                available
+                    .push(platform_index)
+                    .unwrap_or_else(|_| panic_with_error!(502));
+            }
+        }
+
+        if !available.is_empty() {
+            let rand_index = Rand::from_range(0, available.len() as u8 - 1) as usize;
+            Some(available[rand_index])
+        } else {
+            None
+        }
     }
 }
